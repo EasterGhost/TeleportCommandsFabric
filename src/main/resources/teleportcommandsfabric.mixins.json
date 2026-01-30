@@ -4,6 +4,9 @@
   "package": "org.AndrewElizabeth.teleportcommandsfabric.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "ServerStartMixin",
+    "PlayerDeathMixin",
+    "CommandsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

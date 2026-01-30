@@ -7,25 +7,15 @@
   "authors": [],
   "contact": {},
   "license": "MIT",
-  "icon": "assets/teleportcommandsfabric/icon.png",
+  "icon": "assets/icon.png",
   "environment": "*",
   "entrypoints": {
-    "fabric-datagen": [
-      "org.AndrewElizabeth.teleportcommandsfabric.client.TeleportcommandsfabricDataGenerator"
-    ],
-    "client": [
-      "org.AndrewElizabeth.teleportcommandsfabric.client.TeleportcommandsfabricClient"
-    ],
     "main": [
-      "org.AndrewElizabeth.teleportcommandsfabric.Teleportcommandsfabric"
+      "org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands"
     ]
   },
   "mixins": [
-    "teleportcommandsfabric.mixins.json",
-    {
-      "config": "teleportcommandsfabric.client.mixins.json",
-      "environment": "client"
-    }
+    "teleportcommandsfabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
