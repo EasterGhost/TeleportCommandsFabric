@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "teleportcommandsfabric",
+  "version": "${version}",
+  "name": "TeleportCommandsFabric",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/teleportcommandsfabric/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "org.AndrewElizabeth.teleportcommandsfabric.client.TeleportcommandsfabricDataGenerator"
+    ],
+    "client": [
+      "org.AndrewElizabeth.teleportcommandsfabric.client.TeleportcommandsfabricClient"
+    ],
+    "main": [
+      "org.AndrewElizabeth.teleportcommandsfabric.Teleportcommandsfabric"
+    ]
+  },
+  "mixins": [
+    "teleportcommandsfabric.mixins.json",
+    {
+      "config": "teleportcommandsfabric.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
