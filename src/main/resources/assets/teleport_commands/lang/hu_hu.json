@@ -20,6 +20,7 @@
   "commands.teleport_commands.home.defaultSame": "Már alap ez az otthon!",
   "commands.teleport_commands.home.notFound": "Otthon nem találva!",
   "commands.teleport_commands.home.exists": "Az otthon már létezik!",
+  "commands.teleport_commands.home.max": "Elérted az otthonok maximális számát (%0%)!",
   "commands.teleport_commands.home.homeless": "Nincs otthonod!",
 
   "commands.teleport_commands.homes.error": "Hiba történt az otthonok megtalálásával!",
@@ -28,6 +29,7 @@
   "commands.teleport_commands.warp.set": "Warp set",
   "commands.teleport_commands.warp.setError": "Error setting the warp!",
   "commands.teleport_commands.warp.exists": "Warp already exists!",
+  "commands.teleport_commands.warp.max": "Elérted a warpok maximális számát (%0%)!",
   "commands.teleport_commands.warp.go": "Going to the warp",
   "commands.teleport_commands.warp.goSame": "Already at the warp",
   "commands.teleport_commands.warp.goError": "Error going to the warp!",
@@ -51,6 +53,7 @@
   "commands.teleport_commands.tpa.notFound": "Semmi kérésed sincsen!",
   "commands.teleport_commands.tpa.accepted": "Elfogadva",
   "commands.teleport_commands.tpa.denied": "Elutasítva",
+  "commands.teleport_commands.tpa.disabled": "A TPA jelenleg letiltott.",
 
   "commands.teleport_commands.common.teleport": "Utazás",
   "commands.teleport_commands.common.error": "Hiba történt a teleportálással!",

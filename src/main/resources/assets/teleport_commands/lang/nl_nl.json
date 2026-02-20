@@ -20,6 +20,7 @@
   "commands.teleport_commands.home.defaultSame": "Huis is al als standaard ingesteld!",
   "commands.teleport_commands.home.notFound": "Huis niet gevonden!",
   "commands.teleport_commands.home.exists": "Dat Huis bestaad al!",
+  "commands.teleport_commands.home.max": "Je hebt het maximale aantal huizen bereikt (%0%)!",
   "commands.teleport_commands.home.homeless": "Je hebt geen huizen!",
 
   "commands.teleport_commands.homes.error": "Probleem bij het ophalen van jouw huizen!",
@@ -28,6 +29,7 @@
   "commands.teleport_commands.warp.set": "Warp is ingesteld",
   "commands.teleport_commands.warp.setError": "Probleem tijdens het instellen van de Warp!",
   "commands.teleport_commands.warp.exists": "Die Warp bestaad al!",
+  "commands.teleport_commands.warp.max": "Je hebt het maximale aantal warps bereikt (%0%)!",
   "commands.teleport_commands.warp.go": "Naar de Warp",
   "commands.teleport_commands.warp.goSame": "Al bij de Warp",
   "commands.teleport_commands.warp.goError": "Probleem tijdens het naar de Warp gaan!",
@@ -51,6 +53,7 @@
   "commands.teleport_commands.tpa.notFound": "Geen verzoeken gevonden!",
   "commands.teleport_commands.tpa.accepted": "Verzoek geaccepteerd",
   "commands.teleport_commands.tpa.denied": "Verzoek geweigerd",
+  "commands.teleport_commands.tpa.disabled": "TPA is momenteel uitgeschakeld.",
 
   "commands.teleport_commands.common.teleport": "Teleporteren",
   "commands.teleport_commands.common.error": "Probleem tijdens het teleporteren!",
@@ -58,7 +61,7 @@
   "commands.teleport_commands.common.safetyIsForLosers": "Toch teleporteren? (Waarschuwing, je kan dood gaan!)",
   "commands.teleport_commands.common.forceTeleport": "[Geforceerd teleporteren]",
   "commands.teleport_commands.common.tp": "[Tp]",
-  "commands.teleport_commands.common.rename ": "[Naam wijzigen]",
+  "commands.teleport_commands.common.rename": "[Naam wijzigen]",
   "commands.teleport_commands.common.delete": "[Verwijderen]",
   "commands.teleport_commands.common.default": "(Standaard)",
   "commands.teleport_commands.common.defaultPrompt": "[Standaard instellen]",

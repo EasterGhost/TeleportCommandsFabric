@@ -20,6 +20,7 @@
   "commands.teleport_commands.home.defaultSame": "Дом уже задан по умолчанию!",
   "commands.teleport_commands.home.notFound": "Дом не найден!",
   "commands.teleport_commands.home.exists": "Дом уже существует!",
+  "commands.teleport_commands.home.max": "Вы достигли максимального количества домов (%0%)!",
   "commands.teleport_commands.home.homeless": "У вас нет домов!",
 
   "commands.teleport_commands.homes.error": "Ошибка при получении списка домов!",
@@ -28,6 +29,7 @@
   "commands.teleport_commands.warp.set": "Варп установлен",
   "commands.teleport_commands.warp.setError": "Ошибка при установке варпа!",
   "commands.teleport_commands.warp.exists": "Варп уже существует!",
+  "commands.teleport_commands.warp.max": "Вы достигли максимального количества варпов (%0%)!",
   "commands.teleport_commands.warp.go": "Телепортация на варп",
   "commands.teleport_commands.warp.goSame": "Вы уже на этом варпе",
   "commands.teleport_commands.warp.goError": "Ошибка при телепортации на варп!",
@@ -51,6 +53,7 @@
   "commands.teleport_commands.tpa.notFound": "Запросы не найдены!",
   "commands.teleport_commands.tpa.accepted": "Запрос принят",
   "commands.teleport_commands.tpa.denied": "Запрос отклонён",
+  "commands.teleport_commands.tpa.disabled": "TPA в настоящий момент отключена.",
 
   "commands.teleport_commands.common.teleport": "Телепортация",
   "commands.teleport_commands.common.error": "Ошибка телепортации!",

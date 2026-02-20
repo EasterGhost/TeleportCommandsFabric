@@ -20,6 +20,7 @@
   "commands.teleport_commands.home.defaultSame": "家已经设定为默认了!",
   "commands.teleport_commands.home.notFound": "没有找到家!",
   "commands.teleport_commands.home.exists": "家已经存在了!",
+  "commands.teleport_commands.home.max": "你已达到最大家数 (%0%)!",
   "commands.teleport_commands.home.homeless": "你还没有设置家!",
 
   "commands.teleport_commands.homes.error": "获取家时发生错误!",
@@ -28,6 +29,7 @@
   "commands.teleport_commands.warp.set": "设置传送点",
   "commands.teleport_commands.warp.setError": "设置传送点时发生错误!",
   "commands.teleport_commands.warp.exists": "传送点已经存在了!",
+  "commands.teleport_commands.warp.max": "已达到最大传送点数 (%0%)!",
   "commands.teleport_commands.warp.go": "正在前往传送点",
   "commands.teleport_commands.warp.goSame": "已经在传送点了",
   "commands.teleport_commands.warp.goError": "前往传送点时发生错误!",
@@ -51,6 +53,7 @@
   "commands.teleport_commands.tpa.notFound": "没找到请求!",
   "commands.teleport_commands.tpa.accepted": "请求已同意",
   "commands.teleport_commands.tpa.denied": "请求已拒绝",
+  "commands.teleport_commands.tpa.disabled": "传送请求功能已禁用。",
 
   "commands.teleport_commands.common.teleport": "正在传送中",
   "commands.teleport_commands.common.error": "传送时发生错误!",
