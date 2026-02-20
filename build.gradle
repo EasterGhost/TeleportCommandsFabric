@@ -11,12 +11,9 @@ base {
 }
 
 loom {
-    splitEnvironmentSourceSets()
-
     mods {
         "teleportcommandsfabric" {
             sourceSet sourceSets.main
-            sourceSet sourceSets.client
         }
     }
 }
