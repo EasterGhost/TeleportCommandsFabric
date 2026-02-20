@@ -11,6 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -26,11 +27,13 @@ public class tpa {
     public static class tpaArrayClass {
         public final String InitPlayer;
         public final String RecPlayer;
+        public final String RequestId;
         final boolean here;
 
         public tpaArrayClass(String initPlayer, String recPlayer, boolean here) {
             InitPlayer = initPlayer;
             RecPlayer = recPlayer;
+            RequestId = UUID.randomUUID().toString();
             this.here = here;
             tpaList.add(this);
         }
@@ -100,7 +103,7 @@ public class tpa {
                             }
 
                             try {
-                                tpaAccept(player, TargetPlayer);
+                                tpaAccept(player, TargetPlayer, null);
 
                             } catch (Exception e) {
                                 Constants.LOGGER.error("Error while accepting a tpa(here) request! => ", e);
@@ -108,7 +111,29 @@ public class tpa {
                             }
 
                             return 0;
-                        })));
+                        })
+                        .then(Commands.argument("requestId", StringArgumentType.word())
+                                .executes(context -> {
+                                    final ServerPlayer TargetPlayer = EntityArgument.getPlayer(context, "player");
+                                    final ServerPlayer player = context.getSource().getPlayerOrException();
+                                    final String requestId = StringArgumentType.getString(context, "requestId");
+
+                                    if (!ConfigManager.CONFIG.tpa.isEnabled()) {
+                                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.disabled", player)
+                                                .withStyle(ChatFormatting.RED), true);
+                                        return 1;
+                                    }
+
+                                    try {
+                                        tpaAccept(player, TargetPlayer, requestId);
+
+                                    } catch (Exception e) {
+                                        Constants.LOGGER.error("Error while accepting a tpa(here) request! => ", e);
+                                        return 1;
+                                    }
+
+                                    return 0;
+                                }))));
 
         commandDispatcher.register(Commands.literal("tpadeny")
                 .requires(source -> source.getPlayer() != null)
@@ -124,7 +149,7 @@ public class tpa {
                             }
 
                             try {
-                                tpaDeny(player, TargetPlayer);
+                                tpaDeny(player, TargetPlayer, null);
 
                             } catch (Exception e) {
                                 Constants.LOGGER.error("Error while denying a tpa(here) request! => ", e);
@@ -133,7 +158,30 @@ public class tpa {
                             }
 
                             return 0;
-                        })));
+                        })
+                        .then(Commands.argument("requestId", StringArgumentType.word())
+                                .executes(context -> {
+                                    final ServerPlayer TargetPlayer = EntityArgument.getPlayer(context, "player");
+                                    final ServerPlayer player = context.getSource().getPlayerOrException();
+                                    final String requestId = StringArgumentType.getString(context, "requestId");
+
+                                    if (!ConfigManager.CONFIG.tpa.isEnabled()) {
+                                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.disabled", player)
+                                                .withStyle(ChatFormatting.RED), true);
+                                        return 1;
+                                    }
+
+                                    try {
+                                        tpaDeny(player, TargetPlayer, requestId);
+
+                                    } catch (Exception e) {
+                                        Constants.LOGGER.error("Error while denying a tpa(here) request! => ", e);
+                                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.setError", player).withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
+                                        return 1;
+                                    }
+
+                                    return 0;
+                                }))));
     }
 
 
@@ -172,7 +220,7 @@ public class tpa {
                             .withStyle(style -> style
                                     .withClickEvent(
                                             new ClickEvent.RunCommand(
-                                                    String.format("/tpaaccept %s", ReceivedFromPlayer)
+                                        String.format("tpaaccept %s %s", ReceivedFromPlayer, tpaRequest.RequestId)
                                             )
                                     )
                             )
@@ -183,7 +231,7 @@ public class tpa {
                             .withStyle(style -> style
                                     .withClickEvent(
                                             new ClickEvent.RunCommand(
-                                                    String.format("/tpadeny %s", ReceivedFromPlayer)
+                                        String.format("tpadeny %s %s", ReceivedFromPlayer, tpaRequest.RequestId)
                                             )
                                     )
                             )
@@ -208,17 +256,26 @@ public class tpa {
         }
     }
 
-    private static void tpaAccept(ServerPlayer FromPlayer, ServerPlayer ToPlayer) {
+    private static void tpaAccept(ServerPlayer FromPlayer, ServerPlayer ToPlayer, String requestId) {
         if (FromPlayer == ToPlayer) {
             FromPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.self", FromPlayer).withStyle(ChatFormatting.AQUA), true);
             return;
         }
 
         // Check if there is a request
-        Optional<tpaArrayClass> tpaStorage = tpaList.stream()
-                .filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-                .filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-                .findFirst();
+        Optional<tpaArrayClass> tpaStorage;
+        if (requestId == null) {
+            tpaStorage = tpaList.stream()
+                    .filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
+                    .filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
+                    .findFirst();
+        } else {
+            tpaStorage = tpaList.stream()
+                    .filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
+                    .filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
+                    .filter(tpa -> Objects.equals(requestId, tpa.RequestId))
+                    .findFirst();
+        }
 
         if (tpaStorage.isPresent()) {
             // Request found
@@ -254,15 +311,24 @@ public class tpa {
         }
     }
 
-    private static void tpaDeny(ServerPlayer FromPlayer, ServerPlayer ToPlayer) {
+    private static void tpaDeny(ServerPlayer FromPlayer, ServerPlayer ToPlayer, String requestId) {
         if (FromPlayer == ToPlayer) {
             FromPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.self", FromPlayer).withStyle(ChatFormatting.AQUA),true);
 
         } else {
-            Optional<tpaArrayClass> tpaStorage = tpaList.stream()
-                    .filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-                    .filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-                    .findFirst();
+            Optional<tpaArrayClass> tpaStorage;
+            if (requestId == null) {
+                tpaStorage = tpaList.stream()
+                        .filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
+                        .filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
+                        .findFirst();
+            } else {
+                tpaStorage = tpaList.stream()
+                        .filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
+                        .filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
+                        .filter(tpa -> Objects.equals(requestId, tpa.RequestId))
+                        .findFirst();
+            }
 
             if (tpaStorage.isPresent()) {
                 tpaList.remove(tpaStorage.get());
