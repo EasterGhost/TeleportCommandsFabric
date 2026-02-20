@@ -204,31 +204,6 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 - `delay: 5, cooldown: 10` = 等待5秒传送，传送后10秒内不能再次使用
 - `delay: 0, cooldown: 0` = 无任何限制
 
-## 常见配置场景
-
-### 创造模式服务器
-
-```bash
-/teleportcommands config teleporting delay 0
-/teleportcommands config teleporting cooldown 0
-```
-
-### 生存模式服务器
-
-```bash
-/teleportcommands config teleporting delay 3
-/teleportcommands config teleporting cooldown 10
-/teleportcommands config home max 10
-```
-
-### PVP 服务器
-
-```bash
-/teleportcommands config teleporting delay 5
-/teleportcommands config teleporting cooldown 60
-/teleportcommands disable tpa
-```
-
 ## 故障排除
 
 ### 命令无效
