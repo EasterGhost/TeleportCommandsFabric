@@ -200,6 +200,7 @@ public class ConfigManager {
 
         public final class Warp {
             private boolean enabled = true;
+            private int maximum = 0;
             private boolean deleteInvalid = false;
 
             public boolean isEnabled() {
@@ -208,6 +209,14 @@ public class ConfigManager {
 
             public void setEnabled(boolean enabled) {
                 this.enabled = enabled;
+            }
+
+            public int getMaximum() {
+                return maximum;
+            }
+
+            public void setMaximum(int maximum) {
+                this.maximum = maximum;
             }
 
             public boolean isDeleteInvalid() {
