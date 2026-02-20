@@ -5,6 +5,7 @@ import java.util.*;
 import com.mojang.brigadier.CommandDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.tpaSuggestionProvider;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -44,6 +45,12 @@ public class tpa {
                             final ServerPlayer TargetPlayer = EntityArgument.getPlayer(context, "player");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                            if (!ConfigManager.CONFIG.tpa.isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
+
                             try {
                                 tpaCommandHandler(player, TargetPlayer, false);
 
@@ -63,6 +70,12 @@ public class tpa {
                             final ServerPlayer TargetPlayer = EntityArgument.getPlayer(context, "player");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                            if (!ConfigManager.CONFIG.tpa.isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
+
                             try {
                                 tpaCommandHandler(player, TargetPlayer, true);
 
@@ -79,6 +92,12 @@ public class tpa {
                         .executes(context -> {
                             final ServerPlayer TargetPlayer = EntityArgument.getPlayer(context, "player");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.tpa.isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 tpaAccept(player, TargetPlayer);
@@ -97,6 +116,12 @@ public class tpa {
                         .executes(context -> {
                             final ServerPlayer TargetPlayer = EntityArgument.getPlayer(context, "player");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.tpa.isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 tpaDeny(player, TargetPlayer);
