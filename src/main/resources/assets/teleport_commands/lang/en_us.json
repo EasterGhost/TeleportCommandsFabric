@@ -1,11 +1,14 @@
 {
   "commands.teleport_commands.back.go": "Going back",
   "commands.teleport_commands.back.same": "Already back",
+  "commands.teleport_commands.back.disabled": "Back is currently disabled.",
 
   "commands.teleport_commands.worldspawn.go": "Going to the worldspawn",
   "commands.teleport_commands.worldspawn.same": "Already at the worldspawn",
+  "commands.teleport_commands.worldspawn.disabled": "Worldspawn is currently disabled.",
 
   "commands.teleport_commands.home.set": "Home has been set",
+  "commands.teleport_commands.home.disabled": "Home is currently disabled.",
   "commands.teleport_commands.home.setError": "An error occurred while setting the Home!",
   "commands.teleport_commands.home.go": "Going Home",
   "commands.teleport_commands.home.goError": "An error occurred while going to the Home!",
@@ -19,6 +22,7 @@
   "commands.teleport_commands.home.defaultError": "An error occurred while changing the default Home!",
   "commands.teleport_commands.home.defaultSame": "Home is already set as the default!",
   "commands.teleport_commands.home.notFound": "Home was not found!",
+  "commands.teleport_commands.home.deletedInvalid": "Invalid home deleted.",
   "commands.teleport_commands.home.exists": "Home already exists!",
   "commands.teleport_commands.home.max": "You have reached the maximum number of homes (%0%)!",
   "commands.teleport_commands.home.homeless": "You have no homes!",
@@ -27,6 +31,7 @@
   "commands.teleport_commands.homes.homes": "Homes:",
 
   "commands.teleport_commands.warp.set": "Warp has been set",
+  "commands.teleport_commands.warp.disabled": "Warp is currently disabled.",
   "commands.teleport_commands.warp.setError": "Error while setting the Warp!",
   "commands.teleport_commands.warp.exists": "Warp already exists!",
   "commands.teleport_commands.warp.go": "Going to the Warp",
@@ -37,6 +42,7 @@
   "commands.teleport_commands.warp.rename": "Warp has been renamed",
   "commands.teleport_commands.warp.renameError": "Error while renaming the Warp!",
   "commands.teleport_commands.warp.notFound": "Warp was not found!",
+  "commands.teleport_commands.warp.deletedInvalid": "Invalid warp deleted.",
   "commands.teleport_commands.warp.max": "The maximum number of warps (%0%) has been reached!",
   "commands.teleport_commands.warp.homeless": "There are no warps!",
 
@@ -56,6 +62,8 @@
   "commands.teleport_commands.tpa.disabled": "TPA is currently disabled.",
 
   "commands.teleport_commands.common.teleport": "Teleporting",
+  "commands.teleport_commands.common.cooldown": "You must wait %0% seconds before teleporting again!",
+  "commands.teleport_commands.common.delayStart": "Teleporting in %0% seconds...",
   "commands.teleport_commands.common.error": "An error occurred while teleporting!",
   "commands.teleport_commands.common.noSafeLocation": "No safe location has been found!",
   "commands.teleport_commands.common.safetyIsForLosers": "Teleport anyways? (Warning, you might die!)",

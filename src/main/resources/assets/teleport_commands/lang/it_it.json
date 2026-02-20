@@ -1,11 +1,14 @@
 {
   "commands.teleport_commands.back.go": "Stai tornando indietro",
   "commands.teleport_commands.back.same": "Sei già tornato indietro",
+  "commands.teleport_commands.back.disabled": "Back è attualmente disabilitato.",
 
   "commands.teleport_commands.worldspawn.go": "Stai andando allo spawn",
   "commands.teleport_commands.worldspawn.same": "Sei già allo spawn",
+  "commands.teleport_commands.worldspawn.disabled": "Worldspawn è attualmente disabilitato.",
 
   "commands.teleport_commands.home.set": "Casa impostata",
+  "commands.teleport_commands.home.disabled": "Home è attualmente disabilitato.",
   "commands.teleport_commands.home.setError": "Errore nell'impostazione della casa!",
   "commands.teleport_commands.home.go": "Stai andando a casa",
   "commands.teleport_commands.home.goError": "Errore durante il teletrasporto a casa!",
@@ -19,6 +22,7 @@
   "commands.teleport_commands.home.defaultError": "Errore durante il cambio della casa predefinita!",
   "commands.teleport_commands.home.defaultSame": "La casa è già impostata come predefinita!",
   "commands.teleport_commands.home.notFound": "Casa non trovata!",
+  "commands.teleport_commands.home.deletedInvalid": "Casa non valida eliminata.",
   "commands.teleport_commands.home.exists": "La casa esiste già!",
   "commands.teleport_commands.home.max": "Hai raggiunto il numero massimo di case (%0%)!",
   "commands.teleport_commands.home.homeless": "Non hai case!",
@@ -27,6 +31,7 @@
   "commands.teleport_commands.homes.homes": "Case:",
 
   "commands.teleport_commands.warp.set": "Punto di teletrasporto impostato",
+  "commands.teleport_commands.warp.disabled": "Warp è attualmente disabilitato.",
   "commands.teleport_commands.warp.setError": "Errore nell'impostazione del punto di teletrasporto!",
   "commands.teleport_commands.warp.exists": "Il punto di teletrasporto esiste già!",
   "commands.teleport_commands.warp.max": "Hai raggiunto il numero massimo di punti di teletrasporto (%0%)!",
@@ -38,6 +43,7 @@
   "commands.teleport_commands.warp.rename": "Punto di teletrasporto rinominato",
   "commands.teleport_commands.warp.renameError": "Errore nella rinomina del punto di teletrasporto!",
   "commands.teleport_commands.warp.notFound": "Punto di teletrasporto non trovato!",
+  "commands.teleport_commands.warp.deletedInvalid": "Warp non valido eliminato.",
   "commands.teleport_commands.warp.homeless": "Non hai punti di teletrasporto!",
 
   "commands.teleport_commands.warps.error": "Errore durante il recupero dei punti di teletrasporto",
@@ -56,6 +62,8 @@
   "commands.teleport_commands.tpa.disabled": "TPA è attualmente disabilitato.",
 
   "commands.teleport_commands.common.teleport": "Teletrasporto in corso",
+  "commands.teleport_commands.common.cooldown": "Devi attendere %0% secondi prima di teletrasportarti di nuovo!",
+  "commands.teleport_commands.common.delayStart": "Teletrasporto tra %0% secondi...",
   "commands.teleport_commands.common.error": "Errore durante il teletrasporto!",
   "commands.teleport_commands.common.noSafeLocation": "Nessuna posizione sicura trovata!",
   "commands.teleport_commands.common.safetyIsForLosers": "Ti vuoi teletrasportare comunque? (Attenzione, potresti morire!)",

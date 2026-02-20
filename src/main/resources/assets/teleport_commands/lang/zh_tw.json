@@ -1,11 +1,14 @@
 {
   "commands.teleport_commands.back.go": "正在返回上一地點",
   "commands.teleport_commands.back.same": "已成功返回上一地點",
+  "commands.teleport_commands.back.disabled": "Back 功能目前已停用。",
 
   "commands.teleport_commands.worldspawn.go": "正在前往世界重生點",
   "commands.teleport_commands.worldspawn.same": "已成功抵達世界重生點",
+  "commands.teleport_commands.worldspawn.disabled": "世界重生點功能目前已停用。",
 
   "commands.teleport_commands.home.set": "設定住家",
+  "commands.teleport_commands.home.disabled": "住家功能目前已停用。",
   "commands.teleport_commands.home.setError": "設定住家時發生錯誤！",
   "commands.teleport_commands.home.go": "正在回家",
   "commands.teleport_commands.home.goError": "傳送回家時發生錯誤！",
@@ -19,6 +22,7 @@
   "commands.teleport_commands.home.defaultError": "變更預設住家時發生錯誤！",
   "commands.teleport_commands.home.defaultSame": "此住家已經是預設了！",
   "commands.teleport_commands.home.notFound": "找不到此住家！",
+  "commands.teleport_commands.home.deletedInvalid": "已刪除無效的住家。",
   "commands.teleport_commands.home.exists": "此住家名稱已存在！",
   "commands.teleport_commands.home.max": "您已達到最大住家數 (%0%)！",
   "commands.teleport_commands.home.homeless": "您尚未設定任何住家！",
@@ -27,6 +31,7 @@
   "commands.teleport_commands.homes.homes": "您的住家：",
 
   "commands.teleport_commands.warp.set": "設定傳送點",
+  "commands.teleport_commands.warp.disabled": "傳送點功能目前已停用。",
   "commands.teleport_commands.warp.setError": "設定傳送點時發生錯誤！",
   "commands.teleport_commands.warp.exists": "此傳送點已存在！",
   "commands.teleport_commands.warp.max": "已達到最大傳送點數 (%0%)！",
@@ -38,6 +43,7 @@
   "commands.teleport_commands.warp.rename": "傳送點已重新命名",
   "commands.teleport_commands.warp.renameError": "重新命名傳送點時發生錯誤！",
   "commands.teleport_commands.warp.notFound": "找不到此傳送點！",
+  "commands.teleport_commands.warp.deletedInvalid": "已刪除無效的傳送點。",
   "commands.teleport_commands.warp.homeless": "尚未設定任何傳送點！",
 
   "commands.teleport_commands.warps.error": "讀取傳送點列表時發生錯誤！",
@@ -56,6 +62,8 @@
   "commands.teleport_commands.tpa.disabled": "傳送請求功能已禁用。",
 
   "commands.teleport_commands.common.teleport": "傳送中...",
+  "commands.teleport_commands.common.cooldown": "你需要等待 %0% 秒才能再次傳送！",
+  "commands.teleport_commands.common.delayStart": "%0% 秒後開始傳送...",
   "commands.teleport_commands.common.error": "傳送時發生錯誤！",
   "commands.teleport_commands.common.noSafeLocation": "找不到安全的傳送地點！",
   "commands.teleport_commands.common.safetyIsForLosers": "確定要傳送嗎？（警告：這可能會讓你死掉喔！）",

@@ -1,11 +1,14 @@
 {
   "commands.teleport_commands.back.go": "Връщане обратно.",
   "commands.teleport_commands.back.same": "Вече си върнат.",
+  "commands.teleport_commands.back.disabled": "Back е временно изключен.",
 
   "commands.teleport_commands.worldspawn.go": "Телепортиране към началото на света.",
   "commands.teleport_commands.worldspawn.same": "Вече си в началото на света.",
+  "commands.teleport_commands.worldspawn.disabled": "Worldspawn е временно изключен.",
 
   "commands.teleport_commands.home.set": "Създаване на дом.",
+  "commands.teleport_commands.home.disabled": "Home е временно изключен.",
   "commands.teleport_commands.home.setError": "Възникна грешка при създаването на домa!",
   "commands.teleport_commands.home.go": "Телепортиране към дома.",
   "commands.teleport_commands.home.goError": "Възникна грешка при телепортирането към дома!",
@@ -19,6 +22,7 @@
   "commands.teleport_commands.home.defaultError": "Възникна грешка при смяната на дома по подразбиране!",
   "commands.teleport_commands.home.defaultSame": "Домът вече е зададен по подразбиране!",
   "commands.teleport_commands.home.notFound": "Домът не бе намерен!",
+  "commands.teleport_commands.home.deletedInvalid": "Невалиден дом бе изтрит.",
   "commands.teleport_commands.home.exists": "Домът вече съществува!",
   "commands.teleport_commands.home.max": "Достигна си максималния брой домове (%0%)!",
   "commands.teleport_commands.home.homeless": "Нямаш никакви домове!",
@@ -27,6 +31,7 @@
   "commands.teleport_commands.homes.homes": "Домове:",
 
   "commands.teleport_commands.warp.set": "Телепортът бе поставен.",
+  "commands.teleport_commands.warp.disabled": "Warp е временно изключен.",
   "commands.teleport_commands.warp.setError": "Възникна грешка при поставянето на телепорта!",
   "commands.teleport_commands.warp.exists": "Телепортът вече съществува!",
   "commands.teleport_commands.warp.max": "Достигна си максималния брой телепорти (%0%)!",
@@ -38,6 +43,7 @@
   "commands.teleport_commands.warp.rename": "Телепорта бе преименуван",
   "commands.teleport_commands.warp.renameError": "Възникна грешка при преименуването на телепорта!",
   "commands.teleport_commands.warp.notFound": "Телепорта не бе намерен!",
+  "commands.teleport_commands.warp.deletedInvalid": "Невалиден телепорт бе изтрит.",
   "commands.teleport_commands.warp.homeless": "Няма никакви телепорти!",
 
   "commands.teleport_commands.warps.error": "Възникна грешка при търсенето на телепортите!",
@@ -56,6 +62,8 @@
   "commands.teleport_commands.tpa.disabled": "TPA е в момента отключена.",
 
   "commands.teleport_commands.common.teleport": "Телепортиране",
+  "commands.teleport_commands.common.cooldown": "Трябва да изчакаш %0% секунди преди следващия телепорт!",
+  "commands.teleport_commands.common.delayStart": "Телепортиране след %0% секунди...",
   "commands.teleport_commands.common.error": "Възникна грешка при телепортацията!",
   "commands.teleport_commands.common.noSafeLocation": "Безопасна зона не бе открита!",
   "commands.teleport_commands.common.safetyIsForLosers": "Телепортиране въпреки това? (Внимание, може да загинеш!)",

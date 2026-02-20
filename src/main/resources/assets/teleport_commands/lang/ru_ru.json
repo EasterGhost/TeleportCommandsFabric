@@ -1,11 +1,14 @@
 {
   "commands.teleport_commands.back.go": "Возвращение назад",
   "commands.teleport_commands.back.same": "Вы уже на месте",
+  "commands.teleport_commands.back.disabled": "Back сейчас отключён.",
 
   "commands.teleport_commands.worldspawn.go": "Телепортация к спавну",
   "commands.teleport_commands.worldspawn.same": "Вы уже на спавне",
+  "commands.teleport_commands.worldspawn.disabled": "Worldspawn сейчас отключён.",
 
   "commands.teleport_commands.home.set": "Дом установлен",
+  "commands.teleport_commands.home.disabled": "Home сейчас отключён.",
   "commands.teleport_commands.home.setError": "Ошибка при установке дома!",
   "commands.teleport_commands.home.go": "Возвращение домой",
   "commands.teleport_commands.home.goError": "Ошибка при возвращении домой!",
@@ -19,6 +22,7 @@
   "commands.teleport_commands.home.defaultError": "Ошибка при смене дома по умолчанию!",
   "commands.teleport_commands.home.defaultSame": "Дом уже задан по умолчанию!",
   "commands.teleport_commands.home.notFound": "Дом не найден!",
+  "commands.teleport_commands.home.deletedInvalid": "Недействительный дом удалён.",
   "commands.teleport_commands.home.exists": "Дом уже существует!",
   "commands.teleport_commands.home.max": "Вы достигли максимального количества домов (%0%)!",
   "commands.teleport_commands.home.homeless": "У вас нет домов!",
@@ -27,6 +31,7 @@
   "commands.teleport_commands.homes.homes": "Дома:",
 
   "commands.teleport_commands.warp.set": "Варп установлен",
+  "commands.teleport_commands.warp.disabled": "Warp сейчас отключён.",
   "commands.teleport_commands.warp.setError": "Ошибка при установке варпа!",
   "commands.teleport_commands.warp.exists": "Варп уже существует!",
   "commands.teleport_commands.warp.max": "Вы достигли максимального количества варпов (%0%)!",
@@ -38,6 +43,7 @@
   "commands.teleport_commands.warp.rename": "Варп переименован",
   "commands.teleport_commands.warp.renameError": "Ошибка при переименовании варпа!",
   "commands.teleport_commands.warp.notFound": "Варп не найден!",
+  "commands.teleport_commands.warp.deletedInvalid": "Недействительный варп удалён.",
   "commands.teleport_commands.warp.homeless": "Варпов нет!",
 
   "commands.teleport_commands.warps.error": "Ошибка при получении списка варпов!",
@@ -56,6 +62,8 @@
   "commands.teleport_commands.tpa.disabled": "TPA в настоящий момент отключена.",
 
   "commands.teleport_commands.common.teleport": "Телепортация",
+  "commands.teleport_commands.common.cooldown": "Подождите %0% секунд перед следующей телепортацией!",
+  "commands.teleport_commands.common.delayStart": "Телепортация через %0% секунд...",
   "commands.teleport_commands.common.error": "Ошибка телепортации!",
   "commands.teleport_commands.common.noSafeLocation": "Безопасное место не найдено!",
   "commands.teleport_commands.common.safetyIsForLosers": "Телепортироваться всё равно? (Внимание: вы можете погибнуть!)",
