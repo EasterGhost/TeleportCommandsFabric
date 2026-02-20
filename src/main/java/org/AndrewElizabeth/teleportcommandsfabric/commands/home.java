@@ -21,16 +21,13 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
 import static net.minecraft.commands.Commands.argument;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.Teleporter;
 
 public class home {
     public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
@@ -41,6 +38,12 @@ public class home {
                         .executes(context -> {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 SetHome(player, name);
@@ -59,6 +62,12 @@ public class home {
                 .executes(context -> {
                     final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                    if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                .withStyle(ChatFormatting.RED), true);
+                        return 1;
+                    }
+
                     try {
                         GoHome(player, "");
 
@@ -75,6 +84,12 @@ public class home {
                         .executes(context -> {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 GoHome(player, name);
@@ -94,6 +109,12 @@ public class home {
                         .executes(context -> {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 DeleteHome(player, name);
@@ -117,6 +138,12 @@ public class home {
                                     final String newName = StringArgumentType.getString(context, "newName");
                                     final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                                    if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                                .withStyle(ChatFormatting.RED), true);
+                                        return 1;
+                                    }
+
                                     try {
                                         RenameHome(player, name, newName);
 
@@ -137,6 +164,12 @@ public class home {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                            if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
+
                             try {
                                 SetDefaultHome(player, name);
 
@@ -152,6 +185,12 @@ public class home {
                 .requires(source -> source.getPlayer() != null)
                 .executes(context -> {
                     final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                    if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.disabled", player)
+                                .withStyle(ChatFormatting.RED), true);
+                        return 1;
+                    }
 
                     try {
                         PrintHomes(player);
@@ -172,7 +211,7 @@ public class home {
     private static void SetHome(ServerPlayer player, String homeName) throws Exception {
         homeName = homeName.toLowerCase();
         BlockPos blockPos = player.blockPosition();
-        String worldString = getDimensionId(player.level().dimension());
+        String worldString = tools.getDimensionId(player.level().dimension());
 
         // Gets the player's storage and creates it if it doesn't exist
         Player playerStorage = StorageManager.STORAGE.addPlayer(player.getStringUUID());
@@ -258,6 +297,14 @@ public class home {
             player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
 
+            // Delete invalid home if configured
+            if (ConfigManager.CONFIG.getHome().isDeleteInvalid()) {
+                playerStorage.deleteHome(home);
+                Constants.LOGGER.info("Deleted invalid home '{}' for player {}", home.getName(), player.getName().getString());
+                player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.deletedInvalid", player)
+                        .withStyle(ChatFormatting.YELLOW), true);
+            }
+
             return;
         }
 
@@ -274,7 +321,7 @@ public class home {
             Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(), teleportBlockPos.getZ() + 0.5);
 
             player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);
-            Teleporter(player, homeWorld, teleportPos);
+            tools.TeleporterWithDelayAndCooldown(player, homeWorld, teleportPos, false);
         }
     }
 
@@ -303,8 +350,6 @@ public class home {
         // check if it's the default home, if it is set it to the default value
         if (playerStorage.getDefaultHome().equals(homeName)) {
             playerStorage.setDefaultHome("");
-
-            // todo! maybe ask the player if they want to set a new default home? :3
         }
 
         player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.delete", player), true);
@@ -530,14 +575,4 @@ public class home {
         player.displayClientMessage(message, false);
     }
 
-    private static String getDimensionId(ResourceKey<Level> dimensionKey) {
-        // ResourceKey#location() is unavailable in this mapping; parse the id from the string form
-        // Example input: ResourceKey[minecraft:dimension / minecraft:the_nether]
-        String raw = dimensionKey.toString();
-        int splitIndex = raw.indexOf("/ ");
-        if (splitIndex >= 0 && raw.endsWith("]")) {
-            return raw.substring(splitIndex + 2, raw.length() - 1);
-        }
-        return raw;
-    }
 }

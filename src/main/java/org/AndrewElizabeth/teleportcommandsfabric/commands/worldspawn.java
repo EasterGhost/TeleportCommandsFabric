@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -16,6 +17,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
 import static net.minecraft.commands.Commands.argument;
@@ -29,6 +31,12 @@ public class worldspawn {
                 .requires(source -> source.getPlayer() != null)
                 .executes(context -> {
                     final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                    if (!ConfigManager.CONFIG.getWorldSpawn().isEnabled()) {
+                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.disabled", player)
+                                .withStyle(ChatFormatting.RED), true);
+                        return 1;
+                    }
 
                     try {
                         toWorldSpawn(player, false);
@@ -46,6 +54,12 @@ public class worldspawn {
                             final boolean safety = BoolArgumentType.getBool(context, "Disable Safety");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                            if (!ConfigManager.CONFIG.getWorldSpawn().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
+
                             try {
                                 toWorldSpawn(player, safety);
 
@@ -61,9 +75,19 @@ public class worldspawn {
     }
 
     private static void toWorldSpawn(ServerPlayer player, boolean safetyDisabled) throws NullPointerException {
-        // todo! make the dimension customizable
-        ServerLevel world = TeleportCommands.SERVER.getLevel(OVERWORLD);
-        BlockPos worldSpawn = Objects.requireNonNull(world, "Overworld cannot be null!").getLevelData().getRespawnData().pos();
+        // Get world from config
+        String worldId = ConfigManager.CONFIG.getWorldSpawn().getWorld_id();
+        ServerLevel world = StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)
+                .filter(level -> Objects.equals(getDimensionId(level.dimension()), worldId))
+                .findFirst()
+                .orElse(null);
+
+        if (world == null) {
+            Constants.LOGGER.error("World not found: {}, falling back to overworld", worldId);
+            world = TeleportCommands.SERVER.getLevel(OVERWORLD);
+        }
+        
+        BlockPos worldSpawn = Objects.requireNonNull(world, "World cannot be null!").getLevelData().getRespawnData().pos();
 
         if (!safetyDisabled) {
             Optional<BlockPos> teleportData = getSafeBlockPos(worldSpawn, world);
@@ -79,7 +103,7 @@ public class worldspawn {
                     Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(), safeBlockPos.getZ() + 0.5);
 
                     player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player), true);
-                    Teleporter(player, world, teleportPos);
+                    TeleporterWithDelayAndCooldown(player, world, teleportPos, false);
                 }
 
             } else {
@@ -112,8 +136,9 @@ public class worldspawn {
             } else {
 
                 player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player), true);
-                Teleporter(player, world, new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5));
+                TeleporterWithDelayAndCooldown(player, world, new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5), false);
             }
         }
     }
+
 }

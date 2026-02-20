@@ -5,10 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.Permissions;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,15 +14,12 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Arrays;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
 
 public class main {
 
-    // TODO! Make this automatically generate based on the commands we have
     private static final String[] available_commands = {
             "back",
             "home",
@@ -34,8 +29,8 @@ public class main {
     };
 
     // sum lists
-    private static final String[] enabled_commands = available_commands; // TODO! get enabled commands
-    private static final String[] disabled_commands = available_commands; // TODO! get disabled commands
+    private static final String[] enabled_commands = available_commands;
+    private static final String[] disabled_commands = available_commands;
 
     // Create sum suggestion providers
     private static final SuggestionProvider<CommandSourceStack> disabled_commands_suggester = (context, builder) -> SharedSuggestionProvider.suggest(disabled_commands, builder);
@@ -45,7 +40,73 @@ public class main {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 
         dispatcher.register(Commands.literal("teleportcommands")
-                .then(Commands.literal("reloadConfig")
+                .then(Commands.literal("config")
+                        .requires(main::isOpOrConsole)
+                        // --- Teleporting Config ---
+                        .then(Commands.literal("teleporting")
+                                .then(Commands.literal("delay")
+                                        .then(Commands.argument("seconds", IntegerArgumentType.integer(0))
+                                                .executes(context -> setAndSave(context, 
+                                                        () -> ConfigManager.CONFIG.getTeleporting().setDelay(IntegerArgumentType.getInteger(context, "seconds")),
+                                                        "Teleport delay set to " + IntegerArgumentType.getInteger(context, "seconds") + "s"))))
+                                .then(Commands.literal("cooldown")
+                                        .then(Commands.argument("seconds", IntegerArgumentType.integer(0))
+                                                .executes(context -> setAndSave(context, 
+                                                        () -> ConfigManager.CONFIG.getTeleporting().setCooldown(IntegerArgumentType.getInteger(context, "seconds")),
+                                                        "Teleport cooldown set to " + IntegerArgumentType.getInteger(context, "seconds") + "s")))))
+                        // --- Back Config ---
+                        .then(Commands.literal("back")
+                                .then(Commands.literal("deleteAfterTeleport")
+                                        .then(Commands.literal("true").executes(context -> setAndSave(context,
+                                                () -> ConfigManager.CONFIG.getBack().setDeleteAfterTeleport(true),
+                                                "Delete last location after teleport: enabled")))
+                                        .then(Commands.literal("false").executes(context -> setAndSave(context,
+                                                () -> ConfigManager.CONFIG.getBack().setDeleteAfterTeleport(false),
+                                                "Delete last location after teleport: disabled")))))
+                        // --- Home Config ---
+                        .then(Commands.literal("home")
+                                .then(Commands.literal("max")
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(0))
+                                                .executes(context -> setAndSave(context,
+                                                        () -> ConfigManager.CONFIG.getHome().setPlayerMaximum(IntegerArgumentType.getInteger(context, "count")),
+                                                        "Maximum homes per player set to " + IntegerArgumentType.getInteger(context, "count")))))
+                                .then(Commands.literal("deleteInvalid")
+                                        .then(Commands.literal("true").executes(context -> setAndSave(context,
+                                                () -> ConfigManager.CONFIG.getHome().setDeleteInvalid(true),
+                                                "Auto-delete invalid homes: enabled")))
+                                        .then(Commands.literal("false").executes(context -> setAndSave(context,
+                                                () -> ConfigManager.CONFIG.getHome().setDeleteInvalid(false),
+                                                "Auto-delete invalid homes: disabled")))))
+                        // --- TPA Config ---
+                        .then(Commands.literal("tpa")
+                                .then(Commands.literal("expireTime")
+                                        .then(Commands.argument("seconds", IntegerArgumentType.integer(0))
+                                                .executes(context -> setAndSave(context,
+                                                        () -> ConfigManager.CONFIG.getTpa().setRequestExpireTime(IntegerArgumentType.getInteger(context, "seconds")),
+                                                        "TPA request expiration time set to " + IntegerArgumentType.getInteger(context, "seconds") + "s")))))
+                        // --- Warp Config ---
+                        .then(Commands.literal("warp")
+                                .then(Commands.literal("max")
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(0))
+                                                .executes(context -> setAndSave(context,
+                                                        () -> ConfigManager.CONFIG.getWarp().setMaximum(IntegerArgumentType.getInteger(context, "count")),
+                                                        "Maximum warps set to " + IntegerArgumentType.getInteger(context, "count")))))
+                                .then(Commands.literal("deleteInvalid")
+                                        .then(Commands.literal("true").executes(context -> setAndSave(context,
+                                                () -> ConfigManager.CONFIG.getWarp().setDeleteInvalid(true),
+                                                "Auto-delete invalid warps: enabled")))
+                                        .then(Commands.literal("false").executes(context -> setAndSave(context,
+                                                () -> ConfigManager.CONFIG.getWarp().setDeleteInvalid(false),
+                                                "Auto-delete invalid warps: disabled")))))
+                        // --- WorldSpawn Config ---
+                        .then(Commands.literal("worldspawn")
+                                .then(Commands.literal("world")
+                                        .then(Commands.argument("worldId", StringArgumentType.string())
+                                                .executes(context -> setAndSave(context,
+                                                        () -> ConfigManager.CONFIG.getWorldSpawn().setWorld_id(StringArgumentType.getString(context, "worldId")),
+                                                        "WorldSpawn world set to " + StringArgumentType.getString(context, "worldId")))))))
+                .then(Commands.literal("reload")
+                        .requires(main::isOpOrConsole)
                         .executes(context -> {
                             try {
                                 ConfigManager.ConfigLoader();
@@ -53,124 +114,81 @@ public class main {
                                 Constants.LOGGER.error("Failed to reload config!", e);
                                 throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
                             }
+                            context.getSource().sendSuccess(() -> Component.literal("Config reloaded successfully"), true);
                             return 0;
                         }))
-                .then(Commands.literal("tpa")
-                        .requires(main::isOpOrConsole)
-                        .then(Commands.literal("enable")
-                                .executes(context -> {
-                                    try {
-                                        ConfigManager.CONFIG.tpa.setEnabled(true);
-                                        ConfigManager.ConfigSaver();
-                                    } catch (Exception e) {
-                                        Constants.LOGGER.error("Failed to enable tpa!", e);
-                                        throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
-                                    }
-                                    context.getSource().sendSuccess(() -> Component.literal("TPA enabled"), true);
-                                    return 0;
-                                }))
-                        .then(Commands.literal("disable")
-                                .executes(context -> {
-                                    try {
-                                        ConfigManager.CONFIG.tpa.setEnabled(false);
-                                        ConfigManager.ConfigSaver();
-                                    } catch (Exception e) {
-                                        Constants.LOGGER.error("Failed to disable tpa!", e);
-                                        throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
-                                    }
-                                    context.getSource().sendSuccess(() -> Component.literal("TPA disabled"), true);
-                                    return 0;
-                                })))
-                .then(Commands.literal("home")
-                        .requires(main::isOpOrConsole)
-                        .then(Commands.literal("max")
-                                .then(Commands.argument("count", IntegerArgumentType.integer(0))
-                                        .executes(context -> {
-                                            int count = IntegerArgumentType.getInteger(context, "count");
-                                            try {
-                                                ConfigManager.CONFIG.home.setPlayerMaximum(count);
-                                                ConfigManager.ConfigSaver();
-                                            } catch (Exception e) {
-                                                Constants.LOGGER.error("Failed to set home maximum!", e);
-                                                throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
-                                            }
-                                            context.getSource().sendSuccess(() -> Component.literal("Home maximum set to " + count), true);
-                                            return 0;
-                                        }))))
-                .then(Commands.literal("warp")
-                        .requires(main::isOpOrConsole)
-                        .then(Commands.literal("max")
-                                .then(Commands.argument("count", IntegerArgumentType.integer(0))
-                                        .executes(context -> {
-                                            int count = IntegerArgumentType.getInteger(context, "count");
-                                            try {
-                                                ConfigManager.CONFIG.warp.setMaximum(count);
-                                                ConfigManager.ConfigSaver();
-                                            } catch (Exception e) {
-                                                Constants.LOGGER.error("Failed to set warp maximum!", e);
-                                                throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
-                                            }
-                                            context.getSource().sendSuccess(() -> Component.literal("Warp maximum set to " + count), true);
-                                            return 0;
-                                        }))))
             .then(Commands.literal("disable")
                 .then(Commands.argument("command", StringArgumentType.word())
                     .suggests(enabled_commands_suggester)
-                    .requires(main::isOpOrConsole) // Require OP player or console
+                    .requires(main::isOpOrConsole)
                     .executes(context -> {
-                        final ServerPlayer player = context.getSource().getPlayerOrException();
                         final String string = StringArgumentType.getString(context, "command");
 
-                        // todo! maybe move this check outside for reusability?
                         if (!Arrays.asList(enabled_commands).contains(string)) {
-                            // TODO! make this translatable
-                            throw new SimpleCommandExceptionType(Component.literal("\"" + string + "\" is not available as an command!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)).create();
+                            throw new SimpleCommandExceptionType(Component.literal("\"" + string + "\" is not available as a command!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)).create();
                         }
 
                         try {
-                            player.displayClientMessage(Component.literal("meow " + string), true);
-
+                            return switch (string) {
+                                case "back" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getBack().setEnabled(false),
+                                        "Back command: disabled");
+                                case "home" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getHome().setEnabled(false),
+                                        "Home command: disabled");
+                                case "tpa" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getTpa().setEnabled(false),
+                                        "TPA command: disabled");
+                                case "warp" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getWarp().setEnabled(false),
+                                        "Warp command: disabled");
+                                case "worldspawn" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getWorldSpawn().setEnabled(false),
+                                        "WorldSpawn command: disabled");
+                                default -> throw new SimpleCommandExceptionType(Component.literal("Unknown command: " + string)).create();
+                            };
                         } catch (Exception e) {
                             Constants.LOGGER.error("Error while disabling a command! => ", e);
-                            // TODO replace the error below with something normal?
-                            throw new SimpleCommandExceptionType(getTranslatedText("commands.teleport_commands.common.error", player).withStyle(ChatFormatting.RED, ChatFormatting.BOLD)).create();
+                            throw new SimpleCommandExceptionType(Component.literal("Error: " + e.getMessage()).withStyle(ChatFormatting.RED)).create();
                         }
-                        return 0;
                     })
                 ))
             .then(Commands.literal("enable")
                 .then(Commands.argument("command", StringArgumentType.word())
                     .suggests(disabled_commands_suggester)
-                    .requires(main::isOpOrConsole) // Require OP player or console
+                    .requires(main::isOpOrConsole)
                     .executes(context -> {
-                        final ServerPlayer player = context.getSource().getPlayerOrException();
                         final String string = StringArgumentType.getString(context, "command");
 
-                        // todo! maybe move this check outside for reusability?
                         if (!Arrays.asList(disabled_commands).contains(string)) {
-                            // TODO! make this translatable
-                            throw new SimpleCommandExceptionType(Component.literal("\"" + string + "\" is not available as an command!")).create();
+                            throw new SimpleCommandExceptionType(Component.literal("\"" + string + "\" is not available as a command!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)).create();
                         }
 
                         try {
-                            player.displayClientMessage(Component.literal("meow " + string), true);
-
+                            return switch (string) {
+                                case "back" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getBack().setEnabled(true),
+                                        "Back command: enabled");
+                                case "home" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getHome().setEnabled(true),
+                                        "Home command: enabled");
+                                case "tpa" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getTpa().setEnabled(true),
+                                        "TPA command: enabled");
+                                case "warp" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getWarp().setEnabled(true),
+                                        "Warp command: enabled");
+                                case "worldspawn" -> setAndSave(context,
+                                        () -> ConfigManager.CONFIG.getWorldSpawn().setEnabled(true),
+                                        "WorldSpawn command: enabled");
+                                default -> throw new SimpleCommandExceptionType(Component.literal("Unknown command: " + string)).create();
+                            };
                         } catch (Exception e) {
-                            Constants.LOGGER.error("Error while disabling a command! => ", e);
-                            // TODO replace the error below with something normal?
-                            throw new SimpleCommandExceptionType(getTranslatedText("commands.teleport_commands.common.error", player).withStyle(ChatFormatting.RED, ChatFormatting.BOLD)).create();
+                            Constants.LOGGER.error("Error while enabling a command! => ", e);
+                            throw new SimpleCommandExceptionType(Component.literal("Error: " + e.getMessage()).withStyle(ChatFormatting.RED)).create();
                         }
-                        return 0;
                     })
                 ))
-            // Todo! Is this still needed?
-            .then(Commands.literal("reload")
-                .requires(main::isOpOrConsole) // Require OP player or console
-                .executes(context -> {
-                    TeleportCommands.registerCommands(context.getSource().dispatcher());
-                    return 0;
-                }))
-
             .then(Commands.literal("help")
                 .executes(context -> {
                     context.getSource().sendSuccess(main::printCommands, false);
@@ -182,6 +200,18 @@ public class main {
 
     // -----
 
+    /// Utility method to set config and save with error handling
+    private static int setAndSave(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context, Runnable setter, String message) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        try {
+            setter.run();
+            ConfigManager.saveConfigChanges();
+            context.getSource().sendSuccess(() -> Component.literal(message).withStyle(ChatFormatting.GREEN), true);
+            return 0;
+        } catch (Exception e) {
+            Constants.LOGGER.error("Failed to save config!", e);
+            throw new SimpleCommandExceptionType(Component.literal("Failed to save config: " + e.getMessage()).withStyle(ChatFormatting.RED)).create();
+        }
+    }
 
     private static MutableComponent printCommands()  {
         MutableComponent message = Component.empty();

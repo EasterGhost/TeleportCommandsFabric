@@ -16,17 +16,14 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.*;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.Teleporter;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
 import static net.minecraft.commands.Commands.argument;
 
@@ -39,6 +36,12 @@ public class warp {
                         .executes(context -> {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.getWarp().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 SetWarp(player, name);
@@ -59,6 +62,12 @@ public class warp {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                            if (!ConfigManager.CONFIG.getWarp().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
+
                             try {
                                 GoToWarp(player, name);
 
@@ -76,6 +85,12 @@ public class warp {
                         .executes(context -> {
                             final String name = StringArgumentType.getString(context, "name");
                             final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                            if (!ConfigManager.CONFIG.getWarp().isEnabled()) {
+                                player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.disabled", player)
+                                        .withStyle(ChatFormatting.RED), true);
+                                return 1;
+                            }
 
                             try {
                                 DeleteWarp(player, name);
@@ -97,6 +112,12 @@ public class warp {
                                     final String newName = StringArgumentType.getString(context, "newName");
                                     final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                                    if (!ConfigManager.CONFIG.getWarp().isEnabled()) {
+                                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.disabled", player)
+                                                .withStyle(ChatFormatting.RED), true);
+                                        return 1;
+                                    }
+
                                     try {
                                         RenameWarp(player, name, newName);
 
@@ -112,6 +133,12 @@ public class warp {
                                 .requires(source -> source.getPlayer() != null)
                                 .executes(context -> {
                                         final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                                        if (!ConfigManager.CONFIG.getWarp().isEnabled()) {
+                                            player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.disabled", player)
+                                                    .withStyle(ChatFormatting.RED), true);
+                                            return 1;
+                                        }
 
                                         try {
                                                 PrintWarps(context.getSource(), player);
@@ -131,7 +158,7 @@ public class warp {
         warpName = warpName.toLowerCase();
 
         BlockPos blockPos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
-        String worldString = getDimensionId(player.level().dimension());
+        String worldString = tools.getDimensionId(player.level().dimension());
 
         // Create the NamedLocation
         NamedLocation warp = new NamedLocation(warpName, blockPos, worldString);
@@ -185,6 +212,14 @@ public class warp {
             player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
 
+            // Delete invalid warp if configured
+            if (ConfigManager.CONFIG.getWarp().isDeleteInvalid()) {
+                STORAGE.removeWarp(warp);
+                Constants.LOGGER.info("Deleted invalid warp '{}'", warp.getName());
+                player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.deletedInvalid", player)
+                        .withStyle(ChatFormatting.YELLOW), true);
+            }
+
             return;
         }
 
@@ -201,7 +236,7 @@ public class warp {
             Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(), teleportBlockPos.getZ() + 0.5);
 
             player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player), true);
-            Teleporter(player, warpWorld, teleportPos);
+            tools.TeleporterWithDelayAndCooldown(player, warpWorld, teleportPos, false);
         }
     }
 
@@ -373,13 +408,4 @@ public class warp {
         player.displayClientMessage(message, false);
     }
 
-    private static String getDimensionId(ResourceKey<Level> dimensionKey) {
-        // ResourceKey#location() missing in this mapping; parse id from toString form
-        String raw = dimensionKey.toString();
-        int splitIndex = raw.indexOf("/ ");
-        if (splitIndex >= 0 && raw.endsWith("]")) {
-            return raw.substring(splitIndex + 2, raw.length() - 1);
-        }
-        return raw;
-    }
 }

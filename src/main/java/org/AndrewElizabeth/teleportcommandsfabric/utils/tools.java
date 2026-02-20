@@ -3,6 +3,8 @@ package org.AndrewElizabeth.teleportcommandsfabric.utils;
 import com.google.gson.*;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,14 +13,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
+import org.jetbrains.annotations.NotNull;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.Constants.MOD_ID;
@@ -28,6 +35,77 @@ public class tools {
 
     private static final Set<String> unsafeCollisionFreeBlocks = Set.of("block.minecraft.lava", "block.minecraft.flowing_lava", "block.minecraft.end_portal", "block.minecraft.end_gateway","block.minecraft.fire", "block.minecraft.soul_fire", "block.minecraft.powder_snow", "block.minecraft.nether_portal");
 
+    /**
+     * Teleport with delay and cooldown checks
+     * @param player Player to teleport
+     * @param world Target world
+     * @param coords Target coordinates
+     * @param bypassDelay If true, skip delay but still check cooldown
+     * @return true if teleport was initiated, false if on cooldown
+     */
+    public static boolean TeleporterWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords, boolean bypassDelay) {
+        String uuid = player.getStringUUID();
+        int delay = ConfigManager.CONFIG.getTeleporting().getDelay();
+        int cooldown = ConfigManager.CONFIG.getTeleporting().getCooldown();
+        
+        // Check cooldown
+        int remainingCooldown = TeleportCooldownManager.getRemainingCooldown(uuid, cooldown);
+        if (remainingCooldown > 0) {
+            player.displayClientMessage(
+                getTranslatedText("commands.teleport_commands.common.cooldown", player, 
+                    Component.literal(String.valueOf(remainingCooldown)))
+                    .withStyle(ChatFormatting.RED),
+                true
+            );
+            return false;
+        }
+        
+        // If no delay or bypassed, teleport immediately
+        if (delay == 0 || bypassDelay) {
+            Teleporter(player, world, coords);
+            TeleportCooldownManager.updateLastTeleportTime(uuid);
+            return true;
+        }
+        
+        // Schedule delayed teleport
+        long teleportId = TeleportCooldownManager.scheduleTeleport(uuid);
+        
+        player.displayClientMessage(
+            getTranslatedText("commands.teleport_commands.common.delayStart", player,
+                Component.literal(String.valueOf(delay)))
+                .withStyle(ChatFormatting.YELLOW),
+            true
+        );
+        
+        // Use server scheduler for delay
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                // Check if teleport is still valid (not cancelled)
+                if (!TeleportCooldownManager.isScheduledTeleportValid(uuid, teleportId)) {
+                    return; // Cancelled
+                }
+                
+                // Check if player is still online
+                if (player.hasDisconnected()) {
+                    TeleportCooldownManager.cancelScheduledTeleport(uuid);
+                    return;
+                }
+                
+                // Execute teleport
+                Teleporter(player, world, coords);
+                TeleportCooldownManager.updateLastTeleportTime(uuid);
+                TeleportCooldownManager.cancelScheduledTeleport(uuid);
+            }
+        }, delay * 1000L);
+        
+        return true;
+    }
+
+    /**
+     * Immediate teleport without any checks (for internal use or admin commands)
+     */
     public static void Teleporter(ServerPlayer player, ServerLevel world, Vec3 coords) {
         // teleportation effects & sounds before teleporting
         world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 1, player.getZ(), 20, 0.0D, 0.0D, 0.0D, 0.01);
@@ -90,7 +168,6 @@ public class tools {
                                 BlockPos newPos = new BlockPos(blockPosX + x, blockPosY + y, blockPosZ + z);
 
                                 if (isBlockPosSafe(newPos, world)) {
-//                                    return Optional.of(new Vec3(newPos.getX() + 0.5, newPos.getY(), newPos.getZ() + 0.5)); // safe location found!
                                     return Optional.of(newPos);
                                 }
                             }
@@ -108,23 +185,10 @@ public class tools {
 
 
     // Gets the translated text for each player based on their language, this is fully server side and actually works (UNLIKE MOJANG'S TRANSLATED KEY'S WHICH ARE CLIENT SIDE) (I'm not mad, I swear!)
-    public static MutableComponent getTranslatedText(String key, ServerPlayer player, MutableComponent... args) {
-        //todo! maybe make this also loaded in memory?
+    public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player, MutableComponent... args) {
         String language = player.clientInformation().language().toLowerCase();
         String regex = "%(\\d+)%";
         Pattern pattern = Pattern.compile(regex);
-
-//        MinecraftServer server = player.getServer();
-
-//         MinecraftServer.ServerResourcePackInfo silly2 = server.getResourceManager().listResources()
-
-//        java.util.stream.Stream<net.minecraft.server.packs.PackResources> SILLY = server.getResourceManager().listPacks();
-//
-//        SILLY.forEach(pack -> {
-//            Constants.LOGGER.info("{} : {} : {}", pack.packId(), pack.location(), pack.getClass());
-//        });
-
-//        player.displayClientMessage(Component.literal(.toString()), false);
 
         // the try catch stuff is so wacky, but it works fine and I don't need to check everything
         try {
@@ -158,8 +222,6 @@ public class tools {
 
             try {
                 if (!Objects.equals(language, "en_us")) {
-//                    TeleportCommands.LOGGER.warn("Key \"{}\" not found in the language: {}, falling back to default (en_us)", key, language);
-
                     String filePath = String.format("/assets/%s/lang/en_us.json", MOD_ID);
                     InputStream stream = TeleportCommands.class.getResourceAsStream(filePath);
 
@@ -192,10 +254,21 @@ public class tools {
     }
 
 
+    public static String getDimensionId(ResourceKey<Level> dimensionKey) {
+        // ResourceKey#location() missing in this mapping; parse id from toString form
+        String raw = dimensionKey.toString();
+        int splitIndex = raw.indexOf("/ ");
+        if (splitIndex >= 0 && raw.endsWith("]")) {
+            return raw.substring(splitIndex + 2, raw.length() - 1);
+        }
+        return raw;
+    }
+
+
     // Gets the ids of all the worlds
     public static List<String> getWorldIds() {
         return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)
-                .map(level -> level.dimension().toString())
+                .map(level -> getDimensionId(level.dimension()))
                 .toList();
     }
 

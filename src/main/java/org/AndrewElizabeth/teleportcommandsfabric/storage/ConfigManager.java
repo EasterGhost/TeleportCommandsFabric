@@ -60,13 +60,16 @@ public class ConfigManager {
         int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
         if (version < defaultVersion) {
-//            Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
-//
-//            // Save the storage :3
-//            byte[] json = GSON.toJson(jsonObject, JsonArray.class).getBytes();
-//            Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-//
-//            Constants.LOGGER.info("Config file migrated to v{} successfully!", defaultVersion);
+            Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
+
+            // Add any necessary migrations here based on version
+            // For now, no migrations needed
+            
+            // Save the config
+            byte[] json = GSON.toJson(jsonObject, JsonObject.class).getBytes();
+            Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
+
+            Constants.LOGGER.info("Config file migrated to v{} successfully!", defaultVersion);
         } else if (version > defaultVersion) {
             String message = String.format("Teleport Commands: The config file's version is newer than the supported version, found v%s, expected <= v%s.\n" +
                             "If you intentionally backported then you can attempt to downgrade the config file located at this location: \"%s\".\n",
@@ -77,10 +80,15 @@ public class ConfigManager {
     }
 
     public static void ConfigSaver() throws Exception {
-        // todo! maybe throttle saves?
         byte[] json = GSON.toJson( ConfigManager.CONFIG ).getBytes();
 
         Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
+    }
+
+    /// Saves the config after modifications. This method should be called whenever config values are changed.
+    public static void saveConfigChanges() throws Exception {
+        ConfigSaver();
+        Constants.LOGGER.info("Config changes saved!");
     }
 
     public static class ConfigClass {
@@ -96,11 +104,37 @@ public class ConfigManager {
             return version;
         }
 
+        // ===== Convenience Methods =====
+
+        public Teleporting getTeleporting() {
+            return teleporting;
+        }
+
+        public Back getBack() {
+            return back;
+        }
+
+        public Home getHome() {
+            return home;
+        }
+
+        public Tpa getTpa() {
+            return tpa;
+        }
+
+        public Warp getWarp() {
+            return warp;
+        }
+
+        public WorldSpawn getWorldSpawn() {
+            return worldSpawn;
+        }
+
+        // ===== Configuration Sections =====
+
         public static final class Teleporting {
             private int delay = 5;
-            private boolean whileMoving = true;
-            private boolean whileFighting = false;
-            private int fightCooldown = 10;
+            private int cooldown = 5;
 
             public int getDelay() {
                 return delay;
@@ -110,28 +144,12 @@ public class ConfigManager {
                 this.delay = delay;
             }
 
-            public boolean isWhileMoving() {
-                return whileMoving;
+            public int getCooldown() {
+                return cooldown;
             }
 
-            public void setWhileMoving(boolean whileMoving) {
-                this.whileMoving = whileMoving;
-            }
-
-            public boolean isWhileFighting() {
-                return whileFighting;
-            }
-
-            public void setWhileFighting(boolean whileFighting) {
-                this.whileFighting = whileFighting;
-            }
-
-            public int getFightCooldown() {
-                return fightCooldown;
-            }
-
-            public void setFightCooldown(int fightCooldown) {
-                this.fightCooldown = fightCooldown;
+            public void setCooldown(int cooldown) {
+                this.cooldown = cooldown;
             }
         }
 
@@ -188,6 +206,7 @@ public class ConfigManager {
 
         public final class Tpa {
             private boolean enabled = true;
+            private int requestExpireTime = 300; // seconds
 
             public boolean isEnabled() {
                 return enabled;
@@ -195,6 +214,14 @@ public class ConfigManager {
 
             public void setEnabled(boolean enabled) {
                 this.enabled = enabled;
+            }
+
+            public int getRequestExpireTime() {
+                return requestExpireTime;
+            }
+
+            public void setRequestExpireTime(int requestExpireTime) {
+                this.requestExpireTime = requestExpireTime;
             }
         }
 
@@ -250,12 +277,17 @@ public class ConfigManager {
         }
     }
 
-    // --- Ideas! ---
-    // Make config options for disabling certain commands
-    // Make config options for renaming certain commands
-    // Make config option for changing required permission level for certain commands
-    // Make config for setting max homes
-    // Make config that adds a delay between teleports and when fighting. (in teleport function?)
-    // Make config that automatically deletes namedLocations (warps/homes) with invalid world id's
-    // Make config for setting the world_id for /worldspawn ?
+    // --- Configuration Management ---
+    // The ConfigManager provides a centralized way to manage mod settings:
+    //
+    // 1. Teleporting: Controls delay, movement/combat restrictions, and cooldowns
+    // 2. Back: Manages the /back command behavior
+    // 3. Home: Controls home limits, enablement, and invalid location cleanup
+    // 4. Tpa: Manages TPA requestability and request expiration time
+    // 5. Warp: Controls warp limits, enablement, and invalid location cleanup
+    // 6. WorldSpawn: Sets the world and spawn point for /worldspawn
+    //
+    // To modify configuration values at runtime:
+    //   ConfigManager.CONFIG.home.setPlayerMaximum(50);
+    //   ConfigManager.saveConfigChanges();
 }

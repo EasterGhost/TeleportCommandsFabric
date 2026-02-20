@@ -227,14 +227,20 @@ public class tpa {
 
             Optional<BlockPos> teleportData = getSafeBlockPos(destinationPlayer.blockPosition(), destinationPlayer.level());
 
+            boolean teleportSuccess;
             if (teleportData.isPresent()) {
                 BlockPos safeBlockPos = teleportData.get();
                 Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(), safeBlockPos.getZ() + 0.5);
 
-                Teleporter(toSentPlayer, destinationPlayer.level(), teleportPos);
+                teleportSuccess = TeleporterWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(), teleportPos, false);
             } else {
                 // if no safe location then just teleport to the player
-                Teleporter(toSentPlayer, destinationPlayer.level(), destinationPlayer.position());
+                teleportSuccess = TeleporterWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(), destinationPlayer.position(), false);
+            }
+
+            // if the player is on cooldown, don't remove the request
+            if (!teleportSuccess) {
+                return;
             }
 
             // if the player teleported then these messages get sent && the request gets removed

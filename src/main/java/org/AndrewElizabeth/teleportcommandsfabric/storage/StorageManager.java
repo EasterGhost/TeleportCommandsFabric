@@ -21,7 +21,7 @@ public class StorageManager {
     public static Path STORAGE_FOLDER;
     public static Path STORAGE_FILE;
     public static StorageClass STORAGE;
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int defaultVersion = new StorageClass().getVersion();
 
     /// Initializes the StorageManager class and loads the storage from the filesystem.
@@ -121,7 +121,6 @@ public class StorageManager {
 
     /// Saves the storage to the filesystem
     public static void StorageSaver() throws Exception {
-        // todo! maybe throttle saves?
         byte[] json = GSON.toJson( StorageManager.STORAGE ).getBytes();
 
         Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);

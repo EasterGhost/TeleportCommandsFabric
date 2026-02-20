@@ -23,8 +23,6 @@ public class DeathLocation {
         return pos;
     }
 
-    // maybe add getX getY and getZ? todo!
-
     public String getWorldString() {
         return world;
     }

@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import java.util.*;
 
@@ -31,6 +32,12 @@ public class back {
             .executes(context -> {
                 final ServerPlayer player = context.getSource().getPlayerOrException();
 
+                if (!ConfigManager.CONFIG.getBack().isEnabled()) {
+                    player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.disabled", player)
+                            .withStyle(ChatFormatting.RED), true);
+                    return 1;
+                }
+
                 try {
                     ToDeathLocation(player, false);
 
@@ -46,6 +53,12 @@ public class back {
                 .executes(context -> {
                     final boolean safety = BoolArgumentType.getBool(context, "Disable Safety");
                     final ServerPlayer player = context.getSource().getPlayerOrException();
+
+                    if (!ConfigManager.CONFIG.getBack().isEnabled()) {
+                        player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.disabled", player)
+                                .withStyle(ChatFormatting.RED), true);
+                        return 1;
+                    }
 
                     try {
                         ToDeathLocation(player, safety);
@@ -132,7 +145,14 @@ public class back {
             Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(), teleportBlockPos.getZ() + 0.5);
 
             player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
-            tools.Teleporter(player, deathLocationWorld, teleportPos);
+            if (!tools.TeleporterWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false)) {
+                return; // On cooldown, message already sent
+            }
+            
+            // Delete the death location after teleport if configured
+            if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
+                DeathLocationStorage.removeDeathLocation(player.getStringUUID());
+            }
         }
     }
 }

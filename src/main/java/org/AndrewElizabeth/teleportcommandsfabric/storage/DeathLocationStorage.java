@@ -28,6 +28,11 @@ public class DeathLocationStorage {
         }
     }
 
+    // removes the deathLocation of a player
+    public static void removeDeathLocation(String uuid) {
+        deathLocations.remove(uuid);
+    }
+
     public static void clearDeathLocations() {
         deathLocations.clear();
     }

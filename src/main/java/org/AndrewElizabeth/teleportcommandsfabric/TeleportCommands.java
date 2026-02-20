@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,6 +38,7 @@ public class TeleportCommands implements ModInitializer {
 		ConfigManager.ConfigInit(); // Load config before anything depends on it
 		StorageManager.StorageInit(); // Initialize the storage file
 		DeathLocationStorage.clearDeathLocations(); // Clear data of death locations.
+		TeleportCooldownManager.clearAll(); // Clear teleport cooldowns and scheduled teleports
 	}
 
     // initialize commands, also allows me to easily disable any when there is a config

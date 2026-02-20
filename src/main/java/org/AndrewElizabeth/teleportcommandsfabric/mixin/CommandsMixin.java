@@ -2,7 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.mixin;
 
 import com.mojang.brigadier.CommandDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
+//import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
