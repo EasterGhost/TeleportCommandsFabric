@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.Permissions;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
@@ -54,6 +55,64 @@ public class main {
                             }
                             return 0;
                         }))
+                .then(Commands.literal("tpa")
+                        .requires(main::isOpOrConsole)
+                        .then(Commands.literal("enable")
+                                .executes(context -> {
+                                    try {
+                                        ConfigManager.CONFIG.tpa.setEnabled(true);
+                                        ConfigManager.ConfigSaver();
+                                    } catch (Exception e) {
+                                        Constants.LOGGER.error("Failed to enable tpa!", e);
+                                        throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
+                                    }
+                                    context.getSource().sendSuccess(() -> Component.literal("TPA enabled"), true);
+                                    return 0;
+                                }))
+                        .then(Commands.literal("disable")
+                                .executes(context -> {
+                                    try {
+                                        ConfigManager.CONFIG.tpa.setEnabled(false);
+                                        ConfigManager.ConfigSaver();
+                                    } catch (Exception e) {
+                                        Constants.LOGGER.error("Failed to disable tpa!", e);
+                                        throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
+                                    }
+                                    context.getSource().sendSuccess(() -> Component.literal("TPA disabled"), true);
+                                    return 0;
+                                })))
+                .then(Commands.literal("home")
+                        .requires(main::isOpOrConsole)
+                        .then(Commands.literal("max")
+                                .then(Commands.argument("count", IntegerArgumentType.integer(0))
+                                        .executes(context -> {
+                                            int count = IntegerArgumentType.getInteger(context, "count");
+                                            try {
+                                                ConfigManager.CONFIG.home.setPlayerMaximum(count);
+                                                ConfigManager.ConfigSaver();
+                                            } catch (Exception e) {
+                                                Constants.LOGGER.error("Failed to set home maximum!", e);
+                                                throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
+                                            }
+                                            context.getSource().sendSuccess(() -> Component.literal("Home maximum set to " + count), true);
+                                            return 0;
+                                        }))))
+                .then(Commands.literal("warp")
+                        .requires(main::isOpOrConsole)
+                        .then(Commands.literal("max")
+                                .then(Commands.argument("count", IntegerArgumentType.integer(0))
+                                        .executes(context -> {
+                                            int count = IntegerArgumentType.getInteger(context, "count");
+                                            try {
+                                                ConfigManager.CONFIG.warp.setMaximum(count);
+                                                ConfigManager.ConfigSaver();
+                                            } catch (Exception e) {
+                                                Constants.LOGGER.error("Failed to set warp maximum!", e);
+                                                throw new SimpleCommandExceptionType(Component.literal(e.toString())).create();
+                                            }
+                                            context.getSource().sendSuccess(() -> Component.literal("Warp maximum set to " + count), true);
+                                            return 0;
+                                        }))))
             .then(Commands.literal("disable")
                 .then(Commands.argument("command", StringArgumentType.word())
                     .suggests(enabled_commands_suggester)

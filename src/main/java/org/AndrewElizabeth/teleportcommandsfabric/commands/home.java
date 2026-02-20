@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
@@ -176,13 +177,24 @@ public class home {
         // Gets the player's storage and creates it if it doesn't exist
         Player playerStorage = StorageManager.STORAGE.addPlayer(player.getStringUUID());
 
+        int maxHomes = ConfigManager.CONFIG.home.getPlayerMaximum();
+        boolean homeExists = playerStorage.getHome(homeName).isPresent();
+        if (!homeExists && maxHomes > 0 && playerStorage.getHomes().size() >= maxHomes) {
+            player.displayClientMessage(
+                getTranslatedText("commands.teleport_commands.home.max", player, Component.literal(String.valueOf(maxHomes)))
+                    .withStyle(ChatFormatting.RED),
+                true
+            );
+            return;
+        }
+
         // Create the NamedLocation
         NamedLocation warp = new NamedLocation(homeName, blockPos, worldString);
 
         // Adds the home, returns true if the home already exists
-        boolean homeExists = playerStorage.addHome(warp);
+        boolean homeAlreadyExists = playerStorage.addHome(warp);
 
-        if (homeExists) {
+        if (homeAlreadyExists) {
             // Display error message that the home already exists
             player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.exists", player).withStyle(ChatFormatting.RED), true);
 

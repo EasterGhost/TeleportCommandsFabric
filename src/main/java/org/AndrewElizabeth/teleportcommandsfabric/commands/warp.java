@@ -6,6 +6,7 @@ import net.minecraft.server.permissions.Permissions;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.WarpSuggestionProvider;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -134,6 +135,17 @@ public class warp {
 
         // Create the NamedLocation
         NamedLocation warp = new NamedLocation(warpName, blockPos, worldString);
+
+        int maxWarps = ConfigManager.CONFIG.warp.getMaximum();
+        boolean warpAlreadyExists = STORAGE.getWarp(warpName).isPresent();
+        if (!warpAlreadyExists && maxWarps > 0 && STORAGE.getWarps().size() >= maxWarps) {
+            player.displayClientMessage(
+                    getTranslatedText("commands.teleport_commands.warp.max", player, Component.literal(String.valueOf(maxWarps)))
+                            .withStyle(ChatFormatting.RED),
+                    true
+            );
+            return;
+        }
 
         // Adds the warp, returns true if the warp already exists
         boolean warpExists = STORAGE.addWarp(warp);
