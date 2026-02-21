@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[Elfogadás]",
   "commands.teleport_commands.tpa.deny": "[Elutasítás]",
   "commands.teleport_commands.tpa.expired": "Tpa%0% kérés lejárt",
-  "commands.teleport_commands.tpa.notFound": "Semmi kérésed sincsen!",
+  "commands.teleport_commands.tpa.notFound": "A kérelem nem található vagy lejárt!",
   "commands.teleport_commands.tpa.accepted": "Elfogadva",
   "commands.teleport_commands.tpa.denied": "Elutasítva",
   "commands.teleport_commands.tpa.disabled": "A TPA jelenleg letiltott.",

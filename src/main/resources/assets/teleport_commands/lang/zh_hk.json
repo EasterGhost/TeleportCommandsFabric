@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[接受]",
   "commands.teleport_commands.tpa.deny": "[拒絕]",
   "commands.teleport_commands.tpa.expired": "Tpa%0% 請求已逾期",
-  "commands.teleport_commands.tpa.notFound": "找不到該請求！",
+  "commands.teleport_commands.tpa.notFound": "找不到該請求或已逾期！",
   "commands.teleport_commands.tpa.accepted": "請求已獲接受",
   "commands.teleport_commands.tpa.denied": "請求已遭拒絕",
   "commands.teleport_commands.tpa.disabled": "傳送請求功能已禁用。",

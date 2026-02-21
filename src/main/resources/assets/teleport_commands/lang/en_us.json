@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[Accept]",
   "commands.teleport_commands.tpa.deny": "[Deny]",
   "commands.teleport_commands.tpa.expired": "Tpa%0% request expired",
-  "commands.teleport_commands.tpa.notFound": "No requests found!",
+  "commands.teleport_commands.tpa.notFound": "Request not found or expired.",
   "commands.teleport_commands.tpa.accepted": "Request accepted",
   "commands.teleport_commands.tpa.denied": "Request denied",
   "commands.teleport_commands.tpa.disabled": "TPA is currently disabled.",

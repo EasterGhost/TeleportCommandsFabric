@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[Потвърждаване]",
   "commands.teleport_commands.tpa.deny": "[Отказ]",
   "commands.teleport_commands.tpa.expired": "Телепортната%0% заявка изтече.",
-  "commands.teleport_commands.tpa.notFound": "Няма открити заявки!",
+  "commands.teleport_commands.tpa.notFound": "Заявката не е намерена или е изтекла!",
   "commands.teleport_commands.tpa.accepted": "Заявка одобрена.",
   "commands.teleport_commands.tpa.denied": "Заявка отказана.",
   "commands.teleport_commands.tpa.disabled": "TPA е в момента отключена.",

@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[Accepteren]",
   "commands.teleport_commands.tpa.deny": "[Weigeren]",
   "commands.teleport_commands.tpa.expired": "Tpa%0% verzoek verlopen",
-  "commands.teleport_commands.tpa.notFound": "Geen verzoeken gevonden!",
+  "commands.teleport_commands.tpa.notFound": "Verzoek niet gevonden of verlopen!",
   "commands.teleport_commands.tpa.accepted": "Verzoek geaccepteerd",
   "commands.teleport_commands.tpa.denied": "Verzoek geweigerd",
   "commands.teleport_commands.tpa.disabled": "TPA is momenteel uitgeschakeld.",

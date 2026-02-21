@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[Принять]",
   "commands.teleport_commands.tpa.deny": "[Отклонить]",
   "commands.teleport_commands.tpa.expired": "Запрос Tpa%0% истёк",
-  "commands.teleport_commands.tpa.notFound": "Запросы не найдены!",
+  "commands.teleport_commands.tpa.notFound": "Запрос не найден или истёк!",
   "commands.teleport_commands.tpa.accepted": "Запрос принят",
   "commands.teleport_commands.tpa.denied": "Запрос отклонён",
   "commands.teleport_commands.tpa.disabled": "TPA в настоящий момент отключена.",

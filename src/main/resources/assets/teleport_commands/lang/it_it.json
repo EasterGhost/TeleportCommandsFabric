@@ -56,7 +56,7 @@
   "commands.teleport_commands.tpa.accept": "[Accetta]",
   "commands.teleport_commands.tpa.deny": "[Rifiuta]",
   "commands.teleport_commands.tpa.expired": "Richiesta Tpa%0% scaduta",
-  "commands.teleport_commands.tpa.notFound": "Nessuna richiesta trovata!",
+  "commands.teleport_commands.tpa.notFound": "Richiesta non trovata o scaduta!",
   "commands.teleport_commands.tpa.accepted": "Richiesta accettata",
   "commands.teleport_commands.tpa.denied": "Richiesta rifiutata",
   "commands.teleport_commands.tpa.disabled": "TPA è attualmente disabilitato.",
