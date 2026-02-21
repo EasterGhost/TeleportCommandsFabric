@@ -6,6 +6,8 @@ Server-side teleport command mod with multiple teleport features and flexible co
 
 ## Overview
 
+Teleport Commands is a server-side teleport command mod that provides multiple teleport features and a flexible configuration system.
+
 Config file: `config/teleport_commands.json`
 
 Available modules:
@@ -22,14 +24,14 @@ Available modules:
 
 The following commands can be used by all players without special permissions.
 
-### Back - Return to Previous Location
+### Back - Return to Death Location
 
 ```bash
 /back
 /back <disableSafetyCheck>
 ```
 
-- **Function**: Teleport to your last death or teleport location
+- **Function**: Teleport to your last death location
 - **Parameter**: `<disableSafetyCheck>` is `true|false` (optional)
 
 ### Home - Home System
@@ -89,7 +91,7 @@ The following commands require OP permission (level 4).
 /renamewarp <name> <newName> # Rename a global warp point
 ```
 
-### Teleporting System Configuration
+### Teleporting Settings
 
 ```bash
 /teleportcommands config teleporting delay <seconds>
@@ -195,7 +197,7 @@ Reloads the configuration from file.
 
 | Feature             | Command                          | Description                       |
 | ------------------- | -------------------------------- | --------------------------------- |
-| Return to previous  | `/back [true/false]`           | Teleport to last location         |
+| Return to previous  | `/back [true/false]`           | Teleport to last death location   |
 | Set home            | `/sethome <name>`              | Set home at current location      |
 | Teleport to home    | `/home [name]`                 | Teleport to specified home        |
 | Delete home         | `/delhome <name>`              | Delete specified home             |
@@ -219,14 +221,14 @@ Reloads the configuration from file.
 | Set warp            | `/setwarp <name>`                                         | Create global warp point   |
 | Delete warp         | `/delwarp <name>`                                         | Delete global warp point   |
 | Rename warp         | `/renamewarp <name> <newName>`                            | Rename global warp point   |
-| Teleport delay      | `/teleportcommands config teleporting delay <seconds>`    | Set teleport delay time    |
-| Teleport cooldown   | `/teleportcommands config teleporting cooldown <seconds>` | Set teleport cooldown time |
-| Back delete record  | `/teleportcommands config back deleteAfterTeleport <true    | false>`                    |
-| Home max count      | `/teleportcommands config home max <count>`               | Set max homes per player   |
-| Home delete invalid | `/teleportcommands config home deleteInvalid <true          | false>`                    |
-| TPA expire time     | `/teleportcommands config tpa expireTime <seconds>`       | Set request expire time    |
-| Warp max count      | `/teleportcommands config warp max <count>`               | Set max warp points        |
-| Warp delete invalid | `/teleportcommands config warp deleteInvalid <true          | false>`                    |
+| Teleport delay          | `/teleportcommands config teleporting delay <seconds>`              | Set teleport delay time                      |
+| Teleport cooldown       | `/teleportcommands config teleporting cooldown <seconds>`           | Set teleport cooldown time                   |
+| Back delete record      | `/teleportcommands config back deleteAfterTeleport <true\|false>`   | Delete record after Back                     |
+| Home max count          | `/teleportcommands config home max <count>`                         | Set max homes per player                     |
+| Home delete invalid     | `/teleportcommands config home deleteInvalid <true\|false>`         | Auto-delete invalid homes                    |
+| TPA expire time         | `/teleportcommands config tpa expireTime <seconds>`                 | Set request expire time                      |
+| Warp max count          | `/teleportcommands config warp max <count>`                         | Set max warp points                          |
+| Warp delete invalid     | `/teleportcommands config warp deleteInvalid <true\|false>`         | Auto-delete invalid warp points              |
 | WorldSpawn world    | `/teleportcommands config worldspawn world <worldId>`     | Set world spawn world      |
 | Reload config       | `/teleportcommands reload`                                | Reload configuration file  |
 
