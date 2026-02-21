@@ -1,147 +1,161 @@
-# Teleport Commands - 使用文档
+# Teleport Commands
 
-## 概述
+Server-side teleport command mod with multiple teleport features and flexible configuration.
 
-Teleport Commands 是一个服务端传送命令模组，提供多种传送功能和灵活的配置系统。
+- Chinese documentation: [README.zh-CN.md](README.zh-CN.md)
 
-权限要求：所有配置命令需要 OP 权限（等级4）。
+## Overview
 
-配置文件：`config/teleport_commands.json`
+Config file: `config/teleport_commands.json`
 
-## 命令模块
+Available modules:
 
-### 启用/禁用模块
+- `back` - return to previous death location
+- `home` - home system
+- `tpa` - player teleport requests
+- `warp` - global warp points
+- `worldspawn` - world spawn point
 
-```bash
-/teleportcommands enable <模块名>
-/teleportcommands disable <模块名>
-```
+---
 
-可用模块：
+## Player Commands
 
-- `back` - 返回上一位置
-- `home` - 家系统
-- `tpa` - 玩家传送请求
-- `warp` - 全局传送点
-- `worldspawn` - 世界生成点
+The following commands can be used by all players without special permissions.
 
-## 玩家命令
-
-### Back
+### Back - Return to Previous Location
 
 ```bash
 /back
-/back <是否禁用安全检查>
+/back <disableSafetyCheck>
 ```
 
-`<是否禁用安全检查>` 为 `true|false`。
+- **Function**: Teleport to your last death or teleport location
+- **Parameter**: `<disableSafetyCheck>` is `true|false` (optional)
 
-### Home
+### Home - Home System
 
 ```bash
-/sethome <名称>
-/home [名称]
-/delhome <名称>
-/renamehome <名称> <新名称>
-/defaulthome <名称>
-/homes
+/sethome <name>              # Set a home at current location
+/home [name]                 # Teleport to specified home (default home if not specified)
+/delhome <name>              # Delete specified home
+/renamehome <name> <newName> # Rename a home
+/defaulthome <name>          # Set default home
+/homes                       # View all homes
 ```
 
-### TPA
+### TPA - Player Teleport Requests
 
 ```bash
-/tpa <玩家>
-/tpahere <玩家>
-/tpaaccept <玩家>
-/tpadeny <玩家>
+/tpa <player>                # Request to teleport to a player
+/tpahere <player>            # Request a player to teleport to you
+/tpaaccept <player>          # Accept a teleport request from a player
+/tpadeny <player>            # Deny a teleport request from a player
 ```
 
-### Warp
+### Warp - Global Warp Points
 
 ```bash
-/warp <名称>
-/warps
-/setwarp <名称>
-/delwarp <名称>
-/renamewarp <名称> <新名称>
+/warp <name>                 # Teleport to a global warp point
+/warps                       # View all available warp points
 ```
 
-`setwarp` / `delwarp` / `renamewarp` 需要管理员权限。
-
-### WorldSpawn
+### WorldSpawn - World Spawn Point
 
 ```bash
-/worldspawn
-/worldspawn <是否禁用安全>
+/worldspawn                  # Teleport to world spawn
+/worldspawn <disableSafety>  # Teleport to world spawn (optional safety check disable)
 ```
 
-`<是否禁用安全>` 为 `true|false`。
+- **Parameter**: `<disableSafety>` is `true|false` (optional)
 
-### 传送系统配置
+---
+
+## Administrator Commands
+
+The following commands require OP permission (level 4).
+
+### Enable/Disable Modules
 
 ```bash
-/teleportcommands config teleporting delay <秒数>
-/teleportcommands config teleporting cooldown <秒数>
+/teleportcommands enable <module>
+/teleportcommands disable <module>
 ```
 
-- `delay` - 传送延迟时间，玩家执行命令后等待多久才传送
-- `cooldown` - 传送冷却时间，传送完成后多久才能再次使用
+### Warp Management
 
-### Back 命令配置
+```bash
+/setwarp <name>              # Create a global warp point at current location
+/delwarp <name>              # Delete a global warp point
+/renamewarp <name> <newName> # Rename a global warp point
+```
+
+### Teleporting System Configuration
+
+```bash
+/teleportcommands config teleporting delay <seconds>
+/teleportcommands config teleporting cooldown <seconds>
+```
+
+- **delay** - wait time before teleport
+- **cooldown** - time before next teleport can be used
+
+### Back Module Configuration
 
 ```bash
 /teleportcommands config back deleteAfterTeleport <true|false>
 ```
 
-- `deleteAfterTeleport` - 传送后是否删除上一位置记录
+- **deleteAfterTeleport** - delete previous location record after teleport
 
-### Home 命令配置
+### Home Module Configuration
 
 ```bash
-/teleportcommands config home max <数量>
+/teleportcommands config home max <count>
 /teleportcommands config home deleteInvalid <true|false>
 ```
 
-- `max` - 每个玩家可设置的家数量上限
-- `deleteInvalid` - 自动删除无效位置（世界不存在时）
+- **max** - maximum homes per player
+- **deleteInvalid** - remove invalid locations (world missing)
 
-### TPA 命令配置
+### TPA Module Configuration
 
 ```bash
-/teleportcommands config tpa expireTime <秒数>
+/teleportcommands config tpa expireTime <seconds>
 ```
 
-- `expireTime` - 传送请求的有效期，超时自动过期
+- **expireTime** - request timeout
 
-### Warp 命令配置
+### Warp Module Configuration
 
 ```bash
-/teleportcommands config warp max <数量>
+/teleportcommands config warp max <count>
 /teleportcommands config warp deleteInvalid <true|false>
 ```
 
-- `max` - 全服传送点数量上限（0 = 无限制）
-- `deleteInvalid` - 自动删除无效位置
+- **max** - maximum number of warps (0 = unlimited)
+- **deleteInvalid** - remove invalid locations
 
-### WorldSpawn 命令配置
+### WorldSpawn Module Configuration
 
 ```bash
-/teleportcommands config worldspawn world <世界ID>
+/teleportcommands config worldspawn world <worldId>
 ```
 
-- `world` - 世界生成点所在世界（如 `minecraft:overworld`、`minecraft:nether`、`minecraft:the_end`）
+- **world** - world for spawn (e.g. `minecraft:overworld`, `minecraft:nether`, `minecraft:the_end`)
 
-### 重新加载配置
+### Reload Configuration
 
 ```bash
 /teleportcommands reload
 ```
 
-从配置文件重新加载设置。
+Reloads the configuration from file.
 
-## 配置文件结构
+---
 
-`config/teleport_commands.json`：
+## Config File Structure
+
+`config/teleport_commands.json`:
 
 ```json
 {
@@ -175,48 +189,72 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 }
 ```
 
-## 配置参考
+## Quick Reference
 
-| 功能           | 命令                                                              |
-| -------------- | ----------------------------------------------------------------- |
-| 启用模块       | `/teleportcommands enable <模块>`                                 |
-| 禁用模块       | `/teleportcommands disable <模块>`                                |
-| 传送延迟       | `/teleportcommands config teleporting delay <秒>`                 |
-| 传送冷却       | `/teleportcommands config teleporting cooldown <秒>`              |
-| Back删除记录   | `/teleportcommands config back deleteAfterTeleport <true\|false>` |
-| Home数量上限   | `/teleportcommands config home max <数量>`                        |
-| Home删除无效   | `/teleportcommands config home deleteInvalid <true\|false>`       |
-| TPA过期时间    | `/teleportcommands config tpa expireTime <秒>`                    |
-| Warp数量上限   | `/teleportcommands config warp max <数量>`                        |
-| Warp删除无效   | `/teleportcommands config warp deleteInvalid <true\|false>`       |
-| WorldSpawn世界 | `/teleportcommands config worldspawn world <世界ID>`              |
-| 重载配置       | `/teleportcommands reload`                                        |
+### Player Commands
 
-## 传送延迟与冷却
+| Feature             | Command                          | Description                       |
+| ------------------- | -------------------------------- | --------------------------------- |
+| Return to previous  | `/back [true/false]`           | Teleport to last location         |
+| Set home            | `/sethome <name>`              | Set home at current location      |
+| Teleport to home    | `/home [name]`                 | Teleport to specified home        |
+| Delete home         | `/delhome <name>`              | Delete specified home             |
+| Rename home         | `/renamehome <name> <newName>` | Rename a home                     |
+| Set default home    | `/defaulthome <name>`          | Set default home                  |
+| View all homes      | `/homes`                       | List all set homes                |
+| Teleport request    | `/tpa <player>`                | Request to teleport to player     |
+| Request player here | `/tpahere <player>`            | Request player to teleport to you |
+| Accept request      | `/tpaaccept <player>`          | Accept teleport request           |
+| Deny request        | `/tpadeny <player>`            | Deny teleport request             |
+| Teleport to warp    | `/warp <name>`                 | Teleport to global warp point     |
+| View all warps      | `/warps`                       | List all warp points              |
+| World spawn         | `/worldspawn [true/false]`     | Teleport to world spawn           |
 
-- **延迟（delay）**：玩家执行传送命令后的等待时间
-- **冷却（cooldown）**：传送完成后再次使用传送的间隔时间
+### Administrator Commands
 
-两者相互独立：
+| Feature             | Command                                                     | Description                |
+| ------------------- | ----------------------------------------------------------- | -------------------------- |
+| Enable module       | `/teleportcommands enable <module>`                       | Enable specified module    |
+| Disable module      | `/teleportcommands disable <module>`                      | Disable specified module   |
+| Set warp            | `/setwarp <name>`                                         | Create global warp point   |
+| Delete warp         | `/delwarp <name>`                                         | Delete global warp point   |
+| Rename warp         | `/renamewarp <name> <newName>`                            | Rename global warp point   |
+| Teleport delay      | `/teleportcommands config teleporting delay <seconds>`    | Set teleport delay time    |
+| Teleport cooldown   | `/teleportcommands config teleporting cooldown <seconds>` | Set teleport cooldown time |
+| Back delete record  | `/teleportcommands config back deleteAfterTeleport <true    | false>`                    |
+| Home max count      | `/teleportcommands config home max <count>`               | Set max homes per player   |
+| Home delete invalid | `/teleportcommands config home deleteInvalid <true          | false>`                    |
+| TPA expire time     | `/teleportcommands config tpa expireTime <seconds>`       | Set request expire time    |
+| Warp max count      | `/teleportcommands config warp max <count>`               | Set max warp points        |
+| Warp delete invalid | `/teleportcommands config warp deleteInvalid <true          | false>`                    |
+| WorldSpawn world    | `/teleportcommands config worldspawn world <worldId>`     | Set world spawn world      |
+| Reload config       | `/teleportcommands reload`                                | Reload configuration file  |
 
-- `delay: 0, cooldown: 30` = 立即传送，但30秒内不能再次使用
-- `delay: 5, cooldown: 0` = 等待5秒传送，传送后可立即再次使用
-- `delay: 5, cooldown: 10` = 等待5秒传送，传送后10秒内不能再次使用
-- `delay: 0, cooldown: 0` = 无任何限制
+## Teleport Delay vs Cooldown
 
-## 故障排除
+- **Delay**: wait time after issuing the command before teleporting
+- **Cooldown**: wait time after teleporting before the next use
 
-### 命令无效
+Examples:
 
-- 检查是否有 OP 权限（等级4）
-- 验证命令语法是否正确
+- `delay: 0, cooldown: 30` = teleport instantly, then wait 30s
+- `delay: 5, cooldown: 0` = wait 5s, then no cooldown
+- `delay: 5, cooldown: 10` = wait 5s, then 10s cooldown
+- `delay: 0, cooldown: 0` = no limits
 
-### 配置未保存
+## Troubleshooting
 
-- 查看服务器日志中的错误信息
-- 检查配置文件权限
+### Command does not work
 
-### 配置被重置
+- Make sure you have OP level 4
+- Check the command syntax
 
-- 确认 `config/teleport_commands.json` 文件存在
-- 使用 `/teleportcommands reload` 重载配置
+### Config not saved
+
+- Check server logs for errors
+- Check file permissions
+
+### Config resets
+
+- Ensure `config/teleport_commands.json` exists
+- Use `/teleportcommands reload` to refresh
