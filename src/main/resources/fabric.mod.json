@@ -3,8 +3,8 @@
   "id": "teleportcommandsfabric",
   "version": "${version}",
   "name": "TeleportCommandsFabric",
-  "description": "",
-  "authors": [],
+  "description": "A simple tpa command mod for Fabric.",
+  "authors": ["Andrew Elizabeth"],
   "contact": {},
   "license": "MIT",
   "icon": "assets/icon.png",
@@ -20,6 +20,6 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric-api": "*",
-    "minecraft": "${minecraft_version}"
+    "minecraft": ">=${minecraft_version}"
   }
 }
