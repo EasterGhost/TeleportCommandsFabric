@@ -1,20 +1,20 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "org.AndrewElizabeth.teleportcommandsfabric.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "mixins": [
-    "ServerStartMixin",
-    "PlayerDeathMixin",
-    "CommandsMixin"
-  ],
-  "client": [
-    "client.ClientPlayNetworkHandlerMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  },
-  "overwrites": {
-    "requireAnnotations": true
-  }
+	"required": true,
+	"minVersion": "0.8",
+	"package": "org.AndrewElizabeth.teleportcommandsfabric.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ServerStartMixin",
+		"PlayerDeathMixin",
+		"CommandsMixin"
+	],
+	"client": [
+		"client.ClientPlayNetworkHandlerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
 }

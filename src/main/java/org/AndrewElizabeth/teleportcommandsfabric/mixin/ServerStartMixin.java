@@ -10,9 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(MinecraftServer.class)
 public class ServerStartMixin {
 
-    @Inject(method = "runServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;buildServerStatus()Lnet/minecraft/network/protocol/status/ServerStatus;", ordinal = 0))
-    private void runServer(CallbackInfo info) {
-
-        TeleportCommands.initializeMod((MinecraftServer) (Object) this);
-    }
+	@Inject(method = "runServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;buildServerStatus()Lnet/minecraft/network/protocol/status/ServerStatus;", ordinal = 0))
+	private void runServer(CallbackInfo info) {
+		TeleportCommands.initializeMod((MinecraftServer) (Object) this);
+	}
 }

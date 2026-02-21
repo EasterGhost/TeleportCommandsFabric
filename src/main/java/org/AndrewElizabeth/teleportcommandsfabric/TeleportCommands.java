@@ -27,7 +27,6 @@ public class TeleportCommands implements ModInitializer {
 		MOD_LOADER = "Fabric";
 	}
 
-
 	// Gets ran when the server starts, initializes the mod :3
 	public static void initializeMod(MinecraftServer server) {
 		Constants.LOGGER.info("Initializing Teleport Commands (V{})! Hello {}!", Constants.VERSION, MOD_LOADER);
@@ -41,15 +40,16 @@ public class TeleportCommands implements ModInitializer {
 		TeleportCooldownManager.clearAll(); // Clear teleport cooldowns and scheduled teleports
 	}
 
-    // initialize commands, also allows me to easily disable any when there is a config
-    public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        back.register(dispatcher);
-        home.register(dispatcher);
-        tpa.register(dispatcher);
-        warp.register(dispatcher);
-        worldspawn.register(dispatcher);
-        main.register(dispatcher);
-    }
+	// initialize commands, also allows me to easily disable any when there is a
+	// config
+	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+		back.register(dispatcher);
+		home.register(dispatcher);
+		tpa.register(dispatcher);
+		warp.register(dispatcher);
+		worldspawn.register(dispatcher);
+		main.register(dispatcher);
+	}
 
 	// Runs when the playerDeath mixin calls it, updates the /back command position
 	public static void onPlayerDeath(ServerPlayer player) {

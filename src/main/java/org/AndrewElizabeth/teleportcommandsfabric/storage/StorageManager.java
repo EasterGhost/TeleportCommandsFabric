@@ -18,210 +18,218 @@ import java.util.Optional;
 import static java.util.Collections.unmodifiableList;
 
 public class StorageManager {
-    public static Path STORAGE_FOLDER;
-    public static Path STORAGE_FILE;
-    public static StorageClass STORAGE;
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final int defaultVersion = new StorageClass().getVersion();
+	public static Path STORAGE_FOLDER;
+	public static Path STORAGE_FILE;
+	public static StorageClass STORAGE;
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final int defaultVersion = new StorageClass().getVersion();
 
-    /// Initializes the StorageManager class and loads the storage from the filesystem.
-    public static void StorageInit() {
-        STORAGE_FOLDER = TeleportCommands.SAVE_DIR.resolve("TeleportCommands/");
-        STORAGE_FILE = STORAGE_FOLDER.resolve("storage.json");
+	/// Initializes the StorageManager class and loads the storage from the
+	/// filesystem.
+	public static void StorageInit() {
+		STORAGE_FOLDER = TeleportCommands.SAVE_DIR.resolve("TeleportCommands/");
+		STORAGE_FILE = STORAGE_FOLDER.resolve("storage.json");
 
-        try {
-            StorageLoader();
+		try {
+			StorageLoader();
+		} catch (Exception e) {
+			// crashing is probably better here, otherwise the whole mod will be broken
+			Constants.LOGGER.error("Error while initializing the storage file! Exiting! => ", e);
+			throw new RuntimeException("Error while initializing the storage file! Exiting! => ", e);
+		}
+	}
 
-        } catch (Exception e) {
-            // crashing is probably better here, otherwise the whole mod will be broken
-            Constants.LOGGER.error("Error while initializing the storage file! Exiting! => ", e);
-            throw new RuntimeException("Error while initializing the storage file! Exiting! => ", e);
-        }
-    }
+	/// Loads the storage from the filesystem
+	public static void StorageLoader() throws Exception {
+		if (!STORAGE_FILE.toFile().exists() || STORAGE_FILE.toFile().length() == 0) {
+			Constants.LOGGER.warn("Storage file was not found or was empty! Initializing storage");
 
-    /// Loads the storage from the filesystem
-    public static void StorageLoader() throws Exception {
+			Files.createDirectories(STORAGE_FOLDER);
+			STORAGE = new StorageClass();
+			StorageSaver();
+			Constants.LOGGER.info("Storage created successfully!");
+		}
 
-        if (!STORAGE_FILE.toFile().exists() || STORAGE_FILE.toFile().length() == 0) {
-            Constants.LOGGER.warn("Storage file was not found or was empty! Initializing storage");
+		StorageMigrator();
 
-            Files.createDirectories(STORAGE_FOLDER);
-            STORAGE = new StorageClass();
-            StorageSaver();
-            Constants.LOGGER.info("Storage created successfully!");
-        }
+		FileReader reader = new FileReader(STORAGE_FILE.toFile());
+		STORAGE = GSON.fromJson(reader, StorageClass.class);
+		if (STORAGE == null) {
+			Constants.LOGGER.warn("Storage file was empty! Initializing storage");
+			STORAGE = new StorageClass();
+			StorageSaver();
+		}
 
-        StorageMigrator();
+		STORAGE.cleanup();
 
-        FileReader reader = new FileReader(STORAGE_FILE.toFile());
-        STORAGE = GSON.fromJson(reader, StorageClass.class);
-        if (STORAGE == null) {
-            Constants.LOGGER.warn("Storage file was empty! Initializing storage");
-            STORAGE = new StorageClass();
-            StorageSaver();
-        }
+		StorageSaver(); // Save it so any missing values get added to the file.
+		Constants.LOGGER.info("Storage loaded successfully!");
+	}
 
-        STORAGE.cleanup();
+	/// This function checks what version the storage file is and migrates it to the
+	/// current version of the mod.
+	public static void StorageMigrator() throws Exception {
+		FileReader reader = new FileReader(STORAGE_FILE.toFile());
+		JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
 
-        StorageSaver(); // Save it so any missing values get added to the file.
-        Constants.LOGGER.info("Storage loaded successfully!");
-    }
+		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
-    /// This function checks what version the storage file is and migrates it to the current version of the mod.
-    public static void StorageMigrator() throws Exception {
-        FileReader reader = new FileReader(STORAGE_FILE.toFile());
-        JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+		if (version < defaultVersion) {
+			Constants.LOGGER.warn("Storage file is v{}, migrating to v{}!", version, defaultVersion);
 
-        int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
+			// In v1.1.0 "Player_UUID" got renamed to "UUID". Since the storage file didn't
+			// have a version yet, it is set to version 0.
+			if (version == 0) {
 
-        if (version < defaultVersion) {
-            Constants.LOGGER.warn("Storage file is v{}, migrating to v{}!", version, defaultVersion);
+				if (jsonObject.has("Players") && jsonObject.get("Players").isJsonArray()) {
 
-            // In v1.1.0 "Player_UUID" got renamed to "UUID". Since the storage file didn't have a version yet, it is set to version 0.
-            if (version == 0) {
+					JsonArray players = jsonObject.get("Players").getAsJsonArray();
 
-                if (jsonObject.has("Players") && jsonObject.get("Players").isJsonArray()) {
+					for (JsonElement playerElement : players) {
+						JsonObject player = playerElement.getAsJsonObject();
 
-                    JsonArray players = jsonObject.get("Players").getAsJsonArray();
+						String UUID = player.has("Player_UUID")
+								? player.get("Player_UUID").getAsString()
+								: (player.has("UUID")
+										? player.get("UUID").getAsString()
+										: null);
 
-                    for (JsonElement playerElement : players) {
-                        JsonObject player = playerElement.getAsJsonObject();
+						if (UUID == null || UUID.isBlank()) {
+							// remove it then, it's an invalid entry 0.0
+							players.remove(player); // may return true or false for success, but idc
 
-                        String UUID = player.has("Player_UUID")
-                                ? player.get("Player_UUID").getAsString() : (player.has("UUID")
-                                ? player.get("UUID").getAsString() : null);
+						} else {
+							player.remove("Player_UUID");
+							player.addProperty("UUID", UUID);
+						}
+					}
+				}
 
-                        if (UUID == null || UUID.isBlank()) {
-                            // remove it then, it's an invalid entry 0.0
-                            players.remove(player); // may return true or false for success, but idc
+				jsonObject.addProperty("version", 1);
+			}
 
-                        } else {
-                            player.remove("Player_UUID");
-                            player.addProperty("UUID", UUID);
-                        }
-                    }
-                }
+			// Save the storage :3
+			byte[] json = GSON.toJson(jsonObject, JsonArray.class).getBytes();
+			Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+					StandardOpenOption.CREATE);
 
-                jsonObject.addProperty("version", 1);
-            }
+			Constants.LOGGER.info("Storage file migrated to v{} successfully!", defaultVersion);
+		} else if (version > defaultVersion) {
+			String message = String.format(
+					"Teleport Commands: The storage file's version is newer than the supported version, found v%s, expected <= v%s.\n"
+							+
+							"If you intentionally backported then you can attempt to downgrade the storage file located at this location: \"%s\".\n",
+					version, defaultVersion, STORAGE_FILE.toAbsolutePath());
 
-            // Save the storage :3
-            byte[] json = GSON.toJson(jsonObject, JsonArray.class).getBytes();
-            Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
+			throw new IllegalStateException(message);
+		}
+	}
 
-            Constants.LOGGER.info("Storage file migrated to v{} successfully!", defaultVersion);
-        } else if (version > defaultVersion) {
-            String message = String.format("Teleport Commands: The storage file's version is newer than the supported version, found v%s, expected <= v%s.\n" +
-                            "If you intentionally backported then you can attempt to downgrade the storage file located at this location: \"%s\".\n",
-                    version, defaultVersion, STORAGE_FILE.toAbsolutePath());
+	/// Saves the storage to the filesystem
+	public static void StorageSaver() throws Exception {
+		byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes();
 
-            throw new IllegalStateException(message);
-        }
-    }
+		Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+				StandardOpenOption.CREATE);
+	}
 
-    /// Saves the storage to the filesystem
-    public static void StorageSaver() throws Exception {
-        byte[] json = GSON.toJson( StorageManager.STORAGE ).getBytes();
+	public static class StorageClass {
+		private final int version = 1;
+		private final ArrayList<NamedLocation> Warps = new ArrayList<>();
+		private final ArrayList<Player> Players = new ArrayList<>();
 
-        Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-    }
+		/// Cleans up any values in the storage class
+		public void cleanup() throws Exception {
+			for (Player player : Players) {
+				// Remove players with invalid UUID's
+				if (player.getUUID().isBlank()) {
+					Players.remove(player);
+				}
 
+				List<NamedLocation> homes = player.getHomes();
 
-    public static class StorageClass {
-        private final int version = 1;
-        private final ArrayList<NamedLocation> Warps = new ArrayList<>();
-        private final ArrayList<Player> Players = new ArrayList<>();
+				// Delete any homes with an invalid world_id (if enabled in config)
+				if (ConfigManager.CONFIG.home.isDeleteInvalid()) {
+					homes.removeIf(home -> home.getWorld().isEmpty());
+				}
 
-        /// Cleans up any values in the storage class
-        public void cleanup() throws Exception {
-            for (Player player : Players) {
-                // Remove players with invalid UUID's
-                if (player.getUUID().isBlank()) {
-                    Players.remove(player);
-                }
+				// Remove players with no homes
+				if (homes.isEmpty()) {
+					Players.remove(player);
+				}
+			}
 
-                List<NamedLocation> homes = player.getHomes();
+			// Delete any warps with an invalid world_id (if enabled in config)
+			if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {
+				Warps.removeIf(warp -> warp.getWorld().isEmpty());
+			}
 
-                // Delete any homes with an invalid world_id (if enabled in config)
-                if (ConfigManager.CONFIG.home.isDeleteInvalid()) {
-                    homes.removeIf(home -> home.getWorld().isEmpty());
-                }
+			StorageSaver();
+		}
 
-                // Remove players with no homes
-                if (homes.isEmpty()) {
-                    Players.remove(player);
-                }
-            }
+		public int getVersion() {
+			return version;
+		}
 
-            // Delete any warps with an invalid world_id (if enabled in config)
-            if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {
-                Warps.removeIf(warp -> warp.getWorld().isEmpty());
-            }
+		// returns all warps
+		public List<NamedLocation> getWarps() {
+			return unmodifiableList(Warps);
+		}
 
-            StorageSaver();
-        }
+		// filters the warpList and finds the one with the name (if there is one)
+		public Optional<NamedLocation> getWarp(String name) {
+			return Warps.stream()
+					.filter(warp -> Objects.equals(warp.getName(), name))
+					.findFirst();
+		}
 
-        public int getVersion() {
-            return version;
-        }
+		// filters the playerList and finds the one with the uuid (if there is one)
+		public Optional<Player> getPlayer(String uuid) {
+			return Players.stream()
+					.filter(player -> Objects.equals(player.getUUID(), uuid))
+					.findFirst();
+		}
 
-        // returns all warps
-        public List<NamedLocation> getWarps() {
-            return unmodifiableList(Warps);
-        }
+		// -----
 
-        // filters the warpList and finds the one with the name (if there is one)
-        public Optional<NamedLocation> getWarp(String name) {
-            return Warps.stream()
-                    .filter(warp -> Objects.equals(warp.getName(), name))
-                    .findFirst();
-        }
+		// Adds a NamedLocation to the warp list, returns true if a warp with the same
+		// name already exists
+		public boolean addWarp(NamedLocation warp) throws Exception {
+			if (getWarp(warp.getName()).isPresent()) {
+				// Warp with same name found!
+				return true;
 
-        // filters the playerList and finds the one with the uuid (if there is one)
-        public Optional<Player> getPlayer(String uuid) {
-            return Players.stream()
-                    .filter( player -> Objects.equals( player.getUUID(), uuid ))
-                    .findFirst();
-        }
+			} else {
+				Warps.add(warp);
+				StorageSaver();
+				return false;
+			}
+		}
 
-        // -----
+		// Creates a new player, if there already is a player it will return the
+		// existing one. The player won't be saved unless they actually do something lol
+		// The name of this function is wack but whatever kewk
+		public Player addPlayer(String uuid) {
+			final Optional<Player> OptionalPlayer = getPlayer(uuid);
 
-        // Adds a NamedLocation to the warp list, returns true if a warp with the same name already exists
-        public boolean addWarp(NamedLocation warp) throws Exception {
-            if (getWarp(warp.getName()).isPresent()) {
-                // Warp with same name found!
-                return true;
+			if (OptionalPlayer.isEmpty()) {
+				// create and return new player
+				Player player = new Player(uuid);
+				Players.add(player);
 
-            } else {
-                Warps.add(warp);
-                StorageSaver();
-                return false;
-            }
-        }
+				return player;
+			} else {
+				// return existing player
+				return OptionalPlayer.get();
+			}
+		}
 
-        // Creates a new player, if there already is a player it will return the existing one. The player won't be saved unless they actually do something lol
-        // The name of this function is wack but whatever kewk
-        public Player addPlayer(String uuid) {
-            final Optional<Player> OptionalPlayer = getPlayer(uuid);
+		// -----
 
-            if (OptionalPlayer.isEmpty()) {
-                // create and return new player
-                Player player = new Player(uuid);
-                Players.add(player);
-
-                return player;
-            } else {
-                // return existing player
-                return OptionalPlayer.get();
-            }
-        }
-
-        // -----
-
-        // Remove a warp, if the warp isn't found then nothing will happen
-        public void removeWarp(NamedLocation warp) throws Exception {
-            Warps.remove(warp);
-            StorageSaver();
-        }
-    }
+		// Remove a warp, if the warp isn't found then nothing will happen
+		public void removeWarp(NamedLocation warp) throws Exception {
+			Warps.remove(warp);
+			StorageSaver();
+		}
+	}
 }

@@ -10,284 +10,290 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class ConfigManager {
-    public static Path CONFIG_FILE;
-    public static ConfigClass CONFIG;
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final int defaultVersion = new ConfigClass().getVersion();
+	public static Path CONFIG_FILE;
+	public static ConfigClass CONFIG;
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final int defaultVersion = new ConfigClass().getVersion();
 
-    public static void ConfigInit() {
-        CONFIG_FILE = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json");
+	public static void ConfigInit() {
+		CONFIG_FILE = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json");
 
-        try {
-            ConfigLoader();
+		try {
+			ConfigLoader();
 
-        } catch (Exception e) {
-            // crashing is probably better here, otherwise the whole mod will be broken
-            Constants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
-            throw new RuntimeException("Error while initializing the config file! Exiting! => ", e);
-        }
-    }
+		} catch (Exception e) {
+			// crashing is probably better here, otherwise the whole mod will be broken
+			Constants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
+			throw new RuntimeException("Error while initializing the config file! Exiting! => ", e);
+		}
+	}
 
-    public static void ConfigLoader() throws Exception {
-        if (!CONFIG_FILE.toFile().exists() || CONFIG_FILE.toFile().length() == 0) {
-            Files.createDirectories(TeleportCommands.CONFIG_DIR);
+	public static void ConfigLoader() throws Exception {
+		if (!CONFIG_FILE.toFile().exists() || CONFIG_FILE.toFile().length() == 0) {
+			Files.createDirectories(TeleportCommands.CONFIG_DIR);
 
-            Constants.LOGGER.warn("Config file was not found or was empty! Initializing config");
-            CONFIG = new ConfigClass();
-            ConfigSaver();
-            Constants.LOGGER.info("Config created successfully!");
-        }
+			Constants.LOGGER.warn("Config file was not found or was empty! Initializing config");
+			CONFIG = new ConfigClass();
+			ConfigSaver();
+			Constants.LOGGER.info("Config created successfully!");
+		}
 
-        ConfigMigrator();
+		ConfigMigrator();
 
-        FileReader reader = new FileReader(CONFIG_FILE.toFile());
-        CONFIG = GSON.fromJson(reader, ConfigClass.class);
-        if (CONFIG == null) {
-            Constants.LOGGER.warn("Config file was empty! Loading defaults...");
-            CONFIG = new ConfigClass();
-            ConfigSaver();
-        }
+		FileReader reader = new FileReader(CONFIG_FILE.toFile());
+		CONFIG = GSON.fromJson(reader, ConfigClass.class);
+		if (CONFIG == null) {
+			Constants.LOGGER.warn("Config file was empty! Loading defaults...");
+			CONFIG = new ConfigClass();
+			ConfigSaver();
+		}
 
-        ConfigSaver(); // Save it so any missing values get added to the file.
-        Constants.LOGGER.info("Config loaded successfully!");
-    }
+		ConfigSaver(); // Save it so any missing values get added to the file.
+		Constants.LOGGER.info("Config loaded successfully!");
+	}
 
-    /// This function checks what version the config file is and migrates it to the current version of the mod.
-    public static void ConfigMigrator() throws Exception {
-        FileReader reader = new FileReader(CONFIG_FILE.toFile());
-        JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+	/// This function checks what version the config file is and migrates it to the
+	/// current version of the mod.
+	public static void ConfigMigrator() throws Exception {
+		FileReader reader = new FileReader(CONFIG_FILE.toFile());
+		JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
 
-        int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
+		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
-        if (version < defaultVersion) {
-            Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
+		if (version < defaultVersion) {
+			Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
 
-            // Add any necessary migrations here based on version
-            // For now, no migrations needed
-            
-            // Save the config
-            byte[] json = GSON.toJson(jsonObject, JsonObject.class).getBytes();
-            Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
+			// Add any necessary migrations here based on version
+			// For now, no migrations needed
 
-            Constants.LOGGER.info("Config file migrated to v{} successfully!", defaultVersion);
-        } else if (version > defaultVersion) {
-            String message = String.format("Teleport Commands: The config file's version is newer than the supported version, found v%s, expected <= v%s.\n" +
-                            "If you intentionally backported then you can attempt to downgrade the config file located at this location: \"%s\".\n",
-                    version, defaultVersion, CONFIG_FILE.toAbsolutePath());
+			// Save the config
+			byte[] json = GSON.toJson(jsonObject, JsonObject.class).getBytes();
+			Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+					StandardOpenOption.CREATE);
 
-            throw new IllegalStateException(message);
-        }
-    }
+			Constants.LOGGER.info("Config file migrated to v{} successfully!", defaultVersion);
+		} else if (version > defaultVersion) {
+			String message = String.format(
+					"Teleport Commands: The config file's version is newer than the supported version, found v%s, expected <= v%s.\n"
+							+
+							"If you intentionally backported then you can attempt to downgrade the config file located at this location: \"%s\".\n",
+					version, defaultVersion, CONFIG_FILE.toAbsolutePath());
 
-    public static void ConfigSaver() throws Exception {
-        byte[] json = GSON.toJson( ConfigManager.CONFIG ).getBytes();
+			throw new IllegalStateException(message);
+		}
+	}
 
-        Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-    }
+	public static void ConfigSaver() throws Exception {
+		byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes();
 
-    /// Saves the config after modifications. This method should be called whenever config values are changed.
-    public static void saveConfigChanges() throws Exception {
-        ConfigSaver();
-        Constants.LOGGER.info("Config changes saved!");
-    }
+		Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+				StandardOpenOption.CREATE);
+	}
 
-    public static class ConfigClass {
-        private final int version = 0;
-        public Teleporting teleporting = new Teleporting();
-        public Back back = new Back();
-        public Home home = new Home();
-        public Tpa tpa = new Tpa();
-        public Warp warp = new Warp();
-        public WorldSpawn worldSpawn = new WorldSpawn();
+	/// Saves the config after modifications. This method should be called whenever
+	/// config values are changed.
+	public static void saveConfigChanges() throws Exception {
+		ConfigSaver();
+		Constants.LOGGER.info("Config changes saved!");
+	}
 
-        public int getVersion() {
-            return version;
-        }
+	public static class ConfigClass {
+		private final int version = 0;
+		public Teleporting teleporting = new Teleporting();
+		public Back back = new Back();
+		public Home home = new Home();
+		public Tpa tpa = new Tpa();
+		public Warp warp = new Warp();
+		public WorldSpawn worldSpawn = new WorldSpawn();
 
-        // ===== Convenience Methods =====
+		public int getVersion() {
+			return version;
+		}
 
-        public Teleporting getTeleporting() {
-            return teleporting;
-        }
+		// ===== Convenience Methods =====
 
-        public Back getBack() {
-            return back;
-        }
+		public Teleporting getTeleporting() {
+			return teleporting;
+		}
 
-        public Home getHome() {
-            return home;
-        }
+		public Back getBack() {
+			return back;
+		}
 
-        public Tpa getTpa() {
-            return tpa;
-        }
+		public Home getHome() {
+			return home;
+		}
 
-        public Warp getWarp() {
-            return warp;
-        }
+		public Tpa getTpa() {
+			return tpa;
+		}
 
-        public WorldSpawn getWorldSpawn() {
-            return worldSpawn;
-        }
+		public Warp getWarp() {
+			return warp;
+		}
 
-        // ===== Configuration Sections =====
+		public WorldSpawn getWorldSpawn() {
+			return worldSpawn;
+		}
 
-        public static final class Teleporting {
-            private int delay = 5;
-            private int cooldown = 5;
+		// ===== Configuration Sections =====
 
-            public int getDelay() {
-                return delay;
-            }
+		public static final class Teleporting {
+			private int delay = 5;
+			private int cooldown = 5;
 
-            public void setDelay(int delay) {
-                this.delay = delay;
-            }
+			public int getDelay() {
+				return delay;
+			}
 
-            public int getCooldown() {
-                return cooldown;
-            }
+			public void setDelay(int delay) {
+				this.delay = delay;
+			}
 
-            public void setCooldown(int cooldown) {
-                this.cooldown = cooldown;
-            }
-        }
+			public int getCooldown() {
+				return cooldown;
+			}
 
-        public final class Back {
-            private boolean enabled = true;
-            private boolean deleteAfterTeleport = false;
+			public void setCooldown(int cooldown) {
+				this.cooldown = cooldown;
+			}
+		}
 
-            public boolean isEnabled() {
-                return enabled;
-            }
+		public final class Back {
+			private boolean enabled = true;
+			private boolean deleteAfterTeleport = false;
 
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
+			public boolean isEnabled() {
+				return enabled;
+			}
 
-            public boolean isDeleteAfterTeleport() {
-                return deleteAfterTeleport;
-            }
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
 
-            public void setDeleteAfterTeleport(boolean deleteAfterTeleport) {
-                this.deleteAfterTeleport = deleteAfterTeleport;
-            }
-        }
+			public boolean isDeleteAfterTeleport() {
+				return deleteAfterTeleport;
+			}
 
-        public final class Home {
-            private boolean enabled = true;
-            private int playerMaximum = 20;
-            private boolean deleteInvalid = false;
+			public void setDeleteAfterTeleport(boolean deleteAfterTeleport) {
+				this.deleteAfterTeleport = deleteAfterTeleport;
+			}
+		}
 
-            public boolean isEnabled() {
-                return enabled;
-            }
+		public final class Home {
+			private boolean enabled = true;
+			private int playerMaximum = 20;
+			private boolean deleteInvalid = false;
 
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
+			public boolean isEnabled() {
+				return enabled;
+			}
 
-            public int getPlayerMaximum() {
-                return playerMaximum;
-            }
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
 
-            public void setPlayerMaximum(int playerMaximum) {
-                this.playerMaximum = playerMaximum;
-            }
+			public int getPlayerMaximum() {
+				return playerMaximum;
+			}
 
-            public boolean isDeleteInvalid() {
-                return deleteInvalid;
-            }
+			public void setPlayerMaximum(int playerMaximum) {
+				this.playerMaximum = playerMaximum;
+			}
 
-            public void setDeleteInvalid(boolean deleteInvalid) {
-                this.deleteInvalid = deleteInvalid;
-            }
-        }
+			public boolean isDeleteInvalid() {
+				return deleteInvalid;
+			}
 
-        public final class Tpa {
-            private boolean enabled = true;
-            private int requestExpireTime = 300; // seconds
+			public void setDeleteInvalid(boolean deleteInvalid) {
+				this.deleteInvalid = deleteInvalid;
+			}
+		}
 
-            public boolean isEnabled() {
-                return enabled;
-            }
+		public final class Tpa {
+			private boolean enabled = true;
+			private int requestExpireTime = 300; // seconds
 
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
+			public boolean isEnabled() {
+				return enabled;
+			}
 
-            public int getRequestExpireTime() {
-                return requestExpireTime;
-            }
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
 
-            public void setRequestExpireTime(int requestExpireTime) {
-                this.requestExpireTime = requestExpireTime;
-            }
-        }
+			public int getRequestExpireTime() {
+				return requestExpireTime;
+			}
 
-        public final class Warp {
-            private boolean enabled = true;
-            private int maximum = 0;
-            private boolean deleteInvalid = false;
+			public void setRequestExpireTime(int requestExpireTime) {
+				this.requestExpireTime = requestExpireTime;
+			}
+		}
 
-            public boolean isEnabled() {
-                return enabled;
-            }
+		public final class Warp {
+			private boolean enabled = true;
+			private int maximum = 0;
+			private boolean deleteInvalid = false;
 
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
+			public boolean isEnabled() {
+				return enabled;
+			}
 
-            public int getMaximum() {
-                return maximum;
-            }
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
 
-            public void setMaximum(int maximum) {
-                this.maximum = maximum;
-            }
+			public int getMaximum() {
+				return maximum;
+			}
 
-            public boolean isDeleteInvalid() {
-                return deleteInvalid;
-            }
+			public void setMaximum(int maximum) {
+				this.maximum = maximum;
+			}
 
-            public void setDeleteInvalid(boolean deleteInvalid) {
-                this.deleteInvalid = deleteInvalid;
-            }
-        }
+			public boolean isDeleteInvalid() {
+				return deleteInvalid;
+			}
 
-        public final class WorldSpawn {
-            private boolean enabled = true;
-            private String world_id = "minecraft:overworld";
+			public void setDeleteInvalid(boolean deleteInvalid) {
+				this.deleteInvalid = deleteInvalid;
+			}
+		}
 
-            public boolean isEnabled() {
-                return enabled;
-            }
+		public final class WorldSpawn {
+			private boolean enabled = true;
+			private String world_id = "minecraft:overworld";
 
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
+			public boolean isEnabled() {
+				return enabled;
+			}
 
-            public String getWorld_id() {
-                return world_id;
-            }
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
 
-            public void setWorld_id(String world_id) {
-                this.world_id = world_id;
-            }
-        }
-    }
+			public String getWorld_id() {
+				return world_id;
+			}
 
-    // --- Configuration Management ---
-    // The ConfigManager provides a centralized way to manage mod settings:
-    //
-    // 1. Teleporting: Controls delay, movement/combat restrictions, and cooldowns
-    // 2. Back: Manages the /back command behavior
-    // 3. Home: Controls home limits, enablement, and invalid location cleanup
-    // 4. Tpa: Manages TPA requestability and request expiration time
-    // 5. Warp: Controls warp limits, enablement, and invalid location cleanup
-    // 6. WorldSpawn: Sets the world and spawn point for /worldspawn
-    //
-    // To modify configuration values at runtime:
-    //   ConfigManager.CONFIG.home.setPlayerMaximum(50);
-    //   ConfigManager.saveConfigChanges();
+			public void setWorld_id(String world_id) {
+				this.world_id = world_id;
+			}
+		}
+	}
+
+	// --- Configuration Management ---
+	// The ConfigManager provides a centralized way to manage mod settings:
+	//
+	// 1. Teleporting: Controls delay, movement/combat restrictions, and cooldowns
+	// 2. Back: Manages the /back command behavior
+	// 3. Home: Controls home limits, enablement, and invalid location cleanup
+	// 4. Tpa: Manages TPA requestability and request expiration time
+	// 5. Warp: Controls warp limits, enablement, and invalid location cleanup
+	// 6. WorldSpawn: Sets the world and spawn point for /worldspawn
+	//
+	// To modify configuration values at runtime:
+	// ConfigManager.CONFIG.home.setPlayerMaximum(50);
+	// ConfigManager.saveConfigChanges();
 }

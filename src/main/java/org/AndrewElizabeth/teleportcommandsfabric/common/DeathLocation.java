@@ -9,38 +9,39 @@ import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 public class DeathLocation {
-    private BlockPos pos;
-    private String world;
+	private BlockPos pos;
+	private String world;
 
-    public DeathLocation(BlockPos pos, String world) {
-        this.pos = pos;
-        this.world = world;
-    }
+	public DeathLocation(BlockPos pos, String world) {
+		this.pos = pos;
+		this.world = world;
+	}
 
-    // -----
+	// -----
 
-    public BlockPos getBlockPos() {
-        return pos;
-    }
+	public BlockPos getBlockPos() {
+		return pos;
+	}
 
-    public String getWorldString() {
-        return world;
-    }
+	public String getWorldString() {
+		return world;
+	}
 
-    // function to quickly filter the worlds and get the ServerLevel for the string
-    public Optional<ServerLevel> getWorld() {
-        return StreamSupport.stream( TeleportCommands.SERVER.getAllLevels().spliterator(), false ) // woa, this looks silly
-            .filter(level -> Objects.equals( level.dimension().toString(), this.world ))
-                .findFirst();
-    }
+	// function to quickly filter the worlds and get the ServerLevel for the string
+	public Optional<ServerLevel> getWorld() {
+		return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false) // woa, this looks silly
+				.filter(level -> Objects.equals(level.dimension().toString(), this.world))
+				.findFirst();
+	}
 
-    // ----- note to self: these don't need to be saved since this class isn't a part of the storage :3
+	// ----- note to self: these don't need to be saved since this class isn't a
+	// part of the storage :3
 
-    public void setBlockPos(BlockPos pos) {
-        this.pos = pos;
-    }
+	public void setBlockPos(BlockPos pos) {
+		this.pos = pos;
+	}
 
-    public void setWorld(String world) {
-        this.world = world;
-    }
+	public void setWorld(String world) {
+		this.world = world;
+	}
 }

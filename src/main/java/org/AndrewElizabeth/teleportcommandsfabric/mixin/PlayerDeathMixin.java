@@ -10,9 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerPlayer.class)
 public class PlayerDeathMixin {
 
-    @Inject(method = "die", at = @At("HEAD"))
-    private void notifyDeath(CallbackInfo info) {
-
-        TeleportCommands.onPlayerDeath((ServerPlayer) (Object) this);
-    }
+	@Inject(method = "die", at = @At("HEAD"))
+	private void notifyDeath(CallbackInfo info) {
+		TeleportCommands.onPlayerDeath((ServerPlayer) (Object) this);
+	}
 }

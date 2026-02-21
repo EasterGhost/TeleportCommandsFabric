@@ -1,29 +1,31 @@
 {
-  "schemaVersion": 1,
-  "id": "teleportcommandsfabric",
-  "version": "${version}",
-  "name": "TeleportCommandsFabric",
-  "description": "A simple tpa command mod for Fabric.",
-  "authors": ["Andrew Elizabeth"],
-  "contact": {
-    "sources": "https://github.com/AndrewElizabeth/TeleportCommandsFabric",
-    "issues": "https://github.com/AndrewElizabeth/TeleportCommandsFabric/issues",
-    "email": "easterghost1@gmail.com"
-  },
-  "license": "GPL-3.0-only",
-  "icon": "assets/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands"
-    ]
-  },
-  "mixins": [
-    "teleportcommandsfabric.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=${loader_version}",
-    "fabric-api": "*",
-    "minecraft": ">=${minecraft_version}"
-  }
+	"schemaVersion": 1,
+	"id": "teleportcommandsfabric",
+	"version": "${version}",
+	"name": "TeleportCommandsFabric",
+	"description": "A simple tpa command mod for Fabric.",
+	"authors": [
+		"Andrew Elizabeth"
+	],
+	"contact": {
+		"sources": "https://github.com/AndrewElizabeth/TeleportCommandsFabric",
+		"issues": "https://github.com/AndrewElizabeth/TeleportCommandsFabric/issues",
+		"email": "easterghost1@gmail.com"
+	},
+	"license": "GPL-3.0-only",
+	"icon": "assets/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands"
+		]
+	},
+	"mixins": [
+		"teleportcommandsfabric.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"fabric-api": "*",
+		"minecraft": ">=${minecraft_version}"
+	}
 }
