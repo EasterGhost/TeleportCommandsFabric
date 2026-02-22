@@ -94,7 +94,7 @@ public class worldspawn {
 			world = TeleportCommands.SERVER.getLevel(OVERWORLD);
 		}
 
-		BlockPos worldSpawn = Objects.requireNonNull(world, "World cannot be null!").getSharedSpawnPos();
+		BlockPos worldSpawn = Objects.requireNonNull(world, "World cannot be null!").getLevelData().getRespawnData().pos();
 
 		if (!safetyDisabled) {
 			Optional<BlockPos> teleportData = getSafeBlockPos(worldSpawn, world);
