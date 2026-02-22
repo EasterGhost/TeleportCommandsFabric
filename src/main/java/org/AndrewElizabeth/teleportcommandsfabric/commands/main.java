@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import net.minecraft.server.permissions.Permissions;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import net.minecraft.ChatFormatting;
@@ -398,7 +397,7 @@ public class main {
 	}
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {
-		// Use command source permission level (console usually level 4)
-		return source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
+		// Use command source permission level (2 = GameMaster, 3 = Admin, 4 = Owner)
+		return source.hasPermission(2);
 	}
 }

@@ -2,7 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.server.permissions.Permissions;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.WarpSuggestionProvider;
@@ -31,7 +30,7 @@ public class warp {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 
 		commandDispatcher.register(Commands.literal("setwarp")
-				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.requires(source -> source.hasPermission(2))
 				.then(argument("name", StringArgumentType.string())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
@@ -98,7 +97,7 @@ public class warp {
 						})));
 
 		commandDispatcher.register(Commands.literal("delwarp")
-				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.requires(source -> source.hasPermission(2))
 				.then(argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
@@ -132,7 +131,7 @@ public class warp {
 						})));
 
 		commandDispatcher.register(Commands.literal("renamewarp")
-				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.requires(source -> source.hasPermission(2))
 				.then(argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.then(argument("newName", StringArgumentType.string())
@@ -380,7 +379,7 @@ public class warp {
 					currentWarp.getZ());
 			String dimension = String.format(" [%s]", currentWarp.getWorldString());
 
-			boolean canModify = source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
+			boolean canModify = source.hasPermission(2);
 
 			// linebreak
 			message.append("\n");
