@@ -210,27 +210,29 @@ Reloads the configuration from file.
 | Deny request        | `/tpadeny <player>`            | Deny teleport request             |
 | Teleport to warp    | `/warp <name>`                 | Teleport to global warp point     |
 | View all warps      | `/warps`                       | List all warp points              |
+| Random teleport     | `/wild`                        | Teleport to a random location     |
 | World spawn         | `/worldspawn [true/false]`     | Teleport to world spawn           |
 
 ### Administrator Commands
 
-| Feature             | Command                                                     | Description                |
-| ------------------- | ----------------------------------------------------------- | -------------------------- |
-| Enable module       | `/teleportcommands enable <module>`                       | Enable specified module    |
-| Disable module      | `/teleportcommands disable <module>`                      | Disable specified module   |
-| Set warp            | `/setwarp <name>`                                         | Create global warp point   |
-| Delete warp         | `/delwarp <name>`                                         | Delete global warp point   |
-| Rename warp         | `/renamewarp <name> <newName>`                            | Rename global warp point   |
-| Teleport delay          | `/teleportcommands config teleporting delay <seconds>`              | Set teleport delay time                      |
-| Teleport cooldown       | `/teleportcommands config teleporting cooldown <seconds>`           | Set teleport cooldown time                   |
-| Back delete record      | `/teleportcommands config back deleteAfterTeleport <true\|false>`   | Delete record after Back                     |
-| Home max count          | `/teleportcommands config home max <count>`                         | Set max homes per player                     |
-| Home delete invalid     | `/teleportcommands config home deleteInvalid <true\|false>`         | Auto-delete invalid homes                    |
-| TPA expire time         | `/teleportcommands config tpa expireTime <seconds>`                 | Set request expire time                      |
-| Warp max count          | `/teleportcommands config warp max <count>`                         | Set max warp points                          |
-| Warp delete invalid     | `/teleportcommands config warp deleteInvalid <true\|false>`         | Auto-delete invalid warp points              |
-| WorldSpawn world    | `/teleportcommands config worldspawn world <worldId>`     | Set world spawn world      |
-| Reload config       | `/teleportcommands reload`                                | Reload configuration file  |
+| Feature             | Command                                                          | Description                     |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------- |
+| Enable module       | `/teleportcommands enable <module>`                              | Enable specified module         |
+| Disable module      | `/teleportcommands disable <module>`                             | Disable specified module        |
+| Set warp            | `/setwarp <name>`                                                | Create global warp point        |
+| Delete warp         | `/delwarp <name>`                                                | Delete global warp point        |
+| Rename warp         | `/renamewarp <name> <newName>`                                   | Rename global warp point        |
+| Teleport delay      | `/teleportcommands config teleporting delay <seconds>`           | Set teleport delay time         |
+| Teleport cooldown   | `/teleportcommands config teleporting cooldown <seconds>`        | Set teleport cooldown time      |
+| Back delete record  | `/teleportcommands config back deleteAfterTeleport <true\|false>`| Delete record after Back        |
+| Home max count      | `/teleportcommands config home max <count>`                      | Set max homes per player        |
+| Home delete invalid | `/teleportcommands config home deleteInvalid <true\|false>`      | Auto-delete invalid homes       |
+| TPA expire time     | `/teleportcommands config tpa expireTime <seconds>`              | Set request expire time         |
+| Warp max count      | `/teleportcommands config warp max <count>`                      | Set max warp points             |
+| Warp delete invalid | `/teleportcommands config warp deleteInvalid <true\|false>`      | Auto-delete invalid warp points |
+| WorldSpawn world    | `/teleportcommands config worldspawn world <worldId>`            | Set world spawn world           |
+| Random teleport radius | `/teleportcommands config random radius <blocks>`             | Set random teleport radius      |
+| Reload config       | `/teleportcommands reload`                                       | Reload configuration file       |
 
 ## Teleport Delay vs Cooldown
 
