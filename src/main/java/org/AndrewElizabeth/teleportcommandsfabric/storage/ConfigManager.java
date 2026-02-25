@@ -98,13 +98,14 @@ public class ConfigManager {
 	}
 
 	public static class ConfigClass {
-		private final int version = 0;
+		private final int version = 1;
 		public Teleporting teleporting = new Teleporting();
 		public Back back = new Back();
 		public Home home = new Home();
 		public Tpa tpa = new Tpa();
 		public Warp warp = new Warp();
 		public WorldSpawn worldSpawn = new WorldSpawn();
+		public Wild wild = new Wild();
 
 		public int getVersion() {
 			return version;
@@ -134,6 +135,10 @@ public class ConfigManager {
 
 		public WorldSpawn getWorldSpawn() {
 			return worldSpawn;
+		}
+
+		public Wild getWild() {
+			return wild;
 		}
 
 		// ===== Configuration Sections =====
@@ -258,6 +263,27 @@ public class ConfigManager {
 
 			public void setDeleteInvalid(boolean deleteInvalid) {
 				this.deleteInvalid = deleteInvalid;
+			}
+		}
+
+		public final class Wild {
+			private boolean enabled = true;
+			private int radius = 500;
+
+			public boolean isEnabled() {
+				return enabled;
+			}
+
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
+
+			public int getRadius() {
+				return radius;
+			}
+
+			public void setRadius(int radius) {
+				this.radius = radius;
 			}
 		}
 

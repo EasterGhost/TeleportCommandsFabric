@@ -48,6 +48,7 @@ public class TeleportCommands implements ModInitializer {
 		tpa.register(dispatcher);
 		warp.register(dispatcher);
 		worldspawn.register(dispatcher);
+		wild.register(dispatcher);
 		main.register(dispatcher);
 	}
 

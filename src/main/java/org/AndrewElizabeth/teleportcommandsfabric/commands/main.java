@@ -24,7 +24,8 @@ public class main {
 			"home",
 			"tpa",
 			"warp",
-			"worldspawn"
+			"worldspawn",
+			"wild"
 	};
 
 	// sum lists
@@ -186,180 +187,200 @@ public class main {
 						// --- WorldSpawn Config ---
 						.then(Commands.literal("worldspawn")
 								.then(Commands.literal("world")
-										.then(Commands.argument("worldId",
-												StringArgumentType
-														.string())
+										.then(Commands.argument("worldId", StringArgumentType.string())
 												.executes(context -> setAndSave(
 														context,
 														() -> ConfigManager.CONFIG
 																.getWorldSpawn()
 																.setWorld_id(StringArgumentType
-																		.getString(context,
-																				"worldId")),
+																		.getString(context, "worldId")),
 														"WorldSpawn world set to "
 																+ StringArgumentType
-																		.getString(context,
-																				"worldId")))))))
-				.then(Commands.literal("reload")
-						.requires(main::isOpOrConsole)
-						.executes(context -> {
-							try {
-								ConfigManager.ConfigLoader();
-							} catch (Exception e) {
-								Constants.LOGGER.error("Failed to reload config!", e);
-								throw new SimpleCommandExceptionType(
-										Component.literal(e.toString()))
-										.create();
-							}
-							context.getSource()
-									.sendSuccess(() -> Component.literal(
-											"Config reloaded successfully"),
-											true);
-							return 0;
-						}))
-				.then(Commands.literal("disable")
-						.then(Commands.argument("command", StringArgumentType.word())
-								.suggests(enabled_commands_suggester)
+																		.getString(context, "worldId"))))))
+						.then(Commands.literal("wild")
+								.then(Commands.literal("radius")
+										.then(Commands.argument("blocks", IntegerArgumentType.integer(1))
+												.executes(context -> setAndSave(
+														context,
+														() -> ConfigManager.CONFIG
+																.getWild()
+																.setRadius(IntegerArgumentType
+																		.getInteger(context, "blocks")),
+														"Wild radius set to "
+																+ IntegerArgumentType
+																		.getInteger(context, "blocks"))))))
+						.then(Commands.literal("reload")
 								.requires(main::isOpOrConsole)
 								.executes(context -> {
-									final String string = StringArgumentType
-											.getString(context, "command");
-
-									if (!Arrays.asList(enabled_commands)
-											.contains(string)) {
+									try {
+										ConfigManager.ConfigLoader();
+									} catch (Exception e) {
+										Constants.LOGGER.error("Failed to reload config!", e);
 										throw new SimpleCommandExceptionType(
-												Component.literal("\""
-														+ string
-														+ "\" is not available as a command!")
-														.withStyle(ChatFormatting.RED,
-																ChatFormatting.BOLD))
+												Component.literal(e.toString()))
 												.create();
 									}
+									context.getSource()
+											.sendSuccess(() -> Component.literal(
+													"Config reloaded successfully"),
+													true);
+									return 0;
+								}))
+						.then(Commands.literal("disable")
+								.then(Commands.argument("command", StringArgumentType.word())
+										.suggests(enabled_commands_suggester)
+										.requires(main::isOpOrConsole)
+										.executes(context -> {
+											final String string = StringArgumentType
+													.getString(context, "command");
 
-									try {
-										return switch (string) {
-											case "back" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getBack()
-															.setEnabled(false),
-													"Back command: disabled");
-											case "home" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getHome()
-															.setEnabled(false),
-													"Home command: disabled");
-											case "tpa" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getTpa()
-															.setEnabled(false),
-													"TPA command: disabled");
-											case "warp" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getWarp()
-															.setEnabled(false),
-													"Warp command: disabled");
-											case "worldspawn" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getWorldSpawn()
-															.setEnabled(false),
-													"WorldSpawn command: disabled");
-											default ->
+											if (!Arrays.asList(enabled_commands)
+													.contains(string)) {
+												throw new SimpleCommandExceptionType(
+														Component.literal("\""
+																+ string
+																+ "\" is not available as a command!")
+																.withStyle(ChatFormatting.RED,
+																		ChatFormatting.BOLD))
+														.create();
+											}
+
+											try {
+												return switch (string) {
+													case "back" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getBack()
+																	.setEnabled(false),
+															"Back command: disabled");
+													case "home" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getHome()
+																	.setEnabled(false),
+															"Home command: disabled");
+													case "tpa" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getTpa()
+																	.setEnabled(false),
+															"TPA command: disabled");
+													case "warp" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getWarp()
+																	.setEnabled(false),
+															"Warp command: disabled");
+													case "worldspawn" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getWorldSpawn()
+																	.setEnabled(false),
+															"WorldSpawn command: disabled");
+													case "wild" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getWild()
+																	.setEnabled(false),
+															"Wild command: disabled");
+													default ->
+														throw new SimpleCommandExceptionType(
+																Component.literal(
+																		"Unknown command: "
+																				+ string))
+																.create();
+												};
+											} catch (Exception e) {
+												Constants.LOGGER.error(
+														"Error while disabling a command! => ",
+														e);
 												throw new SimpleCommandExceptionType(
 														Component.literal(
-																"Unknown command: "
-																		+ string))
+																"Error: " + e.getMessage())
+																.withStyle(ChatFormatting.RED))
 														.create();
-										};
-									} catch (Exception e) {
-										Constants.LOGGER.error(
-												"Error while disabling a command! => ",
-												e);
-										throw new SimpleCommandExceptionType(
-												Component.literal(
-														"Error: " + e.getMessage())
-														.withStyle(ChatFormatting.RED))
-												.create();
-									}
-								})))
-				.then(Commands.literal("enable")
-						.then(Commands.argument("command", StringArgumentType.word())
-								.suggests(disabled_commands_suggester)
-								.requires(main::isOpOrConsole)
+											}
+										})))
+						.then(Commands.literal("enable")
+								.then(Commands.argument("command", StringArgumentType.word())
+										.suggests(disabled_commands_suggester)
+										.requires(main::isOpOrConsole)
+										.executes(context -> {
+											final String string = StringArgumentType
+													.getString(context, "command");
+
+											if (!Arrays.asList(disabled_commands)
+													.contains(string)) {
+												throw new SimpleCommandExceptionType(
+														Component.literal("\""
+																+ string
+																+ "\" is not available as a command!")
+																.withStyle(ChatFormatting.RED,
+																		ChatFormatting.BOLD))
+														.create();
+											}
+
+											try {
+												return switch (string) {
+													case "back" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getBack()
+																	.setEnabled(true),
+															"Back command: enabled");
+													case "home" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getHome()
+																	.setEnabled(true),
+															"Home command: enabled");
+													case "tpa" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getTpa()
+																	.setEnabled(true),
+															"TPA command: enabled");
+													case "warp" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getWarp()
+																	.setEnabled(true),
+															"Warp command: enabled");
+													case "worldspawn" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getWorldSpawn()
+																	.setEnabled(true),
+															"WorldSpawn command: enabled");
+													case "wild" -> setAndSave(
+															context,
+															() -> ConfigManager.CONFIG
+																	.getWild()
+																	.setEnabled(true),
+															"Wild command: enabled");
+													default ->
+														throw new SimpleCommandExceptionType(
+																Component.literal(
+																		"Unknown command: "
+																				+ string))
+																.create();
+												};
+											} catch (Exception e) {
+												Constants.LOGGER.error(
+														"Error while enabling a command! => ",
+														e);
+												throw new SimpleCommandExceptionType(
+														Component.literal(
+																"Error: " + e.getMessage())
+																.withStyle(ChatFormatting.RED))
+														.create();
+											}
+										})))
+						.then(Commands.literal("help")
 								.executes(context -> {
-									final String string = StringArgumentType
-											.getString(context, "command");
-
-									if (!Arrays.asList(disabled_commands)
-											.contains(string)) {
-										throw new SimpleCommandExceptionType(
-												Component.literal("\""
-														+ string
-														+ "\" is not available as a command!")
-														.withStyle(ChatFormatting.RED,
-																ChatFormatting.BOLD))
-												.create();
-									}
-
-									try {
-										return switch (string) {
-											case "back" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getBack()
-															.setEnabled(true),
-													"Back command: enabled");
-											case "home" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getHome()
-															.setEnabled(true),
-													"Home command: enabled");
-											case "tpa" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getTpa()
-															.setEnabled(true),
-													"TPA command: enabled");
-											case "warp" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getWarp()
-															.setEnabled(true),
-													"Warp command: enabled");
-											case "worldspawn" -> setAndSave(
-													context,
-													() -> ConfigManager.CONFIG
-															.getWorldSpawn()
-															.setEnabled(true),
-													"WorldSpawn command: enabled");
-											default ->
-												throw new SimpleCommandExceptionType(
-														Component.literal(
-																"Unknown command: "
-																		+ string))
-														.create();
-										};
-									} catch (Exception e) {
-										Constants.LOGGER.error(
-												"Error while enabling a command! => ",
-												e);
-										throw new SimpleCommandExceptionType(
-												Component.literal(
-														"Error: " + e.getMessage())
-														.withStyle(ChatFormatting.RED))
-												.create();
-									}
-								})))
-				.then(Commands.literal("help")
-						.executes(context -> {
-							context.getSource().sendSuccess(main::printCommands, false);
-							return 0;
-						})));
+									context.getSource().sendSuccess(main::printCommands, false);
+									return 0;
+								}))));
 	}
 
 	// -----

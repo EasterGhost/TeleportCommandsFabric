@@ -7,6 +7,10 @@
   "commands.teleport_commands.worldspawn.same": "Already at the worldspawn",
   "commands.teleport_commands.worldspawn.disabled": "Worldspawn is currently disabled.",
 
+  "commands.teleport_commands.wild.go": "Teleporting to a random location",
+  "commands.teleport_commands.wild.disabled": "Wild is currently disabled.",
+  "commands.teleport_commands.wild.invalidRadius": "Wild radius must be at least 1.",
+
   "commands.teleport_commands.home.set": "Home has been set",
   "commands.teleport_commands.home.disabled": "Home is currently disabled.",
   "commands.teleport_commands.home.setError": "An error occurred while setting the Home!",
