@@ -208,6 +208,7 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 | 拒绝请求     | `/tpadeny <玩家>`             | 拒绝传送请求           |
 | 传送到Warp   | `/warp <名称>`                | 传送到全局传送点       |
 | 查看所有Warp | `/warps`                      | 列出所有传送点         |
+| 随机传送     | `/wild`                       | 传送到随机位置         |
 | 世界生成点   | `/worldspawn [true/false]`    | 传送到世界生成点       |
 
 ### 管理员命令速查
@@ -223,11 +224,12 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 | 传送冷却           | `/teleportcommands config teleporting cooldown <秒>`               | 设置传送冷却时间           |
 | Back删除记录       | `/teleportcommands config back deleteAfterTeleport <true \| false>` | 传送后是否删除上一位置记录 |
 | Home数量上限       | `/teleportcommands config home max <数量>`                         | 设置玩家最多可设置的家     |
-| Home删除无效传送点 | `/teleportcommands config home deleteInvalid <true \| false>`       |                            |
+| Home删除无效传送点 | `/teleportcommands config home deleteInvalid <true \| false>`       | 自动删除无效的家           |
 | TPA过期时间        | `/teleportcommands config tpa expireTime <秒>`                     | 设置传送请求有效期         |
 | Warp数量上限       | `/teleportcommands config warp max <数量>`                         | 设置全服传送点数量上限     |
 | Warp删除无效传送点 | `/teleportcommands config warp deleteInvalid <true \| false>`       | 自动删除无效传送点         |
 | WorldSpawn世界     | `/teleportcommands config worldspawn world <世界ID>`               | 设置世界生成点所在世界     |
+| 随机传送半径       | `/teleportcommands config random radius <方块数>`                   | 设置随机传送的半径         |
 | 重载配置           | `/teleportcommands reload`                                         | 重新加载配置文件           |
 
 ## 传送延迟与冷却
