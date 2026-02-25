@@ -18,6 +18,9 @@
 	"entrypoints": {
 		"main": [
 			"org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands"
+		],
+		"client": [
+			"org.AndrewElizabeth.teleportcommandsfabric.client.TeleportCommandsClient"
 		]
 	},
 	"mixins": [
