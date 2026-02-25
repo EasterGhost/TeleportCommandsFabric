@@ -1,6 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.client;
 
+import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncDataPayload;
+import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPackets;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncRequestPayload;
 import net.fabricmc.api.EnvType;
@@ -19,6 +21,7 @@ public final class XaeroSyncClient {
 	private static boolean xaeroAvailable;
 	private static boolean wasWorldMapOpen;
 	private static long lastRequestMs;
+	private static XaeroSyncPayload pendingPayload;
 
 	private XaeroSyncClient() {
 	}
@@ -29,6 +32,7 @@ public final class XaeroSyncClient {
 		}
 		initialized = true;
 		xaeroAvailable = isXaeroAvailable();
+		Constants.LOGGER.info("Xaero sync client init. Xaero available: {}", xaeroAvailable);
 
 		XaeroSyncPackets.registerPayloadTypes();
 
@@ -37,7 +41,14 @@ public final class XaeroSyncClient {
 					if (!xaeroAvailable) {
 						return;
 					}
-					XaeroCompat.applySyncPayload(payload.payload());
+					pendingPayload = payload.payload();
+					Constants.LOGGER.info("Xaero sync payload received (warps: {}, homes: {}).",
+							pendingPayload.warps().size(),
+							pendingPayload.homes().size());
+					if (XaeroCompat.applySyncPayload(pendingPayload)) {
+						pendingPayload = null;
+						Constants.LOGGER.info("Xaero sync payload applied.");
+					}
 				}));
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -50,6 +61,7 @@ public final class XaeroSyncClient {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			wasWorldMapOpen = false;
 			lastRequestMs = 0L;
+			pendingPayload = null;
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(XaeroSyncClient::onClientTick);
@@ -70,6 +82,11 @@ public final class XaeroSyncClient {
 			sendSyncRequest();
 		}
 
+		if (pendingPayload != null && XaeroCompat.applySyncPayload(pendingPayload)) {
+			pendingPayload = null;
+			Constants.LOGGER.info("Xaero sync payload applied after retry.");
+		}
+
 		wasWorldMapOpen = worldMapOpen;
 	}
 
@@ -79,6 +96,7 @@ public final class XaeroSyncClient {
 			return;
 		}
 		lastRequestMs = now;
+		Constants.LOGGER.info("Sending Xaero sync request.");
 		ClientPlayNetworking.send(new XaeroSyncRequestPayload());
 	}
 

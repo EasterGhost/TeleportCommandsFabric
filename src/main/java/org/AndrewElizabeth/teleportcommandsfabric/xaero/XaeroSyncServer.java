@@ -35,6 +35,7 @@ public final class XaeroSyncServer {
 			return;
 		}
 		initialized = true;
+		Constants.LOGGER.info("Xaero sync server hooks initializing.");
 
 		XaeroSyncPackets.registerPayloadTypes();
 
@@ -51,6 +52,7 @@ public final class XaeroSyncServer {
 	}
 
 	private static void handleSyncRequest(ServerPlayer player) {
+		Constants.LOGGER.info("Xaero sync request from {}", player.getName().getString());
 		if (!isEnabled()) {
 			return;
 		}
@@ -91,6 +93,10 @@ public final class XaeroSyncServer {
 
 	private static void sendSync(ServerPlayer player) {
 		XaeroSyncPayload payload = buildPayload(player);
+		Constants.LOGGER.info("Sending Xaero sync to {} (warps: {}, homes: {})",
+				player.getName().getString(),
+				payload.warps().size(),
+				payload.homes().size());
 		ServerPlayNetworking.send(player, new XaeroSyncDataPayload(payload));
 	}
 
