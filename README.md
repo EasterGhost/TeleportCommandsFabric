@@ -231,7 +231,7 @@ Reloads the configuration from file.
 | Warp max count      | `/teleportcommands config warp max <count>`                      | Set max warp points             |
 | Warp delete invalid | `/teleportcommands config warp deleteInvalid <true\|false>`      | Auto-delete invalid warp points |
 | WorldSpawn world    | `/teleportcommands config worldspawn world <worldId>`            | Set world spawn world           |
-| Random teleport radius | `/teleportcommands config random radius <blocks>`             | Set random teleport radius      |
+| Random teleport radius | `/teleportcommands config wild radius <blocks>`               | Set random teleport radius      |
 | Reload config       | `/teleportcommands reload`                                       | Reload configuration file       |
 
 ## Teleport Delay vs Cooldown
