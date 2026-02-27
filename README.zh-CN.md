@@ -15,6 +15,7 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 - `tpa` - 玩家传送请求
 - `warp` - 全局传送点
 - `worldspawn` - 世界生成点
+- `rtp` - 随机传送（wild）
 
 ---
 
@@ -67,6 +68,15 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 ```
 
 - **参数**：`<是否禁用安全>` 为 `true|false`（可选）
+
+### RTP - 随机传送
+
+```bash
+/rtp
+/wild #（可选别名，等同于 /rtp）
+```
+
+- **功能**：在可配置半径内随机传送。
 
 ---
 
@@ -143,6 +153,14 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 
 - **world** - 世界生成点所在世界（如 `minecraft:overworld`、`minecraft:nether`、`minecraft:the_end`）
 
+### RTP 模块配置
+
+```bash
+/teleportcommands config rtp radius <半径方块数>
+```
+
+- **radius** - 随机传送半径（单位：方块数）
+
 ### 重新加载配置
 
 ```bash
@@ -208,7 +226,7 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 | 拒绝请求     | `/tpadeny <玩家>`             | 拒绝传送请求           |
 | 传送到Warp   | `/warp <名称>`                | 传送到全局传送点       |
 | 查看所有Warp | `/warps`                      | 列出所有传送点         |
-| 随机传送     | `/wild`                       | 传送到随机位置         |
+| 随机传送     | `/rtp`                        | 传送到随机位置         |
 | 世界生成点   | `/worldspawn [true/false]`    | 传送到世界生成点       |
 
 ### 管理员命令速查
@@ -229,7 +247,7 @@ Teleport Commands 是一个服务端传送命令模组，提供多种传送功�
 | Warp数量上限       | `/teleportcommands config warp max <数量>`                         | 设置全服传送点数量上限     |
 | Warp删除无效传送点 | `/teleportcommands config warp deleteInvalid <true \| false>`       | 自动删除无效传送点         |
 | WorldSpawn世界     | `/teleportcommands config worldspawn world <世界ID>`               | 设置世界生成点所在世界     |
-| 随机传送半径       | `/teleportcommands config wild radius <方块数>`                   | 设置随机传送的半径         |
+| 随机传送半径       | `/teleportcommands config rtp radius <半径方块数>`                   | 设置随机传送的半径         |
 | 重载配置           | `/teleportcommands reload`                                         | 重新加载配置文件           |
 
 ## 传送延迟与冷却
