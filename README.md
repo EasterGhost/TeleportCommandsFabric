@@ -17,6 +17,7 @@ Available modules:
 - `tpa` - player teleport requests
 - `warp` - global warp points
 - `worldspawn` - world spawn point
+- `rtp` - random teleport (wild)
 
 ---
 
@@ -69,6 +70,15 @@ The following commands can be used by all players without special permissions.
 ```
 
 - **Parameter**: `<disableSafety>` is `true|false` (optional)
+
+### RTP - Random Teleport
+
+```bash
+/rtp
+/wild # (optional alias for /rtp
+```
+
+- **Function**: Teleport to a random location within a configurable radius.
 
 ---
 
@@ -136,6 +146,13 @@ The following commands require OP permission (level 4).
 
 - **max** - maximum number of warps (0 = unlimited)
 - **deleteInvalid** - remove invalid locations
+
+### RTP Module Configuration
+
+```bash
+/teleportcommands config rtp radius <blocks>
+```
+- **radius** - radius for random teleportation
 
 ### WorldSpawn Module Configuration
 
@@ -210,7 +227,7 @@ Reloads the configuration from file.
 | Deny request        | `/tpadeny <player>`            | Deny teleport request             |
 | Teleport to warp    | `/warp <name>`                 | Teleport to global warp point     |
 | View all warps      | `/warps`                       | List all warp points              |
-| Random teleport     | `/wild`                        | Teleport to a random location     |
+| Random teleport     | `/rtp`                         | Teleport to a random location     |
 | World spawn         | `/worldspawn [true/false]`     | Teleport to world spawn           |
 
 ### Administrator Commands
@@ -231,7 +248,7 @@ Reloads the configuration from file.
 | Warp max count      | `/teleportcommands config warp max <count>`                      | Set max warp points             |
 | Warp delete invalid | `/teleportcommands config warp deleteInvalid <true\|false>`      | Auto-delete invalid warp points |
 | WorldSpawn world    | `/teleportcommands config worldspawn world <worldId>`            | Set world spawn world           |
-| Random teleport radius | `/teleportcommands config wild radius <blocks>`               | Set random teleport radius      |
+| Random teleport radius | `/teleportcommands config rtp radius <blocks>`                | Set random teleport radius      |
 | Reload config       | `/teleportcommands reload`                                       | Reload configuration file       |
 
 ## Teleport Delay vs Cooldown
