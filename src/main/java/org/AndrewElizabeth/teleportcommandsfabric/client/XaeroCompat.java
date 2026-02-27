@@ -66,9 +66,10 @@ public final class XaeroCompat {
 	private static void applyEntries(MinimapWorldManager worldManager, List<XaeroSyncEntry> entries,
 			EntryType type, boolean persist, String warpSetName, String homeSetName) {
 		Map<String, List<XaeroSyncEntry>> byWorld = groupByWorld(entries);
+		MinimapWorldRootContainer currentRoot = worldManager.getCurrentRootContainer();
 		for (Map.Entry<String, List<XaeroSyncEntry>> entry : byWorld.entrySet()) {
 			String worldId = entry.getKey();
-			MinimapWorld world = findWorld(worldManager, worldId);
+			MinimapWorld world = findWorld(worldManager, currentRoot, worldId);
 			if (world == null) {
 				continue;
 			}
@@ -78,7 +79,7 @@ public final class XaeroCompat {
 			persistWaypoints(world, entry.getValue(), waypoints, type, persist, warpSetName, homeSetName);
 		}
 
-			clearMissingWorlds(worldManager, byWorld.keySet(), type, persist, warpSetName, homeSetName);
+		clearMissingWorlds(worldManager, byWorld.keySet(), type, persist, warpSetName, homeSetName);
 	}
 
 	private static void clearMissingWorlds(MinimapWorldManager worldManager, Set<String> activeWorlds,
@@ -87,7 +88,8 @@ public final class XaeroCompat {
 		Set<String> previousWorlds = new HashSet<>(idsByWorld.keySet());
 		previousWorlds.removeAll(activeWorlds);
 		for (String worldId : previousWorlds) {
-			MinimapWorld world = findWorld(worldManager, worldId);
+			MinimapWorldRootContainer currentRoot = worldManager.getCurrentRootContainer();
+			MinimapWorld world = findWorld(worldManager, currentRoot, worldId);
 			if (world == null) {
 				idsByWorld.remove(worldId);
 				continue;
@@ -105,7 +107,16 @@ public final class XaeroCompat {
 		return result;
 	}
 
-	private static MinimapWorld findWorld(MinimapWorldManager worldManager, String worldId) {
+	private static MinimapWorld findWorld(MinimapWorldManager worldManager, MinimapWorldRootContainer currentRoot,
+			String worldId) {
+		if (currentRoot != null) {
+			for (MinimapWorld world : currentRoot.getAllWorldsIterable()) {
+				String currentId = tools.getDimensionId(world.getDimId());
+				if (worldId.equals(currentId)) {
+					return world;
+				}
+			}
+		}
 		for (MinimapWorldRootContainer root : worldManager.getRootContainers()) {
 			for (MinimapWorld world : root.getAllWorldsIterable()) {
 				String currentId = tools.getDimensionId(world.getDimId());
@@ -246,7 +257,6 @@ public final class XaeroCompat {
 		String key = prefix + worldId + ":" + name;
 		return 0x54000000 ^ key.hashCode();
 	}
-
 
 	private enum EntryType {
 		WARP,
