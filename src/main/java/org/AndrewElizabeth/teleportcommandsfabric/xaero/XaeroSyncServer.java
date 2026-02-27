@@ -23,8 +23,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class XaeroSyncServer {
+	private static final long MIN_REQUEST_INTERVAL_MS = Constants.SYNC_INTERVAL_MS;
 	private static final Set<UUID> XAERO_CLIENTS = ConcurrentHashMap.newKeySet();
 	private static final Map<UUID, Long> LAST_SYNC = new ConcurrentHashMap<>();
+	private static final Map<UUID, Long> LAST_REQUEST = new ConcurrentHashMap<>();
 	private static boolean initialized;
 
 	private XaeroSyncServer() {
@@ -46,20 +48,29 @@ public final class XaeroSyncServer {
 			UUID uuid = handler.player.getUUID();
 			XAERO_CLIENTS.remove(uuid);
 			LAST_SYNC.remove(uuid);
+			LAST_REQUEST.remove(uuid);
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(XaeroSyncServer::onServerTick);
 	}
 
 	private static void handleSyncRequest(ServerPlayer player) {
-		Constants.LOGGER.info("Xaero sync request from {}", player.getName().getString());
 		if (!isEnabled()) {
 			return;
 		}
 
-		XAERO_CLIENTS.add(player.getUUID());
+		UUID uuid = player.getUUID();
+		long now = System.currentTimeMillis();
+		long lastRequest = LAST_REQUEST.getOrDefault(uuid, 0L);
+		if (now - lastRequest < MIN_REQUEST_INTERVAL_MS) {
+			Constants.LOGGER.debug("Xaero sync request throttled for {}", player.getName().getString());
+			return;
+		}
+
+		LAST_REQUEST.put(uuid, now);
+		XAERO_CLIENTS.add(uuid);
 		sendSync(player);
-		LAST_SYNC.put(player.getUUID(), System.currentTimeMillis());
+		LAST_SYNC.put(uuid, now);
 	}
 
 	private static void onServerTick(MinecraftServer server) {
