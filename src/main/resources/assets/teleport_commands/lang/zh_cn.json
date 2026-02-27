@@ -7,9 +7,9 @@
   "commands.teleport_commands.worldspawn.same": "成功前往世界生成点",
   "commands.teleport_commands.worldspawn.disabled": "Worldspawn 功能目前已禁用。",
 
-  "commands.teleport_commands.wild.go": "正在随机传送",
-  "commands.teleport_commands.wild.disabled": "随机传送功能目前已禁用。",
-  "commands.teleport_commands.wild.invalidRadius": "随机传送半径必须大于等于 1。",
+  "commands.teleport_commands.rtp.go": "正在随机传送",
+  "commands.teleport_commands.rtp.disabled": "随机传送功能目前已禁用。",
+  "commands.teleport_commands.rtp.invalidRadius": "随机传送半径必须大于等于 1。",
 
   "commands.teleport_commands.home.set": "设置家",
   "commands.teleport_commands.home.disabled": "家功能目前已禁用。",
@@ -82,3 +82,4 @@
   "commands.teleport_commands.common.worldNotFound": "没有找到世界!",
   "commands.teleport_commands.common.nameExists": "该名称已存在!"
 }
+

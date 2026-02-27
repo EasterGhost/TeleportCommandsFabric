@@ -19,19 +19,19 @@ import net.minecraft.util.RandomSource;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.TeleporterWithDelayAndCooldown;
 
-public class wild {
+public class rtp {
 
 	private static final int MAX_ATTEMPTS = 64;
 
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
-		commandDispatcher.register(Commands.literal("wild")
+		commandDispatcher.register(Commands.literal("rtp")
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> {
 					final ServerPlayer player = context.getSource().getPlayerOrException();
 
 					if (!ConfigManager.CONFIG.getWild().isEnabled()) {
 						player.displayClientMessage(
-								getTranslatedText("commands.teleport_commands.wild.disabled", player)
+								getTranslatedText("commands.teleport_commands.rtp.disabled", player)
 										.withStyle(ChatFormatting.RED),
 								true);
 						return 1;
@@ -40,7 +40,7 @@ public class wild {
 					int radius = ConfigManager.CONFIG.getWild().getRadius();
 					if (radius < 1) {
 						player.displayClientMessage(
-								getTranslatedText("commands.teleport_commands.wild.invalidRadius", player)
+								getTranslatedText("commands.teleport_commands.rtp.invalidRadius", player)
 										.withStyle(ChatFormatting.RED),
 								true);
 						return 1;
@@ -49,7 +49,7 @@ public class wild {
 					try {
 						return randomTeleport(player, radius);
 					} catch (Exception e) {
-						Constants.LOGGER.error("Error while executing /wild!", e);
+						Constants.LOGGER.error("Error while executing /rtp!", e);
 						player.displayClientMessage(
 								getTranslatedText("commands.teleport_commands.common.error", player)
 										.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
@@ -73,7 +73,7 @@ public class wild {
 
 		BlockPos blockPos = safePos.get();
 		Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
-		player.displayClientMessage(getTranslatedText("commands.teleport_commands.wild.go", player), true);
+		player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
 		TeleporterWithDelayAndCooldown(player, world, teleportPos, false);
 		return 0;
 	}
