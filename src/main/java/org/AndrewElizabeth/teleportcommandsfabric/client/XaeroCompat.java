@@ -3,8 +3,8 @@ package org.AndrewElizabeth.teleportcommandsfabric.client;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncEntry;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
-import xaero.common.XaeroMinimapSession;
 import xaero.common.minimap.waypoints.Waypoint;
+import xaero.hud.minimap.BuiltInHudModules;
 import xaero.hud.minimap.module.MinimapSession;
 import xaero.hud.minimap.waypoint.WaypointColor;
 import xaero.hud.minimap.waypoint.WaypointPurpose;
@@ -37,14 +37,8 @@ public final class XaeroCompat {
 	private XaeroCompat() {
 	}
 
-	@SuppressWarnings("deprecation")
 	public static boolean applySyncPayload(XaeroSyncPayload payload) {
-		XaeroMinimapSession session = XaeroMinimapSession.getCurrentSession();
-		if (session == null || session.getMinimapProcessor() == null) {
-			return false;
-		}
-
-		MinimapSession minimapSession = session.getMinimapProcessor().getSession();
+		MinimapSession minimapSession = BuiltInHudModules.MINIMAP.getCurrentSession();
 		if (minimapSession == null) {
 			return false;
 		}
