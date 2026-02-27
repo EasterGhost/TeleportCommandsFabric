@@ -6,6 +6,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.xaero.XaeroSyncServer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,6 +39,7 @@ public class TeleportCommands implements ModInitializer {
 		StorageManager.StorageInit(); // Initialize the storage file
 		DeathLocationStorage.clearDeathLocations(); // Clear data of death locations.
 		TeleportCooldownManager.clearAll(); // Clear teleport cooldowns and scheduled teleports
+		XaeroSyncServer.initialize(); // Register Xaero sync handlers
 	}
 
 	// initialize commands, also allows me to easily disable any when there is a
@@ -48,7 +50,7 @@ public class TeleportCommands implements ModInitializer {
 		tpa.register(dispatcher);
 		warp.register(dispatcher);
 		worldspawn.register(dispatcher);
-		wild.register(dispatcher);
+		rtp.register(dispatcher);
 		main.register(dispatcher);
 	}
 

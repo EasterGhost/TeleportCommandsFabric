@@ -25,7 +25,7 @@ public class main {
 			"tpa",
 			"warp",
 			"worldspawn",
-			"wild"
+			"rtp"
 	};
 
 	// sum lists
@@ -197,7 +197,7 @@ public class main {
 														"WorldSpawn world set to "
 																+ StringArgumentType
 																		.getString(context, "worldId"))))))
-						.then(Commands.literal("wild")
+						.then(Commands.literal("rtp")
 								.then(Commands.literal("radius")
 										.then(Commands.argument("blocks", IntegerArgumentType.integer(1))
 												.executes(context -> setAndSave(
@@ -206,7 +206,7 @@ public class main {
 																.getWild()
 																.setRadius(IntegerArgumentType
 																		.getInteger(context, "blocks")),
-														"Wild radius set to "
+														"RTP radius set to "
 																+ IntegerArgumentType
 																		.getInteger(context, "blocks"))))))
 						.then(Commands.literal("reload")
@@ -277,12 +277,12 @@ public class main {
 																	.getWorldSpawn()
 																	.setEnabled(false),
 															"WorldSpawn command: disabled");
-													case "wild" -> setAndSave(
+													case "rtp" -> setAndSave(
 															context,
 															() -> ConfigManager.CONFIG
 																	.getWild()
 																	.setEnabled(false),
-															"Wild command: disabled");
+															"RTP command: disabled");
 													default ->
 														throw new SimpleCommandExceptionType(
 																Component.literal(
@@ -352,12 +352,12 @@ public class main {
 																	.getWorldSpawn()
 																	.setEnabled(true),
 															"WorldSpawn command: enabled");
-													case "wild" -> setAndSave(
+													case "rtp" -> setAndSave(
 															context,
 															() -> ConfigManager.CONFIG
 																	.getWild()
 																	.setEnabled(true),
-															"Wild command: enabled");
+															"RTP command: enabled");
 													default ->
 														throw new SimpleCommandExceptionType(
 																Component.literal(

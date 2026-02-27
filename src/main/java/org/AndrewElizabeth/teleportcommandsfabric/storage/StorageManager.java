@@ -140,10 +140,10 @@ public class StorageManager {
 
 		/// Cleans up any values in the storage class
 		public void cleanup() throws Exception {
-			for (Player player : Players) {
+			Players.removeIf(player -> {
 				// Remove players with invalid UUID's
 				if (player.getUUID().isBlank()) {
-					Players.remove(player);
+					return true;
 				}
 
 				List<NamedLocation> homes = player.getHomes();
@@ -154,10 +154,8 @@ public class StorageManager {
 				}
 
 				// Remove players with no homes
-				if (homes.isEmpty()) {
-					Players.remove(player);
-				}
-			}
+				return homes.isEmpty();
+			});
 
 			// Delete any warps with an invalid world_id (if enabled in config)
 			if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {

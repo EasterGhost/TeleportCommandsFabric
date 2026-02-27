@@ -28,7 +28,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.Constants.MOD_ID;
+import static org.AndrewElizabeth.teleportcommandsfabric.Constants.ASSETS_ID;
 import static net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT;
 
 public class tools {
@@ -205,7 +205,7 @@ public class tools {
 		// the try catch stuff is so wacky, but it works fine and I don't need to check
 		// everything
 		try {
-			String filePath = String.format("/assets/%s/lang/%s.json", MOD_ID, language);
+			String filePath = String.format("/assets/%s/lang/%s.json", ASSETS_ID, language);
 			InputStream stream = TeleportCommands.class.getResourceAsStream(filePath);
 
 			Reader reader = new InputStreamReader(
@@ -237,7 +237,7 @@ public class tools {
 
 			try {
 				if (!Objects.equals(language, "en_us")) {
-					String filePath = String.format("/assets/%s/lang/en_us.json", MOD_ID);
+					String filePath = String.format("/assets/%s/lang/en_us.json", ASSETS_ID);
 					InputStream stream = TeleportCommands.class.getResourceAsStream(filePath);
 
 					Reader reader = new InputStreamReader(

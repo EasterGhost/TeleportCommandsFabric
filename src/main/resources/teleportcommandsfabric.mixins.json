@@ -9,7 +9,10 @@
 		"CommandsMixin"
 	],
 	"client": [
-		"client.ClientPlayNetworkHandlerMixin"
+		"client.ClientPlayNetworkHandlerMixin",
+		"client.GuiMapMixin",
+		"client.RightClickOptionAccessor",
+		"client.WaypointTeleportMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

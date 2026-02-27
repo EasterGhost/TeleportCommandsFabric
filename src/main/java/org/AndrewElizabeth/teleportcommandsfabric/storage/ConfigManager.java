@@ -106,6 +106,7 @@ public class ConfigManager {
 		public Warp warp = new Warp();
 		public WorldSpawn worldSpawn = new WorldSpawn();
 		public Wild wild = new Wild();
+		public Xaero xaero = new Xaero();
 
 		public int getVersion() {
 			return version;
@@ -139,6 +140,10 @@ public class ConfigManager {
 
 		public Wild getWild() {
 			return wild;
+		}
+
+		public Xaero getXaero() {
+			return xaero;
 		}
 
 		// ===== Configuration Sections =====
@@ -305,6 +310,54 @@ public class ConfigManager {
 
 			public void setWorld_id(String world_id) {
 				this.world_id = world_id;
+			}
+		}
+
+		public final class Xaero {
+			private boolean enabled = true;
+			private int syncIntervalSeconds = 60;
+			private boolean persistWaypointSets = true;
+			private String warpSetName = "TeleportCommands Warps";
+			private String homeSetName = "TeleportCommands Homes";
+
+			public boolean isEnabled() {
+				return enabled;
+			}
+
+			public void setEnabled(boolean enabled) {
+				this.enabled = enabled;
+			}
+
+			public int getSyncIntervalSeconds() {
+				return syncIntervalSeconds;
+			}
+
+			public void setSyncIntervalSeconds(int syncIntervalSeconds) {
+				this.syncIntervalSeconds = syncIntervalSeconds;
+			}
+
+			public boolean isPersistWaypointSets() {
+				return persistWaypointSets;
+			}
+
+			public void setPersistWaypointSets(boolean persistWaypointSets) {
+				this.persistWaypointSets = persistWaypointSets;
+			}
+
+			public String getWarpSetName() {
+				return warpSetName;
+			}
+
+			public void setWarpSetName(String warpSetName) {
+				this.warpSetName = warpSetName;
+			}
+
+			public String getHomeSetName() {
+				return homeSetName;
+			}
+
+			public void setHomeSetName(String homeSetName) {
+				this.homeSetName = homeSetName;
 			}
 		}
 	}
