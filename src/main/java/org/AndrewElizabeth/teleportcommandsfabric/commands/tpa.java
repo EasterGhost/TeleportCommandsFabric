@@ -1,9 +1,11 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.mojang.brigadier.CommandDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.tpaSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
@@ -23,6 +25,13 @@ import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
 public class tpa {
 
 	public static final ArrayList<tpaArrayClass> tpaList = new ArrayList<>();
+	private static final ScheduledExecutorService REQUEST_EXPIRATION_SCHEDULER = Executors
+			.newSingleThreadScheduledExecutor(runnable -> {
+				Thread thread = new Thread(runnable, "teleportcommands-tpa-expiration");
+				thread.setDaemon(true);
+				return thread;
+			});
+	private static final Map<String, ScheduledFuture<?>> requestExpiryTasks = new ConcurrentHashMap<>();
 
 	public static class tpaArrayClass {
 		public final String InitPlayer;
@@ -262,27 +271,15 @@ public class tpa {
 																	tpaRequest.RequestId))))),
 					false);
 
-			Timer timer = new Timer();
-			timer.schedule(
-					new TimerTask() {
-						@Override
-						public void run() {
-							boolean successful = tpaList.remove(tpaRequest);
-							if (successful) {
-								FromPlayer.displayClientMessage(
-										getTranslatedText("commands.teleport_commands.tpa.expired", FromPlayer,
-												Component.literal(hereText))
-												.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
-										true);
-								ToPlayer.displayClientMessage(
-										getTranslatedText("commands.teleport_commands.tpa.expired", ToPlayer,
-												Component.literal(hereText)).withStyle(ChatFormatting.WHITE),
-										true);
-							}
-							// else not needed since it may be denied/cancelled
-						}
-					}, 30 * 1000 // 30 seconds
-			);
+			long requestExpireTimeSeconds = Math.max(0, ConfigManager.CONFIG.getTpa().getRequestExpireTime());
+			ScheduledFuture<?> expiryTask = REQUEST_EXPIRATION_SCHEDULER.schedule(() -> {
+				// Route back to the MC server thread before touching player/list state.
+				if (TeleportCommands.SERVER != null) {
+					TeleportCommands.SERVER.execute(
+							() -> expireRequest(tpaRequest, FromPlayer, ToPlayer, hereText));
+				}
+			}, requestExpireTimeSeconds, TimeUnit.SECONDS);
+			requestExpiryTasks.put(tpaRequest.RequestId, expiryTask);
 		}
 	}
 
@@ -342,6 +339,7 @@ public class tpa {
 			ToPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.accepted", ToPlayer)
 					.withStyle(ChatFormatting.GREEN), true);
 			tpaList.remove(tpaStorage.get());
+			cancelExpiryTask(tpaStorage.get().RequestId);
 
 		} else {
 			// No request found
@@ -373,6 +371,7 @@ public class tpa {
 
 			if (tpaStorage.isPresent()) {
 				tpaList.remove(tpaStorage.get());
+				cancelExpiryTask(tpaStorage.get().RequestId);
 
 				ToPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.denied", ToPlayer)
 						.withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
@@ -383,6 +382,31 @@ public class tpa {
 				FromPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.notFound", FromPlayer)
 						.withStyle(ChatFormatting.RED), true);
 			}
+		}
+	}
+
+	private static void expireRequest(tpaArrayClass request, ServerPlayer fromPlayer, ServerPlayer toPlayer, String hereText) {
+		requestExpiryTasks.remove(request.RequestId);
+
+		boolean successful = tpaList.remove(request);
+		if (!successful) {
+			return;
+		}
+
+		fromPlayer.displayClientMessage(
+				getTranslatedText("commands.teleport_commands.tpa.expired", fromPlayer, Component.literal(hereText))
+						.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+				true);
+		toPlayer.displayClientMessage(
+				getTranslatedText("commands.teleport_commands.tpa.expired", toPlayer, Component.literal(hereText))
+						.withStyle(ChatFormatting.WHITE),
+				true);
+	}
+
+	private static void cancelExpiryTask(String requestId) {
+		ScheduledFuture<?> expiryTask = requestExpiryTasks.remove(requestId);
+		if (expiryTask != null) {
+			expiryTask.cancel(false);
 		}
 	}
 }
