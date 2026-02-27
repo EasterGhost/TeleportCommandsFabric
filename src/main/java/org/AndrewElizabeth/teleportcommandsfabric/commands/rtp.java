@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import net.minecraft.ChatFormatting;
@@ -24,7 +25,12 @@ public class rtp {
 	private static final int MAX_ATTEMPTS = 64;
 
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
-		commandDispatcher.register(Commands.literal("rtp")
+		commandDispatcher.register(tpc$buildRtpCommand("rtp"));
+		commandDispatcher.register(tpc$buildRtpCommand("wild"));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> tpc$buildRtpCommand(String commandName) {
+		return Commands.literal(commandName)
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> {
 					final ServerPlayer player = context.getSource().getPlayerOrException();
@@ -56,7 +62,7 @@ public class rtp {
 								true);
 						return 1;
 					}
-				}));
+				});
 	}
 
 	private static int randomTeleport(ServerPlayer player, int radius) {
