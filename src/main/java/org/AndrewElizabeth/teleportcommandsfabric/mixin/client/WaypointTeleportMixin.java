@@ -16,9 +16,7 @@ public class WaypointTeleportMixin {
 	private static final String WARP_TAG_PREFIX = "TPC-W ";
 	private static final String HOME_TAG_PREFIX = "TPC-H ";
 
-	@Redirect(
-			method = "teleportToWaypoint(Lxaero/common/minimap/waypoints/Waypoint;Lxaero/hud/minimap/world/MinimapWorld;Lnet/minecraft/client/gui/screens/Screen;Z)V",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;sendCommand(Ljava/lang/String;)V"))
+	@Redirect(method = "teleportToWaypoint(Lxaero/common/minimap/waypoints/Waypoint;Lxaero/hud/minimap/world/MinimapWorld;Lnet/minecraft/client/gui/screens/Screen;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;sendCommand(Ljava/lang/String;)V"))
 	private void tpc$redirectTeleportSendCommand(
 			ClientPacketListener connection,
 			String originalCommand,
@@ -30,9 +28,7 @@ public class WaypointTeleportMixin {
 		connection.sendCommand(replacement != null ? replacement : originalCommand);
 	}
 
-	@Redirect(
-			method = "teleportToWaypoint(Lxaero/common/minimap/waypoints/Waypoint;Lxaero/hud/minimap/world/MinimapWorld;Lnet/minecraft/client/gui/screens/Screen;Z)V",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;sendChat(Ljava/lang/String;)V"))
+	@Redirect(method = "teleportToWaypoint(Lxaero/common/minimap/waypoints/Waypoint;Lxaero/hud/minimap/world/MinimapWorld;Lnet/minecraft/client/gui/screens/Screen;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;sendChat(Ljava/lang/String;)V"))
 	private void tpc$redirectTeleportSendChat(
 			ClientPacketListener connection,
 			String originalMessage,
