@@ -92,8 +92,8 @@ public class StorageManager {
 
 					JsonArray players = jsonObject.get("Players").getAsJsonArray();
 
-					for (JsonElement playerElement : players) {
-						JsonObject player = playerElement.getAsJsonObject();
+					for (int i = players.size() - 1; i >= 0; i--) {
+						JsonObject player = players.get(i).getAsJsonObject();
 
 						String UUID = player.has("Player_UUID")
 								? player.get("Player_UUID").getAsString()
@@ -103,7 +103,7 @@ public class StorageManager {
 
 						if (UUID == null || UUID.isBlank()) {
 							// remove it then, it's an invalid entry 0.0
-							players.remove(player); // may return true or false for success, but idc
+							players.remove(i);
 
 						} else {
 							player.remove("Player_UUID");
