@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -149,22 +150,36 @@ public class StorageManager {
 
 		/// Cleans up any values in the storage class
 		public void cleanup() throws Exception {
-			Players.removeIf(player -> {
+			for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
+				Player player = iterator.next();
+
 				// Remove players with invalid UUID's
 				if (player.getUUID().isBlank()) {
-					return true;
+					iterator.remove();
+					continue;
 				}
-
-				List<NamedLocation> homes = player.getHomes();
 
 				// Delete any homes with an invalid world_id (if enabled in config)
 				if (ConfigManager.CONFIG.home.isDeleteInvalid()) {
-					homes.removeIf(home -> home.getWorld().isEmpty());
+					List<NamedLocation> homesSnapshot = new ArrayList<>(player.getHomes());
+					for (NamedLocation home : homesSnapshot) {
+						if (home.getWorld().isEmpty()) {
+							player.deleteHomeNoSave(home);
+						}
+					}
+
+					// Clear dangling default home after invalid entries are removed.
+					String defaultHome = player.getDefaultHome();
+					if (!defaultHome.isEmpty() && player.getHome(defaultHome).isEmpty()) {
+						player.setDefaultHomeNoSave("");
+					}
 				}
 
 				// Remove players with no homes
-				return homes.isEmpty();
-			});
+				if (player.getHomes().isEmpty()) {
+					iterator.remove();
+				}
+			}
 
 			// Delete any warps with an invalid world_id (if enabled in config)
 			if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {
