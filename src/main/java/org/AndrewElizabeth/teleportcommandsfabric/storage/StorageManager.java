@@ -6,7 +6,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 
-import java.io.FileReader;
+import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,7 +54,7 @@ public class StorageManager {
 
 		StorageMigrator();
 
-		try (FileReader reader = new FileReader(STORAGE_FILE.toFile())) {
+		try (BufferedReader reader = Files.newBufferedReader(STORAGE_FILE, StandardCharsets.UTF_8)) {
 			STORAGE = GSON.fromJson(reader, StorageClass.class);
 		}
 		if (STORAGE == null) {
@@ -73,7 +73,7 @@ public class StorageManager {
 	/// current version of the mod.
 	public static void StorageMigrator() throws Exception {
 		JsonObject jsonObject;
-		try (FileReader reader = new FileReader(STORAGE_FILE.toFile())) {
+		try (BufferedReader reader = Files.newBufferedReader(STORAGE_FILE, StandardCharsets.UTF_8)) {
 			jsonObject = GSON.fromJson(reader, JsonObject.class);
 		}
 		if (jsonObject == null) {
