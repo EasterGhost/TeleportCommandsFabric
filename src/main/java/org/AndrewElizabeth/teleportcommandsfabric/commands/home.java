@@ -332,7 +332,11 @@ public class home {
 
 			// Delete invalid home if configured
 			if (ConfigManager.CONFIG.getHome().isDeleteInvalid()) {
-				playerStorage.deleteHome(home);
+				playerStorage.deleteHomeNoSave(home);
+				if (home.getName().equals(playerStorage.getDefaultHome())) {
+					playerStorage.setDefaultHomeNoSave("");
+				}
+				StorageManager.StorageSaver();
 				Constants.LOGGER.info("Deleted invalid home '{}' for player {}", home.getName(),
 						player.getName().getString());
 				player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.deletedInvalid", player)

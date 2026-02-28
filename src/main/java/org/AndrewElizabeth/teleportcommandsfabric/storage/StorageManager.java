@@ -26,8 +26,8 @@ public class StorageManager {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final int defaultVersion = new StorageClass().getVersion();
 
-	/// Initializes the StorageManager class and loads the storage from the
-	/// filesystem.
+	/// Initializes the StorageManager class and loads the storage from
+	/// the filesystem.
 	public static void StorageInit() {
 		STORAGE_FOLDER = TeleportCommands.SAVE_DIR.resolve("TeleportCommands/");
 		STORAGE_FILE = STORAGE_FOLDER.resolve("storage.json");
@@ -153,8 +153,15 @@ public class StorageManager {
 			for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
 				Player player = iterator.next();
 
+				// Remove null/corrupt player entries from malformed storage files.
+				if (player == null) {
+					iterator.remove();
+					continue;
+				}
+
 				// Remove players with invalid UUID's
-				if (player.getUUID().isBlank()) {
+				String uuid = player.getUUID();
+				if (uuid == null || uuid.isBlank()) {
 					iterator.remove();
 					continue;
 				}
@@ -170,7 +177,9 @@ public class StorageManager {
 
 					// Clear dangling default home after invalid entries are removed.
 					String defaultHome = player.getDefaultHome();
-					if (!defaultHome.isEmpty() && player.getHome(defaultHome).isEmpty()) {
+					if (defaultHome == null) {
+						player.setDefaultHomeNoSave("");
+					} else if (!defaultHome.isEmpty() && player.getHome(defaultHome).isEmpty()) {
 						player.setDefaultHomeNoSave("");
 					}
 				}
