@@ -136,7 +136,7 @@ public class StorageManager {
 
 	/// Saves the storage to the filesystem
 	public static void StorageSaver() throws Exception {
-		byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes();
+		byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
 
 		Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 				StandardOpenOption.CREATE);

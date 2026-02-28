@@ -94,7 +94,7 @@ public class ConfigManager {
 	}
 
 	public static void ConfigSaver() throws Exception {
-		byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes();
+		byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes(StandardCharsets.UTF_8);
 
 		Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 				StandardOpenOption.CREATE);
