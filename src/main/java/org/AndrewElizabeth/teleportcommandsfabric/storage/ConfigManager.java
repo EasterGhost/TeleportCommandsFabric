@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 
 import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -40,8 +41,9 @@ public class ConfigManager {
 
 		ConfigMigrator();
 
-		FileReader reader = new FileReader(CONFIG_FILE.toFile());
-		CONFIG = GSON.fromJson(reader, ConfigClass.class);
+		try (FileReader reader = new FileReader(CONFIG_FILE.toFile())) {
+			CONFIG = GSON.fromJson(reader, ConfigClass.class);
+		}
 		if (CONFIG == null) {
 			Constants.LOGGER.warn("Config file was empty! Loading defaults...");
 			CONFIG = new ConfigClass();
@@ -55,8 +57,13 @@ public class ConfigManager {
 	/// This function checks what version the config file is and migrates it to the
 	/// current version of the mod.
 	public static void ConfigMigrator() throws Exception {
-		FileReader reader = new FileReader(CONFIG_FILE.toFile());
-		JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+		JsonObject jsonObject;
+		try (FileReader reader = new FileReader(CONFIG_FILE.toFile())) {
+			jsonObject = GSON.fromJson(reader, JsonObject.class);
+		}
+		if (jsonObject == null) {
+			jsonObject = new JsonObject();
+		}
 
 		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
@@ -66,8 +73,11 @@ public class ConfigManager {
 			// Add any necessary migrations here based on version
 			// For now, no migrations needed
 
+			// Always bump to the latest supported schema version after migrations.
+			jsonObject.addProperty("version", defaultVersion);
+
 			// Save the config
-			byte[] json = GSON.toJson(jsonObject, JsonObject.class).getBytes();
+			byte[] json = GSON.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
 			Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
 

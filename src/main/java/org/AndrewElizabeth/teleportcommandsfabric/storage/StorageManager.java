@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 
 import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -52,8 +53,9 @@ public class StorageManager {
 
 		StorageMigrator();
 
-		FileReader reader = new FileReader(STORAGE_FILE.toFile());
-		STORAGE = GSON.fromJson(reader, StorageClass.class);
+		try (FileReader reader = new FileReader(STORAGE_FILE.toFile())) {
+			STORAGE = GSON.fromJson(reader, StorageClass.class);
+		}
 		if (STORAGE == null) {
 			Constants.LOGGER.warn("Storage file was empty! Initializing storage");
 			STORAGE = new StorageClass();
@@ -69,8 +71,13 @@ public class StorageManager {
 	/// This function checks what version the storage file is and migrates it to the
 	/// current version of the mod.
 	public static void StorageMigrator() throws Exception {
-		FileReader reader = new FileReader(STORAGE_FILE.toFile());
-		JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+		JsonObject jsonObject;
+		try (FileReader reader = new FileReader(STORAGE_FILE.toFile())) {
+			jsonObject = GSON.fromJson(reader, JsonObject.class);
+		}
+		if (jsonObject == null) {
+			jsonObject = new JsonObject();
+		}
 
 		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
@@ -105,11 +112,13 @@ public class StorageManager {
 					}
 				}
 
-				jsonObject.addProperty("version", 1);
 			}
 
+			// Always bump to the latest supported schema version after migrations.
+			jsonObject.addProperty("version", defaultVersion);
+
 			// Save the storage :3
-			byte[] json = GSON.toJson(jsonObject, JsonArray.class).getBytes();
+			byte[] json = GSON.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
 			Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
 
