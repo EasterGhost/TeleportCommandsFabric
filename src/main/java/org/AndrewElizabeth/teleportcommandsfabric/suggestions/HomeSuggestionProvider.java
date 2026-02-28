@@ -34,7 +34,7 @@ public class HomeSuggestionProvider implements SuggestionProvider<CommandSourceS
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting home suggestions! ", e);
-			return null;
+			return builder.buildFuture();
 		}
 	}
 }

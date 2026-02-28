@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.commands.tpa;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -23,11 +24,15 @@ public class tpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 			List<tpa.tpaArrayClass> playerTpaList = tpa.tpaList.stream()
 					.filter(tpa -> Objects.equals(player.getStringUUID(), tpa.RecPlayer))
 					.toList();
+			PlayerList playerList = context.getSource().getServer().getPlayerList();
 
 			for (tpa.tpaArrayClass tpaEntry : playerTpaList) {
+				ServerPlayer requestingPlayer = playerList.getPlayer(UUID.fromString(tpaEntry.InitPlayer));
+				if (requestingPlayer == null) {
+					continue;
+				}
 
-				Optional<String> recPlayerName = Optional.ofNullable(context.getSource().getServer().getPlayerList()
-						.getPlayer(UUID.fromString(tpaEntry.InitPlayer)).getName().getString());
+				Optional<String> recPlayerName = Optional.ofNullable(requestingPlayer.getName().getString());
 
 				if (recPlayerName.isPresent()) {
 					builder.suggest(recPlayerName.get());
@@ -38,7 +43,7 @@ public class tpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting tpa suggestions! ", e);
-			return null;
+			return builder.buildFuture();
 		}
 	}
 }
