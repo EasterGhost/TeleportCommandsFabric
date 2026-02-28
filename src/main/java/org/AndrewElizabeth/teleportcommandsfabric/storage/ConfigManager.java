@@ -4,7 +4,7 @@ import com.google.gson.*;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 
-import java.io.FileReader;
+import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +41,7 @@ public class ConfigManager {
 
 		ConfigMigrator();
 
-		try (FileReader reader = new FileReader(CONFIG_FILE.toFile())) {
+		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
 			CONFIG = GSON.fromJson(reader, ConfigClass.class);
 		}
 		if (CONFIG == null) {
@@ -58,7 +58,7 @@ public class ConfigManager {
 	/// current version of the mod.
 	public static void ConfigMigrator() throws Exception {
 		JsonObject jsonObject;
-		try (FileReader reader = new FileReader(CONFIG_FILE.toFile())) {
+		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
 			jsonObject = GSON.fromJson(reader, JsonObject.class);
 		}
 		if (jsonObject == null) {
