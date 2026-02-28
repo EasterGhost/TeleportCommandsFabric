@@ -306,7 +306,7 @@ public class tools {
 	}
 
 	public static String getDimensionId(ResourceKey<Level> dimensionKey) {
-		// ResourceKey#location() missing in this mapping; parse id from toString form
+		// ResourceKey#location() is unavailable in this mapping; normalize from toString.
 		String raw = dimensionKey.toString();
 		int splitIndex = raw.indexOf("/ ");
 		if (splitIndex >= 0 && raw.endsWith("]")) {
