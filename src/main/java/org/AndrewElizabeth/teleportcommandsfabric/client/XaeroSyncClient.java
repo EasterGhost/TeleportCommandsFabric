@@ -16,10 +16,13 @@ import net.minecraft.client.Minecraft;
 @Environment(EnvType.CLIENT)
 public final class XaeroSyncClient {
 	private static final String WORLD_MAP_SCREEN_CLASS = "xaero.map.gui.GuiMap";
-	private static final long REQUEST_COOLDOWN_MS = 5000L;
+	private static final long REQUEST_COOLDOWN_MS = Constants.SYNC_INTERVAL_MS;
+	private static final int JOIN_REQUEST_DELAY_TICKS = 40;
 	private static boolean initialized;
 	private static boolean xaeroAvailable;
 	private static boolean wasWorldMapOpen;
+	private static boolean pendingJoinSyncRequest;
+	private static int ticksSinceJoin;
 	private static long lastRequestMs;
 	private static XaeroSyncPayload pendingPayload;
 
@@ -45,21 +48,21 @@ public final class XaeroSyncClient {
 					Constants.LOGGER.info("Xaero sync payload received (warps: {}, homes: {}).",
 							pendingPayload.warps().size(),
 							pendingPayload.homes().size());
-					if (XaeroCompat.applySyncPayload(pendingPayload)) {
-						pendingPayload = null;
-						Constants.LOGGER.info("Xaero sync payload applied.");
-					}
 				}));
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 			if (!xaeroAvailable) {
 				return;
 			}
-			sendSyncRequest();
+			pendingJoinSyncRequest = true;
+			ticksSinceJoin = 0;
+			wasWorldMapOpen = false;
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			wasWorldMapOpen = false;
+			pendingJoinSyncRequest = false;
+			ticksSinceJoin = 0;
 			lastRequestMs = 0L;
 			pendingPayload = null;
 		});
@@ -75,6 +78,14 @@ public final class XaeroSyncClient {
 			return;
 		}
 
+		if (pendingJoinSyncRequest) {
+			ticksSinceJoin++;
+			if (ticksSinceJoin >= JOIN_REQUEST_DELAY_TICKS) {
+				sendSyncRequest();
+				pendingJoinSyncRequest = false;
+			}
+		}
+
 		boolean worldMapOpen = client.screen != null
 				&& WORLD_MAP_SCREEN_CLASS.equals(client.screen.getClass().getName());
 
@@ -82,9 +93,15 @@ public final class XaeroSyncClient {
 			sendSyncRequest();
 		}
 
-		if (pendingPayload != null && XaeroCompat.applySyncPayload(pendingPayload)) {
-			pendingPayload = null;
-			Constants.LOGGER.info("Xaero sync payload applied after retry.");
+		if (pendingPayload != null) {
+			try {
+				if (XaeroCompat.applySyncPayload(pendingPayload)) {
+					pendingPayload = null;
+					Constants.LOGGER.info("Xaero sync payload applied.");
+				}
+			} catch (Throwable throwable) {
+				Constants.LOGGER.error("Xaero sync apply failed; deferring retry.", throwable);
+			}
 		}
 
 		wasWorldMapOpen = worldMapOpen;
