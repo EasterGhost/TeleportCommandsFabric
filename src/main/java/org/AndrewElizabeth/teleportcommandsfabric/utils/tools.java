@@ -9,6 +9,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManage
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
@@ -32,6 +35,12 @@ import static org.AndrewElizabeth.teleportcommandsfabric.Constants.ASSETS_ID;
 import static net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT;
 
 public class tools {
+	private static final ScheduledExecutorService TELEPORT_SCHEDULER = Executors.newSingleThreadScheduledExecutor(
+			runnable -> {
+				Thread thread = new Thread(runnable, "teleportcommands-teleport-delay");
+				thread.setDaemon(true);
+				return thread;
+			});
 
 	private static final Set<String> unsafeCollisionFreeBlocks = Set.of("block.minecraft.lava",
 			"block.minecraft.flowing_lava", "block.minecraft.end_portal", "block.minecraft.end_gateway",
@@ -80,11 +89,19 @@ public class tools {
 						.withStyle(ChatFormatting.YELLOW),
 				true);
 
-		// Use server scheduler for delay
-		Timer timer = new Timer();
-		timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
+		TELEPORT_SCHEDULER.schedule(() -> {
+			// Fast-fail off the server thread to avoid queueing unnecessary tasks.
+			if (!TeleportCooldownManager.isScheduledTeleportValid(uuid, teleportId)) {
+				return; // Cancelled/replaced
+			}
+			if (player.hasDisconnected()) {
+				TeleportCooldownManager.cancelScheduledTeleport(uuid);
+				return;
+			}
+			if (TeleportCommands.SERVER == null) {
+				return;
+			}
+			TeleportCommands.SERVER.execute(() -> {
 				// Check if teleport is still valid (not cancelled)
 				if (!TeleportCooldownManager.isScheduledTeleportValid(uuid, teleportId)) {
 					return; // Cancelled
@@ -100,8 +117,8 @@ public class tools {
 				Teleporter(player, world, coords);
 				TeleportCooldownManager.updateLastTeleportTime(uuid);
 				TeleportCooldownManager.cancelScheduledTeleport(uuid);
-			}
-		}, delay * 1000L);
+			});
+		}, delay, TimeUnit.SECONDS);
 
 		return true;
 	}
@@ -110,6 +127,8 @@ public class tools {
 	 * Immediate teleport without any checks (for internal use or admin commands)
 	 */
 	public static void Teleporter(ServerPlayer player, ServerLevel world, Vec3 coords) {
+		boolean crossDimension = player.level() != world;
+
 		// teleportation effects & sounds before teleporting
 		world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 1, player.getZ(), 20, 0.0D, 0.0D,
 				0.0D, 0.01);
@@ -134,19 +153,31 @@ public class tools {
 		world.playSound(null, player.blockPosition(), SoundEvent.createVariableRangeEvent(ENDERMAN_TELEPORT.location()),
 				SoundSource.PLAYERS, 0.4f, 1.0f);
 
-		// delay visual effects so the player can see it when switching dimensions
-		Timer timer = new Timer();
-		timer.schedule(
-				new TimerTask() {
-					@Override
-					public void run() {
-						world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
-								0.0D, 1.0D, 0.0D, 0.01);
-						world.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
-								0.0D, 0.0D, 0.0D, 0.03);
-					}
-				}, 100 // hopefully a good delay, ~ 2 ticks
-		);
+		// Avoid scheduling extra work for same-dimension teleports.
+		if (!crossDimension) {
+			world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
+					0.0D, 1.0D, 0.0D, 0.01);
+			world.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
+					0.0D, 0.0D, 0.0D, 0.03);
+			return;
+		}
+
+		// Delay visual effects so the player can see it when switching dimensions.
+		TELEPORT_SCHEDULER.schedule(() -> {
+			if (TeleportCommands.SERVER == null) {
+				return;
+			}
+			TeleportCommands.SERVER.execute(() -> {
+				if (player.hasDisconnected() || !(player.level() instanceof ServerLevel currentWorld)) {
+					return;
+				}
+
+				currentWorld.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
+						0.0D, 1.0D, 0.0D, 0.01);
+				currentWorld.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
+						0.0D, 0.0D, 0.0D, 0.03);
+			});
+		}, 100, TimeUnit.MILLISECONDS);
 	}
 
 	// checks a 7x7x7 location around the player in order to find a safe place to
