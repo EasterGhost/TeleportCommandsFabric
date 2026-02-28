@@ -202,7 +202,7 @@ public class warp {
 	}
 
 	private static void SetWarp(ServerPlayer player, String warpName) throws Exception {
-		System.out.println(warpName);
+		// System.out.println(warpName);
 		warpName = warpName.toLowerCase();
 
 		BlockPos blockPos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
