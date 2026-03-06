@@ -46,13 +46,13 @@ public class TeleportCommands implements ModInitializer {
 	// initialize commands, also allows me to easily disable any when there is a
 	// config
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+		admin.register(dispatcher);
 		back.register(dispatcher);
 		home.register(dispatcher);
 		tpa.register(dispatcher);
 		warp.register(dispatcher);
 		worldspawn.register(dispatcher);
 		rtp.register(dispatcher);
-		main.register(dispatcher);
 	}
 
 	// Runs when the playerDeath mixin calls it, updates the /back command position

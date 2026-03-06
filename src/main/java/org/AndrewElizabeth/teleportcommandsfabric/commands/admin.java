@@ -15,34 +15,51 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
-import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
-public class main {
+public class admin {
 
-	private static final String[] available_commands = {
-			"back",
-			"home",
-			"tpa",
-			"warp",
-			"worldspawn",
-			"rtp"
-	};
+	private static final Map<String, ModuleToggle> MODULE_TOGGLES = new LinkedHashMap<>();
 
-	// sum lists
-	private static final String[] enabled_commands = available_commands;
-	private static final String[] disabled_commands = available_commands;
+	static {
+		MODULE_TOGGLES.put("back", new ModuleToggle(
+				enabled -> ConfigManager.CONFIG.getBack().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getBack().isEnabled(),
+				"Back command"));
+		MODULE_TOGGLES.put("home", new ModuleToggle(
+				enabled -> ConfigManager.CONFIG.getHome().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getHome().isEnabled(),
+				"Home command"));
+		MODULE_TOGGLES.put("tpa", new ModuleToggle(
+				enabled -> ConfigManager.CONFIG.getTpa().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getTpa().isEnabled(),
+				"TPA command"));
+		MODULE_TOGGLES.put("warp", new ModuleToggle(
+				enabled -> ConfigManager.CONFIG.getWarp().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getWarp().isEnabled(),
+				"Warp command"));
+		MODULE_TOGGLES.put("worldspawn", new ModuleToggle(
+				enabled -> ConfigManager.CONFIG.getWorldSpawn().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getWorldSpawn().isEnabled(),
+				"WorldSpawn command"));
+		MODULE_TOGGLES.put("rtp", new ModuleToggle(
+				enabled -> ConfigManager.CONFIG.getWild().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getWild().isEnabled(),
+				"RTP command"));
+	}
 
-	// Create sum suggestion providers
 	private static final SuggestionProvider<CommandSourceStack> disabled_commands_suggester = (context,
-			builder) -> SharedSuggestionProvider.suggest(disabled_commands, builder);
+			builder) -> SharedSuggestionProvider.suggest(getModuleNamesByState(false), builder);
 	private static final SuggestionProvider<CommandSourceStack> enabled_commands_suggester = (context,
-			builder) -> SharedSuggestionProvider.suggest(enabled_commands, builder);
+			builder) -> SharedSuggestionProvider.suggest(getModuleNamesByState(true), builder);
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 
 		dispatcher.register(Commands.literal("teleportcommands")
 				.then(Commands.literal("config")
-						.requires(main::isOpOrConsole)
+						.requires(admin::isOpOrConsole)
 						// --- Teleporting Config ---
 						.then(Commands.literal("teleporting")
 								.then(Commands.literal("delay")
@@ -208,179 +225,39 @@ public class main {
 																		.getInteger(context, "blocks")),
 														"RTP radius set to "
 																+ IntegerArgumentType
-																		.getInteger(context, "blocks"))))))
-						.then(Commands.literal("reload")
-								.requires(main::isOpOrConsole)
-								.executes(context -> {
-									try {
-										ConfigManager.ConfigLoader();
-									} catch (Exception e) {
-										Constants.LOGGER.error("Failed to reload config!", e);
-										throw new SimpleCommandExceptionType(
-												Component.literal(e.toString()))
-												.create();
-									}
-									context.getSource()
-											.sendSuccess(() -> Component.literal(
-													"Config reloaded successfully"),
-													true);
-									return 0;
-								}))
-						.then(Commands.literal("disable")
-								.then(Commands.argument("command", StringArgumentType.word())
-										.suggests(enabled_commands_suggester)
-										.requires(main::isOpOrConsole)
-										.executes(context -> {
-											final String string = StringArgumentType
-													.getString(context, "command");
-
-											if (!Arrays.asList(enabled_commands)
-													.contains(string)) {
-												throw new SimpleCommandExceptionType(
-														Component.literal("\""
-																+ string
-																+ "\" is not available as a command!")
-																.withStyle(ChatFormatting.RED,
-																		ChatFormatting.BOLD))
-														.create();
-											}
-
-											try {
-												return switch (string) {
-													case "back" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getBack()
-																	.setEnabled(false),
-															"Back command: disabled");
-													case "home" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getHome()
-																	.setEnabled(false),
-															"Home command: disabled");
-													case "tpa" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getTpa()
-																	.setEnabled(false),
-															"TPA command: disabled");
-													case "warp" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getWarp()
-																	.setEnabled(false),
-															"Warp command: disabled");
-													case "worldspawn" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getWorldSpawn()
-																	.setEnabled(false),
-															"WorldSpawn command: disabled");
-													case "rtp" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getWild()
-																	.setEnabled(false),
-															"RTP command: disabled");
-													default ->
-														throw new SimpleCommandExceptionType(
-																Component.literal(
-																		"Unknown command: "
-																				+ string))
-																.create();
-												};
-											} catch (Exception e) {
-												Constants.LOGGER.error(
-														"Error while disabling a command! => ",
-														e);
-												throw new SimpleCommandExceptionType(
-														Component.literal(
-																"Error: " + e.getMessage())
-																.withStyle(ChatFormatting.RED))
-														.create();
-											}
-										})))
-						.then(Commands.literal("enable")
-								.then(Commands.argument("command", StringArgumentType.word())
-										.suggests(disabled_commands_suggester)
-										.requires(main::isOpOrConsole)
-										.executes(context -> {
-											final String string = StringArgumentType
-													.getString(context, "command");
-
-											if (!Arrays.asList(disabled_commands)
-													.contains(string)) {
-												throw new SimpleCommandExceptionType(
-														Component.literal("\""
-																+ string
-																+ "\" is not available as a command!")
-																.withStyle(ChatFormatting.RED,
-																		ChatFormatting.BOLD))
-														.create();
-											}
-
-											try {
-												return switch (string) {
-													case "back" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getBack()
-																	.setEnabled(true),
-															"Back command: enabled");
-													case "home" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getHome()
-																	.setEnabled(true),
-															"Home command: enabled");
-													case "tpa" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getTpa()
-																	.setEnabled(true),
-															"TPA command: enabled");
-													case "warp" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getWarp()
-																	.setEnabled(true),
-															"Warp command: enabled");
-													case "worldspawn" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getWorldSpawn()
-																	.setEnabled(true),
-															"WorldSpawn command: enabled");
-													case "rtp" -> setAndSave(
-															context,
-															() -> ConfigManager.CONFIG
-																	.getWild()
-																	.setEnabled(true),
-															"RTP command: enabled");
-													default ->
-														throw new SimpleCommandExceptionType(
-																Component.literal(
-																		"Unknown command: "
-																				+ string))
-																.create();
-												};
-											} catch (Exception e) {
-												Constants.LOGGER.error(
-														"Error while enabling a command! => ",
-														e);
-												throw new SimpleCommandExceptionType(
-														Component.literal(
-																"Error: " + e.getMessage())
-																.withStyle(ChatFormatting.RED))
-														.create();
-											}
-										})))
-						.then(Commands.literal("help")
-								.executes(context -> {
-									context.getSource().sendSuccess(main::printCommands, false);
-									return 0;
-								}))));
+																		.getInteger(context, "blocks")))))))
+				.then(Commands.literal("reload")
+						.requires(admin::isOpOrConsole)
+						.executes(context -> {
+							try {
+								ConfigManager.ConfigLoader();
+							} catch (Exception e) {
+								Constants.LOGGER.error("Failed to reload config!", e);
+								throw new SimpleCommandExceptionType(
+										Component.literal(e.toString()))
+										.create();
+							}
+							context.getSource()
+									.sendSuccess(() -> Component.literal(
+											"Config reloaded successfully"),
+											true);
+							return 0;
+						}))
+				.then(Commands.literal("disable")
+						.then(Commands.argument("command", StringArgumentType.word())
+								.suggests(enabled_commands_suggester)
+								.requires(admin::isOpOrConsole)
+								.executes(context -> toggleModule(context, false))))
+				.then(Commands.literal("enable")
+						.then(Commands.argument("command", StringArgumentType.word())
+								.suggests(disabled_commands_suggester)
+								.requires(admin::isOpOrConsole)
+								.executes(context -> toggleModule(context, true))))
+				.then(Commands.literal("help")
+						.executes(context -> {
+							context.getSource().sendSuccess(admin::printCommands, false);
+							return 0;
+						})));
 	}
 
 	// -----
@@ -403,6 +280,43 @@ public class main {
 		}
 	}
 
+	private static int toggleModule(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
+			boolean enabled) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		final String moduleName = StringArgumentType.getString(context, "command");
+		final ModuleToggle module = MODULE_TOGGLES.get(moduleName);
+
+		if (module == null) {
+			throw new SimpleCommandExceptionType(
+					Component.literal("\"" + moduleName + "\" is not available as a command!")
+							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD))
+					.create();
+		}
+
+		try {
+			return setAndSave(
+					context,
+					() -> module.setter().accept(enabled),
+					module.label() + ": " + (enabled ? "enabled" : "disabled"));
+		} catch (Exception e) {
+			Constants.LOGGER.error(
+					"Error while {} a command! => ",
+					enabled ? "enabling" : "disabling",
+					e);
+			throw new SimpleCommandExceptionType(
+					Component.literal("Error: " + e.getMessage())
+							.withStyle(ChatFormatting.RED))
+					.create();
+		}
+	}
+
+	private static Iterable<String> getModuleNamesByState(boolean enabled) {
+		return MODULE_TOGGLES.entrySet()
+				.stream()
+				.filter(entry -> entry.getValue().isEnabled().getAsBoolean() == enabled)
+				.map(Map.Entry::getKey)
+				.toList();
+	}
+
 	private static MutableComponent printCommands() {
 		MutableComponent message = Component.empty();
 
@@ -421,5 +335,8 @@ public class main {
 	private static boolean isOpOrConsole(CommandSourceStack source) {
 		// Use command source permission level (console usually level 4)
 		return source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
+	}
+
+	private record ModuleToggle(Consumer<Boolean> setter, java.util.function.BooleanSupplier isEnabled, String label) {
 	}
 }
