@@ -1,0 +1,48 @@
+package org.AndrewElizabeth.teleportcommandsfabric.commands.admin;
+
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
+
+final class AdminMessages {
+
+	private AdminMessages() {
+	}
+
+	static MutableComponent t(CommandSourceStack source, String key, MutableComponent... args) {
+		ServerPlayer player = source.getPlayer();
+		return player != null ? getTranslatedText(key, player, args) : getTranslatedText(key, "en_us", args);
+	}
+
+	static MutableComponent intArg(CommandContext<CommandSourceStack> context, String argName) {
+		return Component.literal(String.valueOf(
+				com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, argName)));
+	}
+
+	static int setAndSave(
+			CommandContext<CommandSourceStack> context,
+			Runnable setter,
+			MutableComponent message) throws CommandSyntaxException {
+		try {
+			setter.run();
+			ConfigManager.saveConfigChanges();
+			context.getSource().sendSuccess(() -> message.copy().withStyle(ChatFormatting.GREEN), true);
+			return 0;
+		} catch (Exception e) {
+			Constants.LOGGER.error("Failed to save config!", e);
+			throw new com.mojang.brigadier.exceptions.SimpleCommandExceptionType(
+					t(context.getSource(),
+							"commands.teleport_commands.admin.save.error",
+							Component.literal(e.getMessage())).withStyle(ChatFormatting.RED))
+					.create();
+		}
+	}
+}

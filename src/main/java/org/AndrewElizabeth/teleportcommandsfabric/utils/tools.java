@@ -230,6 +230,11 @@ public class tools {
 	public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player,
 			MutableComponent... args) {
 		String language = player.clientInformation().language().toLowerCase();
+		return getTranslatedText(key, language, args);
+	}
+
+	public static @NotNull MutableComponent getTranslatedText(String key, String language,
+			MutableComponent... args) {
 		String regex = "%(\\d+)%";
 		Pattern pattern = Pattern.compile(regex);
 

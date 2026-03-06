@@ -3,11 +3,13 @@ package org.AndrewElizabeth.teleportcommandsfabric;
 import com.mojang.brigadier.CommandDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.admin.AdminCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
 import org.AndrewElizabeth.teleportcommandsfabric.xaero.XaeroSyncServer;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,7 +48,7 @@ public class TeleportCommands implements ModInitializer {
 	// initialize commands, also allows me to easily disable any when there is a
 	// config
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-		admin.register(dispatcher);
+		AdminCommands.register(dispatcher);
 		back.register(dispatcher);
 		home.register(dispatcher);
 		tpa.register(dispatcher);
