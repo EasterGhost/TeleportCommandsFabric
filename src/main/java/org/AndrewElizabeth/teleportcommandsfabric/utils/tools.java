@@ -23,18 +23,27 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.Ticket;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.Constants.ASSETS_ID;
 import static net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT;
 
 public class tools {
+	private static final TicketType PRELOAD_TICKET_TYPE = new TicketType(
+			2L,
+			TicketType.FLAG_LOADING | TicketType.FLAG_CAN_EXPIRE_IF_UNLOADED);
+	private static final int PRELOAD_TICKET_LEVEL = 31;
+	private static final long ONE_TICK_MS = 50L;
+
 	private static final ScheduledExecutorService TELEPORT_SCHEDULER = Executors.newSingleThreadScheduledExecutor(
 			runnable -> {
 				Thread thread = new Thread(runnable, "teleportcommands-teleport-delay");
@@ -75,7 +84,7 @@ public class tools {
 
 		// If no delay or bypassed, teleport immediately
 		if (delay == 0 || bypassDelay) {
-			Teleporter(player, world, coords);
+			teleportWithManagedPreload(player, world, coords);
 			TeleportCooldownManager.updateLastTeleportTime(uuid);
 			return true;
 		}
@@ -114,13 +123,56 @@ public class tools {
 				}
 
 				// Execute teleport
-				Teleporter(player, world, coords);
+				teleportWithManagedPreload(player, world, coords);
 				TeleportCooldownManager.updateLastTeleportTime(uuid);
 				TeleportCooldownManager.cancelScheduledTeleport(uuid);
 			});
 		}, delay, TimeUnit.SECONDS);
 
 		return true;
+	}
+
+	private static void teleportWithManagedPreload(ServerPlayer player, ServerLevel world, Vec3 coords) {
+		ConfigManager.ConfigClass.Teleporting teleportConfig = ConfigManager.CONFIG.getTeleporting();
+		boolean preloadEnabled = teleportConfig.isPreloadEnabled();
+		int radiusChunks = Math.max(0, teleportConfig.getPreloadRadiusChunks());
+		if (!preloadEnabled) {
+			Teleporter(player, world, coords);
+			return;
+		}
+
+		List<ChunkPos> chunks = collectChunkSquare(BlockPos.containing(coords), radiusChunks);
+		issuePreloadTickets(world, chunks); // tick N-1 (one tick before teleport)
+
+		TELEPORT_SCHEDULER.schedule(() -> {
+			if (TeleportCommands.SERVER == null) {
+				return;
+			}
+			TeleportCommands.SERVER.execute(() -> {
+				if (player.hasDisconnected()) {
+					return;
+				}
+				Teleporter(player, world, coords);
+			});
+		}, ONE_TICK_MS, TimeUnit.MILLISECONDS);
+	}
+
+	private static List<ChunkPos> collectChunkSquare(BlockPos centerPos, int radiusChunks) {
+		ChunkPos center = new ChunkPos(centerPos);
+		List<ChunkPos> result = new ArrayList<>((radiusChunks * 2 + 1) * (radiusChunks * 2 + 1));
+		for (int dx = -radiusChunks; dx <= radiusChunks; dx++) {
+			for (int dz = -radiusChunks; dz <= radiusChunks; dz++) {
+				result.add(new ChunkPos(center.x + dx, center.z + dz));
+			}
+		}
+		return result;
+	}
+
+	private static void issuePreloadTickets(ServerLevel world, List<ChunkPos> chunks) {
+		for (ChunkPos chunk : chunks) {
+			world.getChunkSource().addTicket(new Ticket(PRELOAD_TICKET_TYPE, PRELOAD_TICKET_LEVEL), chunk);
+			world.getChunk(chunk.x, chunk.z);
+		}
 	}
 
 	/**

@@ -164,6 +164,8 @@ public class ConfigManager {
 		public static final class Teleporting {
 			private int delay = 5;
 			private int cooldown = 5;
+			private boolean preloadEnabled = true;
+			private int preloadRadiusChunks = 1;
 
 			public int getDelay() {
 				return delay;
@@ -179,6 +181,22 @@ public class ConfigManager {
 
 			public void setCooldown(int cooldown) {
 				this.cooldown = cooldown;
+			}
+
+			public boolean isPreloadEnabled() {
+				return preloadEnabled;
+			}
+
+			public void setPreloadEnabled(boolean preloadEnabled) {
+				this.preloadEnabled = preloadEnabled;
+			}
+
+			public int getPreloadRadiusChunks() {
+				return preloadRadiusChunks;
+			}
+
+			public void setPreloadRadiusChunks(int preloadRadiusChunks) {
+				this.preloadRadiusChunks = preloadRadiusChunks;
 			}
 		}
 
