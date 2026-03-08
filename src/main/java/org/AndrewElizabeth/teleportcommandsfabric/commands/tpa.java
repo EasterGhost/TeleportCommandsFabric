@@ -175,7 +175,7 @@ public class tpa {
 							} catch (Exception e) {
 								Constants.LOGGER.error("Error while denying a tpa(here) request! => ", e);
 								player.displayClientMessage(
-										getTranslatedText("commands.teleport_commands.home.setError", player)
+										getTranslatedText("commands.teleport_commands.common.error", player)
 												.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
 										true);
 								return 1;
@@ -203,7 +203,7 @@ public class tpa {
 									} catch (Exception e) {
 										Constants.LOGGER.error("Error while denying a tpa(here) request! => ", e);
 										player.displayClientMessage(
-												getTranslatedText("commands.teleport_commands.home.setError", player)
+												getTranslatedText("commands.teleport_commands.common.error", player)
 														.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
 												true);
 										return 1;
@@ -385,7 +385,8 @@ public class tpa {
 		}
 	}
 
-	private static void expireRequest(tpaArrayClass request, ServerPlayer fromPlayer, ServerPlayer toPlayer, String hereText) {
+	private static void expireRequest(tpaArrayClass request, ServerPlayer fromPlayer, ServerPlayer toPlayer,
+			String hereText) {
 		requestExpiryTasks.remove(request.RequestId);
 
 		boolean successful = tpaList.remove(request);
