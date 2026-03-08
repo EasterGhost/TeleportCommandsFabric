@@ -7,10 +7,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -85,7 +87,12 @@ public class rtp {
 	}
 
 	private static int enqueueRandomTeleport(ServerPlayer player, int radius) {
-		SEARCH_JOBS.put(player.getUUID(), new RtpSearchJob(player, player.blockPosition().immutable(), radius, MAX_ATTEMPTS));
+		SEARCH_JOBS.put(player.getUUID(), new RtpSearchJob(
+				player,
+				player.blockPosition().immutable(),
+				player.level().dimension(),
+				radius,
+				MAX_ATTEMPTS));
 		return 0;
 	}
 
@@ -101,10 +108,15 @@ public class rtp {
 				SEARCH_JOBS.remove(uuid);
 				continue;
 			}
+			if (!player.level().dimension().equals(job.centerDimension())) {
+				SEARCH_JOBS.remove(uuid);
+				continue;
+			}
 
 			ServerLevel world = player.level();
 			int budget = Math.min(ATTEMPTS_PER_TICK, job.remainingAttempts());
-			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.random, budget);
+			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.random,
+					budget);
 			if (safePos.isPresent()) {
 				BlockPos blockPos = safePos.get();
 				Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
@@ -124,7 +136,12 @@ public class rtp {
 				continue;
 			}
 
-			SEARCH_JOBS.put(uuid, new RtpSearchJob(player, job.center(), job.radius(), remaining));
+			SEARCH_JOBS.put(uuid, new RtpSearchJob(
+					player,
+					job.center(),
+					job.centerDimension(),
+					job.radius(),
+					remaining));
 		}
 	}
 
@@ -193,6 +210,11 @@ public class rtp {
 		return feetState.isAir() && headState.isAir() && headTopState.isAir();
 	}
 
-	private record RtpSearchJob(ServerPlayer player, BlockPos center, int radius, int remainingAttempts) {
+	private record RtpSearchJob(
+			ServerPlayer player,
+			BlockPos center,
+			ResourceKey<Level> centerDimension,
+			int radius,
+			int remainingAttempts) {
 	}
 }
