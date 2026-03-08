@@ -29,7 +29,7 @@ import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslat
 public class rtp {
 
 	private static final int MAX_ATTEMPTS = 4096;
-	private static final int ATTEMPTS_PER_TICK = 32;
+	private static final int ATTEMPTS_PER_TICK = 256;
 	private static final Map<UUID, RtpSearchJob> SEARCH_JOBS = new ConcurrentHashMap<>();
 	private static boolean tickHookRegistered = false;
 
