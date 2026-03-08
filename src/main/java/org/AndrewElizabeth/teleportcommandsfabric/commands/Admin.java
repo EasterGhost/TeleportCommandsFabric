@@ -51,8 +51,8 @@ public class Admin {
 				() -> ConfigManager.CONFIG.getWorldSpawn().isEnabled(),
 				"commands.teleport_commands.admin.module.worldspawn"));
 		MODULE_TOGGLES.put("rtp", new ModuleToggle(
-				enabled -> ConfigManager.CONFIG.getWild().setEnabled(enabled),
-				() -> ConfigManager.CONFIG.getWild().isEnabled(),
+				enabled -> ConfigManager.CONFIG.getRtp().setEnabled(enabled),
+				() -> ConfigManager.CONFIG.getRtp().isEnabled(),
 				"commands.teleport_commands.admin.module.rtp"));
 		MODULE_TOGGLES.put("xaero", new ModuleToggle(
 				enabled -> ConfigManager.CONFIG.getXaero().setEnabled(enabled),
@@ -213,7 +213,7 @@ public class Admin {
 														.argument("blocks", IntegerArgumentType.integer(1))
 														.executes(context -> setAndSave(
 																context,
-																() -> ConfigManager.CONFIG.getWild()
+																() -> ConfigManager.CONFIG.getRtp()
 																		.setRadius(IntegerArgumentType
 																				.getInteger(context, "blocks")),
 																translate(context.getSource(),
@@ -232,7 +232,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.xaero.syncIntervalSeconds",
 																		argInt(context, "seconds"))))))))
-						// Admin subcommands reload / enable / disable / help
+					// Admin subcommands reload / enable / disable / help
 						.then(Commands.literal("reload")
 								.requires(Admin::isOpOrConsole)
 								.executes(context -> {

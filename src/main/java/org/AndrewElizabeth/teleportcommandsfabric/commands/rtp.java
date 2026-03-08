@@ -35,7 +35,7 @@ public class rtp {
 				.executes(context -> {
 					final ServerPlayer player = context.getSource().getPlayerOrException();
 
-					if (!ConfigManager.CONFIG.getWild().isEnabled()) {
+					if (!ConfigManager.CONFIG.getRtp().isEnabled()) {
 						player.displayClientMessage(
 								getTranslatedText("commands.teleport_commands.rtp.disabled", player)
 										.withStyle(ChatFormatting.RED),
@@ -43,7 +43,7 @@ public class rtp {
 						return 1;
 					}
 
-					int radius = ConfigManager.CONFIG.getWild().getRadius();
+					int radius = ConfigManager.CONFIG.getRtp().getRadius();
 					if (radius < 1) {
 						player.displayClientMessage(
 								getTranslatedText("commands.teleport_commands.rtp.invalidRadius", player)

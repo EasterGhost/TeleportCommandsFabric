@@ -123,7 +123,7 @@ public final class AdminCommands {
 						"radius",
 						"blocks",
 						1,
-						value -> ConfigManager.CONFIG.getWild().setRadius(value),
+						value -> ConfigManager.CONFIG.getRtp().setRadius(value),
 						"commands.teleport_commands.admin.config.rtp.radius"));
 	}
 

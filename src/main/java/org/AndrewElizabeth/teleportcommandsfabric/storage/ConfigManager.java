@@ -70,8 +70,11 @@ public class ConfigManager {
 		if (version < defaultVersion) {
 			Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
 
-			// Add any necessary migrations here based on version
-			// For now, no migrations needed
+			// Rename legacy "wild" section to "rtp" if needed.
+			if (jsonObject.has("wild") && !jsonObject.has("rtp")) {
+				jsonObject.add("rtp", jsonObject.get("wild"));
+				jsonObject.remove("wild");
+			}
 
 			// Always bump to the latest supported schema version after migrations.
 			jsonObject.addProperty("version", defaultVersion);
@@ -108,14 +111,14 @@ public class ConfigManager {
 	}
 
 	public static class ConfigClass {
-		private final int version = 1;
+		private final int version = Constants.CONFIG_VERSION;
 		public Teleporting teleporting = new Teleporting();
 		public Back back = new Back();
 		public Home home = new Home();
 		public Tpa tpa = new Tpa();
 		public Warp warp = new Warp();
 		public WorldSpawn worldSpawn = new WorldSpawn();
-		public Wild wild = new Wild();
+		public Rtp rtp = new Rtp();
 		public Xaero xaero = new Xaero();
 
 		public int getVersion() {
@@ -148,8 +151,8 @@ public class ConfigManager {
 			return worldSpawn;
 		}
 
-		public Wild getWild() {
-			return wild;
+		public Rtp getRtp() {
+			return rtp;
 		}
 
 		public Xaero getXaero() {
@@ -281,7 +284,7 @@ public class ConfigManager {
 			}
 		}
 
-		public final class Wild {
+		public final class Rtp {
 			private boolean enabled = true;
 			private int radius = 500;
 

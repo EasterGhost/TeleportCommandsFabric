@@ -37,8 +37,8 @@ final class AdminModuleRegistry {
 				() -> ConfigManager.CONFIG.getWorldSpawn().isEnabled(),
 				"commands.teleport_commands.admin.module.worldspawn"));
 		MODULES.put("rtp", new ModuleToggle(
-				value -> ConfigManager.CONFIG.getWild().setEnabled(value),
-				() -> ConfigManager.CONFIG.getWild().isEnabled(),
+				value -> ConfigManager.CONFIG.getRtp().setEnabled(value),
+				() -> ConfigManager.CONFIG.getRtp().isEnabled(),
 				"commands.teleport_commands.admin.module.rtp"));
 		MODULES.put("xaero", new ModuleToggle(
 				value -> ConfigManager.CONFIG.getXaero().setEnabled(value),
