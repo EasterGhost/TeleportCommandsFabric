@@ -44,7 +44,8 @@ public class rtp {
 					}
 
 					int radius = ConfigManager.CONFIG.getRtp().getRadius();
-					if (radius < 1) {
+					if (radius < ConfigManager.ConfigClass.Rtp.MIN_RADIUS
+							|| radius > ConfigManager.ConfigClass.Rtp.MAX_RADIUS) {
 						player.displayClientMessage(
 								getTranslatedText("commands.teleport_commands.rtp.invalidRadius", player)
 										.withStyle(ChatFormatting.RED),
@@ -88,8 +89,14 @@ public class rtp {
 			RandomSource random) {
 		int minY = world.getMinY() + 1;
 		int maxY = world.getMaxY() - 2;
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos headPos = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos headTopPos = new BlockPos.MutableBlockPos();
+		int[] offset = new int[3];
+
 		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-			int[] offset = randomOffsetInSphere(random, radius);
+			fillRandomOffsetInSphere(random, radius, offset);
 			int x = center.getX() + offset[0];
 			int y = center.getY() + offset[1];
 			int z = center.getZ() + offset[2];
@@ -98,40 +105,46 @@ public class rtp {
 				continue;
 			}
 
-			BlockPos pos = new BlockPos(x, y, z);
-			if (isSafeTeleportPos(world, pos)) {
-				return Optional.of(pos);
+			pos.set(x, y, z);
+			if (isSafeTeleportPos(world, pos, belowPos, headPos, headTopPos)) {
+				return Optional.of(pos.immutable());
 			}
 		}
 
 		return Optional.empty();
 	}
 
-	private static int[] randomOffsetInSphere(RandomSource random, int radius) {
+	private static void fillRandomOffsetInSphere(RandomSource random, int radius, int[] offset) {
 		int r2 = radius * radius;
 		while (true) {
 			int x = random.nextInt(radius * 2 + 1) - radius;
 			int y = random.nextInt(radius * 2 + 1) - radius;
 			int z = random.nextInt(radius * 2 + 1) - radius;
 			if (x * x + y * y + z * z <= r2) {
-				return new int[] { x, y, z };
+				offset[0] = x;
+				offset[1] = y;
+				offset[2] = z;
+				return;
 			}
 		}
 	}
 
-	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos) {
-		BlockPos below = pos.below();
-		BlockState belowState = world.getBlockState(below);
+	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos, BlockPos.MutableBlockPos belowPos,
+			BlockPos.MutableBlockPos headPos, BlockPos.MutableBlockPos headTopPos) {
+		belowPos.set(pos.getX(), pos.getY() - 1, pos.getZ());
+		BlockState belowState = world.getBlockState(belowPos);
 		if (belowState.isAir() || !belowState.getFluidState().isEmpty()) {
 			return false;
 		}
-		if (belowState.getCollisionShape(world, below).isEmpty()) {
+		if (belowState.getCollisionShape(world, belowPos).isEmpty()) {
 			return false;
 		}
 
 		BlockState feetState = world.getBlockState(pos);
-		BlockState headState = world.getBlockState(pos.above());
-		BlockState headTopState = world.getBlockState(pos.above(2));
+		headPos.set(pos.getX(), pos.getY() + 1, pos.getZ());
+		BlockState headState = world.getBlockState(headPos);
+		headTopPos.set(pos.getX(), pos.getY() + 2, pos.getZ());
+		BlockState headTopState = world.getBlockState(headTopPos);
 		return feetState.isAir() && headState.isAir() && headTopState.isAir();
 	}
 }

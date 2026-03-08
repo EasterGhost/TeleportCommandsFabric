@@ -122,7 +122,8 @@ public final class AdminCommands {
 				.then(AdminConfigNodeFactory.intNode(
 						"radius",
 						"blocks",
-						1,
+						ConfigManager.ConfigClass.Rtp.MIN_RADIUS,
+						ConfigManager.ConfigClass.Rtp.MAX_RADIUS,
 						value -> ConfigManager.CONFIG.getRtp().setRadius(value),
 						"commands.teleport_commands.admin.config.rtp.radius"));
 	}
