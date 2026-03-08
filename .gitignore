@@ -121,3 +121,6 @@ bin/
 
 # markdownlint config file
 .markdownlint.json
+
+# Ignore Wiki pages
+wiki/
