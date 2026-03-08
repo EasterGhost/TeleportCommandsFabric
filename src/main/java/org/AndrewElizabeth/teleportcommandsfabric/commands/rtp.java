@@ -89,28 +89,10 @@ public class rtp {
 		return 0;
 	}
 
-<<<<<<< HEAD
 	private static void onServerTick(MinecraftServer server) {
 		if (SEARCH_JOBS.isEmpty()) {
 			return;
 		}
-=======
-	private static Optional<BlockPos> findSafeRandomPosition(ServerLevel world, BlockPos center, int radius,
-			RandomSource random) {
-		int minY = world.getMinY() + 1;
-		int maxY = world.getMaxY() - 2;
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
-		BlockPos.MutableBlockPos headPos = new BlockPos.MutableBlockPos();
-		BlockPos.MutableBlockPos headTopPos = new BlockPos.MutableBlockPos();
-		int[] offset = new int[3];
-
-		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-			fillRandomOffsetInSphere(random, radius, offset);
-			int x = center.getX() + offset[0];
-			int y = center.getY() + offset[1];
-			int z = center.getZ() + offset[2];
->>>>>>> 694cee8989c06d509d27e44817af12c3a20ec03a
 
 		for (RtpSearchJob job : new ArrayList<>(SEARCH_JOBS.values())) {
 			ServerPlayer player = job.player();
@@ -120,7 +102,6 @@ public class rtp {
 				continue;
 			}
 
-<<<<<<< HEAD
 			ServerLevel world = player.level();
 			int budget = Math.min(ATTEMPTS_PER_TICK, job.remainingAttempts());
 			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.random, budget);
@@ -184,8 +165,6 @@ public class rtp {
 			}
 			int y = centerY + dy;
 
-=======
->>>>>>> 694cee8989c06d509d27e44817af12c3a20ec03a
 			pos.set(x, y, z);
 			if (isSafeTeleportPos(world, pos, belowPos, headPos, headTopPos)) {
 				return Optional.of(pos.immutable());
@@ -195,24 +174,6 @@ public class rtp {
 		return Optional.empty();
 	}
 
-<<<<<<< HEAD
-=======
-	private static void fillRandomOffsetInSphere(RandomSource random, int radius, int[] offset) {
-		int r2 = radius * radius;
-		while (true) {
-			int x = random.nextInt(radius * 2 + 1) - radius;
-			int y = random.nextInt(radius * 2 + 1) - radius;
-			int z = random.nextInt(radius * 2 + 1) - radius;
-			if (x * x + y * y + z * z <= r2) {
-				offset[0] = x;
-				offset[1] = y;
-				offset[2] = z;
-				return;
-			}
-		}
-	}
-
->>>>>>> 694cee8989c06d509d27e44817af12c3a20ec03a
 	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos, BlockPos.MutableBlockPos belowPos,
 			BlockPos.MutableBlockPos headPos, BlockPos.MutableBlockPos headTopPos) {
 		belowPos.set(pos.getX(), pos.getY() - 1, pos.getZ());
