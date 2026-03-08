@@ -13,15 +13,15 @@ import java.util.stream.StreamSupport;
 public class NamedLocation {
 	private String name;
 	private final int x;
-	private final int y;
+	private final double y;
 	private final int z;
 	private final String world;
 
-	public NamedLocation(String name, BlockPos pos, String world) {
+	public NamedLocation(String name, int x, double y, int z, String world) {
 		this.name = name;
-		this.x = pos.getX();
-		this.y = pos.getY();
-		this.z = pos.getZ();
+		this.x = x;
+		this.y = y;
+		this.z = z;
 		this.world = world;
 	}
 
@@ -32,7 +32,7 @@ public class NamedLocation {
 	}
 
 	public BlockPos getBlockPos() {
-		return new BlockPos(this.x, this.y, this.z);
+		return new BlockPos(this.x, (int) Math.floor(this.y), this.z);
 	}
 
 	public int getX() {
@@ -40,6 +40,10 @@ public class NamedLocation {
 	}
 
 	public int getY() {
+		return (int) Math.floor(this.y);
+	}
+
+	public double getYPrecise() {
 		return this.y;
 	}
 

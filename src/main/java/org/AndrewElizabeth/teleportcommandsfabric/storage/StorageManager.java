@@ -115,6 +115,11 @@ public class StorageManager {
 
 			}
 
+			// In v2.0.0 NamedLocation.y switched to precise double-based storage.
+			if (version < Constants.STORAGE_VERSION) {
+				normalizeNamedLocationYAsDouble(jsonObject);
+			}
+
 			// Always bump to the latest supported schema version after migrations.
 			jsonObject.addProperty("version", defaultVersion);
 
@@ -143,8 +148,45 @@ public class StorageManager {
 				StandardOpenOption.CREATE);
 	}
 
+	private static void normalizeNamedLocationYAsDouble(JsonObject root) {
+		normalizeLocationsArrayY(root.getAsJsonArray("Warps"));
+
+		if (root.has("Players") && root.get("Players").isJsonArray()) {
+			JsonArray players = root.getAsJsonArray("Players");
+			for (JsonElement element : players) {
+				if (!element.isJsonObject()) {
+					continue;
+				}
+				JsonObject player = element.getAsJsonObject();
+				normalizeLocationsArrayY(player.getAsJsonArray("Homes"));
+			}
+		}
+	}
+
+	private static void normalizeLocationsArrayY(JsonArray locations) {
+		if (locations == null) {
+			return;
+		}
+		for (JsonElement element : locations) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+			JsonObject location = element.getAsJsonObject();
+			if (!location.has("y")) {
+				continue;
+			}
+
+			JsonElement yValue = location.get("y");
+			if (!yValue.isJsonPrimitive() || !yValue.getAsJsonPrimitive().isNumber()) {
+				continue;
+			}
+
+			location.addProperty("y", yValue.getAsDouble());
+		}
+	}
+
 	public static class StorageClass {
-		private final int version = 1;
+		private final int version = Constants.STORAGE_VERSION;
 		private final ArrayList<NamedLocation> Warps = new ArrayList<>();
 		private final ArrayList<Player> Players = new ArrayList<>();
 

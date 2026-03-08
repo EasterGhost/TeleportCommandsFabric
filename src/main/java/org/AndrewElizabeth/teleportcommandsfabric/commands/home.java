@@ -236,7 +236,6 @@ public class home {
 	// Adds a new home to the homeList of a player
 	private static void SetHome(ServerPlayer player, String homeName) throws Exception {
 		homeName = homeName.toLowerCase();
-		BlockPos blockPos = player.blockPosition();
 		String worldString = tools.getDimensionId(player.level().dimension());
 
 		// Gets the player's storage and creates it if it doesn't exist
@@ -254,10 +253,15 @@ public class home {
 		}
 
 		// Create the NamedLocation
-		NamedLocation warp = new NamedLocation(homeName, blockPos, worldString);
+		NamedLocation home = new NamedLocation(
+				homeName,
+				player.getBlockX(),
+				player.getY(),
+				player.getBlockZ(),
+				worldString);
 
 		// Adds the home, returns true if the home already exists
-		boolean homeAlreadyExists = playerStorage.addHome(warp);
+		boolean homeAlreadyExists = playerStorage.addHome(home);
 
 		if (homeAlreadyExists) {
 			// Display error message that the home already exists
@@ -358,7 +362,7 @@ public class home {
 
 		} else {
 			// Teleport the player!
-			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
+			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, home.getYPrecise(),
 					teleportBlockPos.getZ() + 0.5);
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);

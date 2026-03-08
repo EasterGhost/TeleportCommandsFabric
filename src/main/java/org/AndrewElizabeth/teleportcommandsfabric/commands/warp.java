@@ -205,11 +205,15 @@ public class warp {
 		// System.out.println(warpName);
 		warpName = warpName.toLowerCase();
 
-		BlockPos blockPos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
 		String worldString = tools.getDimensionId(player.level().dimension());
 
 		// Create the NamedLocation
-		NamedLocation warp = new NamedLocation(warpName, blockPos, worldString);
+		NamedLocation warp = new NamedLocation(
+				warpName,
+				player.getBlockX(),
+				player.getY(),
+				player.getBlockZ(),
+				worldString);
 
 		int maxWarps = ConfigManager.CONFIG.warp.getMaximum();
 		boolean warpAlreadyExists = STORAGE.getWarp(warpName).isPresent();
@@ -291,7 +295,7 @@ public class warp {
 
 		} else {
 			// Teleport the player!
-			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
+			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, warp.getYPrecise(),
 					teleportBlockPos.getZ() + 0.5);
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player),
