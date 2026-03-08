@@ -29,6 +29,21 @@ final class AdminConfigNodeFactory {
 								AdminMessages.t(context.getSource(), messageKey, AdminMessages.intArg(context, argName)))));
 	}
 
+	static LiteralArgumentBuilder<CommandSourceStack> intNode(
+			String literalName,
+			String argName,
+			int min,
+			int max,
+			IntConsumer setter,
+			String messageKey) {
+		return Commands.literal(literalName)
+				.then(Commands.argument(argName, IntegerArgumentType.integer(min, max))
+						.executes(context -> AdminMessages.setAndSave(
+								context,
+								() -> setter.accept(IntegerArgumentType.getInteger(context, argName)),
+								AdminMessages.t(context.getSource(), messageKey, AdminMessages.intArg(context, argName)))));
+	}
+
 	static LiteralArgumentBuilder<CommandSourceStack> boolNode(
 			String literalName,
 			Consumer<Boolean> setter,

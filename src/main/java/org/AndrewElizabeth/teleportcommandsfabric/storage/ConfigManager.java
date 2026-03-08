@@ -303,6 +303,8 @@ public class ConfigManager {
 		}
 
 		public final class Rtp {
+			public static final int MIN_RADIUS = 1;
+			public static final int MAX_RADIUS = 128;
 			private boolean enabled = true;
 			private int radius = 500;
 
@@ -319,7 +321,7 @@ public class ConfigManager {
 			}
 
 			public void setRadius(int radius) {
-				this.radius = radius;
+				this.radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
 			}
 		}
 
