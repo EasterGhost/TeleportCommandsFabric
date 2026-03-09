@@ -3,6 +3,7 @@
 A server-side teleport command mod for Fabric, focused on daily server operations. It also provides a client-side integration path for Xaero map mods to improve in-game usability.
 
 - Chinese README: [README.zh-CN.md](README.zh-CN.md)
+- Wiki: [Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/EN-Home)
 
 ## Why This Mod
 
@@ -20,7 +21,7 @@ TeleportCommandsFabric provides a complete teleport toolkit for Fabric servers. 
 
 Server-side teleport commands remain available regardless of whether clients install this mod. Players can still use `back`, `home`, `warp`, `tpa`, `worldspawn`, and `rtp` with no client installation. Installing the client mod improves teleport-related interaction, and pairing it with Xaero map mods adds waypoint sync for `home` and `warp`.
 
-For a more detailed comparison between client installation options, see [Features Overview](wiki/TeleportCommandsFabric.wiki/2-Features-Overview.md) and [Xaero Integration Module](wiki/TeleportCommandsFabric.wiki/5-7-Xaero.md).
+For a more detailed comparison between client installation options, see [Features Overview](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview) and [Xaero Integration Module](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-7-Xaero).
 
 ## Quick Start
 
@@ -35,22 +36,22 @@ Detailed docs are maintained in the wiki. This README focuses on project overvie
 
 ### Getting Started
 
-- [Home](wiki/TeleportCommandsFabric.wiki/Home.md)
-- [Quick Start](wiki/TeleportCommandsFabric.wiki/1-Quick-Start.md)
-- [Features Overview](wiki/TeleportCommandsFabric.wiki/2-Features-Overview.md)
+- [Home](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/Home)
+- [Quick Start](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/1-Quick-Start)
+- [Features Overview](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview)
 
 ### Usage
 
-- [Commands](wiki/TeleportCommandsFabric.wiki/3-Commands.md)
-- [Configuration](wiki/TeleportCommandsFabric.wiki/4-Configuration.md)
-- [Module Details](wiki/TeleportCommandsFabric.wiki/5-Module-Details.md)
+- [Commands](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/3-Commands)
+- [Configuration](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration)
+- [Module Details](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-Module-Details)
 
 ### Operations
 
-- [Permissions and Access](wiki/TeleportCommandsFabric.wiki/6-Permissions-and-Access.md)
-- [Data and Storage](wiki/TeleportCommandsFabric.wiki/7-Data-and-Storage.md)
-- [Troubleshooting](wiki/TeleportCommandsFabric.wiki/8-Troubleshooting.md)
-- [FAQ](wiki/TeleportCommandsFabric.wiki/9-FAQ.md)
+- [Permissions and Access](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/6-Permissions-and-Access)
+- [Data and Storage](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/7-Data-and-Storage)
+- [Troubleshooting](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/8-Troubleshooting)
+- [FAQ](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/9-FAQ)
 
 ## Admin Basics
 
@@ -58,4 +59,4 @@ Detailed docs are maintained in the wiki. This README focuses on project overvie
 - Runtime config command: `/teleportcommands config ...`
 - Reload command: `/teleportcommands reload`
 
-For field-level details and examples, see [Configuration](wiki/TeleportCommandsFabric.wiki/4-Configuration.md).
+For field-level details and examples, see [Configuration](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration).
