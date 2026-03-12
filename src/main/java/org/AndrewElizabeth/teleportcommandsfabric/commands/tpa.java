@@ -303,19 +303,7 @@ public class tpa {
 		}
 
 		// Check if there is a request
-		Optional<tpaArrayClass> tpaStorage;
-		if (requestId == null) {
-			tpaStorage = tpaList.stream()
-					.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-					.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-					.findFirst();
-		} else {
-			tpaStorage = tpaList.stream()
-					.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-					.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-					.filter(tpa -> Objects.equals(requestId, tpa.RequestId))
-					.findFirst();
-		}
+		Optional<tpaArrayClass> tpaStorage = findMatchingRequest(FromPlayer, ToPlayer, requestId);
 
 		if (tpaStorage.isPresent()) {
 			// Request found
@@ -366,19 +354,7 @@ public class tpa {
 					true);
 
 		} else {
-			Optional<tpaArrayClass> tpaStorage;
-			if (requestId == null) {
-				tpaStorage = tpaList.stream()
-						.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-						.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-						.findFirst();
-			} else {
-				tpaStorage = tpaList.stream()
-						.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-						.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-						.filter(tpa -> Objects.equals(requestId, tpa.RequestId))
-						.findFirst();
-			}
+			Optional<tpaArrayClass> tpaStorage = findMatchingRequest(FromPlayer, ToPlayer, requestId);
 
 			if (tpaStorage.isPresent()) {
 				tpaList.remove(tpaStorage.get());
@@ -420,5 +396,20 @@ public class tpa {
 		if (expiryTask != null) {
 			expiryTask.cancel(false);
 		}
+	}
+
+	private static Optional<tpaArrayClass> findMatchingRequest(ServerPlayer recipient, ServerPlayer sender,
+			String requestId) {
+		if (requestId == null) {
+			return tpaList.stream()
+					.filter(tpa -> Objects.equals(sender.getStringUUID(), tpa.InitPlayer))
+					.filter(tpa -> Objects.equals(recipient.getStringUUID(), tpa.RecPlayer))
+					.findFirst();
+		}
+		return tpaList.stream()
+				.filter(tpa -> Objects.equals(sender.getStringUUID(), tpa.InitPlayer))
+				.filter(tpa -> Objects.equals(recipient.getStringUUID(), tpa.RecPlayer))
+				.filter(tpa -> Objects.equals(requestId, tpa.RequestId))
+				.findFirst();
 	}
 }
