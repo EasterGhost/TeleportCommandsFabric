@@ -365,8 +365,9 @@ public class home {
 			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, home.getYPrecise(),
 					teleportBlockPos.getZ() + 0.5);
 
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);
-			TeleportService.teleportWithDelayAndCooldown(player, homeWorld, teleportPos, false);
+			if (TeleportService.teleportWithDelayAndCooldown(player, homeWorld, teleportPos, false)) {
+				player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);
+			}
 		}
 	}
 

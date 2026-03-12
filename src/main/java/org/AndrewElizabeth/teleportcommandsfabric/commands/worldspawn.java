@@ -111,9 +111,10 @@ public class worldspawn {
 					Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(),
 							safeBlockPos.getZ() + 0.5);
 
-					player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
-							true);
-					TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false);
+					if (TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false)) {
+						player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
+								true);
+					}
 				}
 
 			} else {
@@ -142,10 +143,11 @@ public class worldspawn {
 						.withStyle(ChatFormatting.AQUA), true);
 			} else {
 
-				player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
-						true);
-				TeleportService.teleportWithDelayAndCooldown(player, world,
-						new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5), false);
+				if (TeleportService.teleportWithDelayAndCooldown(player, world,
+						new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5), false)) {
+					player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
+							true);
+				}
 			}
 		}
 	}

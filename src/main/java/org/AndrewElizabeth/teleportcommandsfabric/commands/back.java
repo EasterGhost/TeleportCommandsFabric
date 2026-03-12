@@ -155,7 +155,6 @@ public class back {
 			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
 					teleportBlockPos.getZ() + 0.5);
 
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
 			Runnable onTeleportSuccess = null;
 			if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
 				String playerUuid = player.getStringUUID();
@@ -166,6 +165,7 @@ public class back {
 					onTeleportSuccess)) {
 				return; // On cooldown, message already sent
 			}
+			player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
 		}
 	}
 }

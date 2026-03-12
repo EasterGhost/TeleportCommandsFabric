@@ -299,9 +299,10 @@ public class warp {
 			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, warp.getYPrecise(),
 					teleportBlockPos.getZ() + 0.5);
 
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player),
-					true);
-			TeleportService.teleportWithDelayAndCooldown(player, warpWorld, teleportPos, false);
+			if (TeleportService.teleportWithDelayAndCooldown(player, warpWorld, teleportPos, false)) {
+				player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player),
+						true);
+			}
 		}
 	}
 

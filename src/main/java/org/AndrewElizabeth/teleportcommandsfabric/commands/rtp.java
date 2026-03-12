@@ -122,8 +122,9 @@ public class rtp {
 			if (safePos.isPresent()) {
 				BlockPos blockPos = safePos.get();
 				Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
-				player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
-				TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false);
+				if (TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false)) {
+					player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
+				}
 				SEARCH_JOBS.remove(uuid);
 				continue;
 			}
