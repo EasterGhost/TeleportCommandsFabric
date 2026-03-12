@@ -52,6 +52,9 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.equals("teleportcommands status")
 				|| normalized.startsWith("teleportcommands enable ")
 				|| normalized.startsWith("teleportcommands disable ")
+				|| normalized.equals("tpc status")
+				|| normalized.startsWith("tpc enable ")
+				|| normalized.startsWith("tpc disable ")
 				|| normalized.startsWith("teleportcommandsfabric:");
 	}
 }

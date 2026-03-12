@@ -8,6 +8,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
 final class AdminStatusFormatter {
+	private static final String ROOT_COMMAND = "tpc";
 
 	private AdminStatusFormatter() {
 	}
@@ -51,7 +52,7 @@ final class AdminStatusFormatter {
 		String actionKey = enabled
 				? "commands.teleport_commands.admin.action.disable"
 				: "commands.teleport_commands.admin.action.enable";
-		String command = "teleportcommands " + (enabled ? "disable " : "enable ") + moduleKey;
+		String command = ROOT_COMMAND + " " + (enabled ? "disable " : "enable ") + moduleKey;
 		MutableComponent state = AdminMessages.t(source,
 				enabled
 						? "commands.teleport_commands.admin.stat.enabled"

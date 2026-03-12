@@ -17,6 +17,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.permissions.Permissions;
 
 public final class AdminCommands {
+	private static final String PRIMARY_COMMAND = "tpc";
+	private static final String LEGACY_COMMAND = "teleportcommands";
 
 	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER =
 			(context, builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
@@ -27,13 +29,18 @@ public final class AdminCommands {
 	}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(Commands.literal("teleportcommands")
+		dispatcher.register(buildRootCommand(PRIMARY_COMMAND));
+		dispatcher.register(buildRootCommand(LEGACY_COMMAND));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildRootCommand(String literal) {
+		return Commands.literal(literal)
 				.then(buildConfigNode())
 				.then(buildStatusNode())
 				.then(buildReloadNode())
 				.then(buildDisableNode())
 				.then(buildEnableNode())
-				.then(buildHelpNode()));
+				.then(buildHelpNode());
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildConfigNode() {
