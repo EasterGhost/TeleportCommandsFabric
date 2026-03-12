@@ -1,14 +1,16 @@
 package org.AndrewElizabeth.teleportcommandsfabric.network;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import net.minecraft.network.FriendlyByteBuf;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class XaeroSyncPackets {
+	private static boolean payloadTypesRegistered;
+
 	public static final Identifier SYNC_REQUEST_ID =
 				Identifier.fromNamespaceAndPath(Constants.MOD_ID, "xaero_sync_request");
 	public static final Identifier SYNC_DATA_ID =
@@ -17,9 +19,13 @@ public final class XaeroSyncPackets {
 	private XaeroSyncPackets() {
 	}
 
-	public static void registerPayloadTypes() {
+	public static synchronized void registerPayloadTypes() {
+		if (payloadTypesRegistered) {
+			return;
+		}
 		PayloadTypeRegistry.playC2S().register(XaeroSyncRequestPayload.TYPE, XaeroSyncRequestPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(XaeroSyncDataPayload.TYPE, XaeroSyncDataPayload.CODEC);
+		payloadTypesRegistered = true;
 	}
 
 	public static void writePayload(FriendlyByteBuf buf, XaeroSyncPayload payload) {

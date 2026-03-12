@@ -62,12 +62,16 @@ public class WaypointTeleportMixin {
 
 		String normalizedSymbol = symbol == null ? "" : symbol.trim().toUpperCase(Locale.ROOT);
 		if ("W".equals(normalizedSymbol) || name.startsWith(WARP_TAG_PREFIX)) {
-			return "warp " + normalizedName;
+			return "warp " + tpc$quoteCommandArgument(normalizedName);
 		}
 		if ("H".equals(normalizedSymbol) || name.startsWith(HOME_TAG_PREFIX)) {
-			return "home " + normalizedName;
+			return "home " + tpc$quoteCommandArgument(normalizedName);
 		}
 		return null;
+	}
+
+	private static String tpc$quoteCommandArgument(String value) {
+		return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
 	}
 
 	private static String tpc$stripTaggedPrefix(String name) {

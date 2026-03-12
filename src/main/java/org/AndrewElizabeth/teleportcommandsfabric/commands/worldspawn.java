@@ -2,9 +2,14 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -17,11 +22,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
-import static net.minecraft.commands.Commands.argument;
-
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 import static net.minecraft.world.level.Level.OVERWORLD;
 
 public class worldspawn {
@@ -51,7 +53,7 @@ public class worldspawn {
 					}
 					return 0;
 				})
-				.then(argument("Disable Safety", BoolArgumentType.bool())
+				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> {
 							final boolean safety = BoolArgumentType.getBool(context, "Disable Safety");
@@ -84,10 +86,7 @@ public class worldspawn {
 	private static void toWorldSpawn(ServerPlayer player, boolean safetyDisabled) throws NullPointerException {
 		// Get world from config
 		String worldId = ConfigManager.CONFIG.getWorldSpawn().getWorld_id();
-		ServerLevel world = StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)
-				.filter(level -> Objects.equals(getDimensionId(level.dimension()), worldId))
-				.findFirst()
-				.orElse(null);
+		ServerLevel world = WorldResolver.getDimensionById(worldId).orElse(null);
 
 		if (world == null) {
 			Constants.LOGGER.error("World not found: {}, falling back to overworld", worldId);
@@ -98,7 +97,7 @@ public class worldspawn {
 				.pos();
 
 		if (!safetyDisabled) {
-			Optional<BlockPos> teleportData = getSafeBlockPos(worldSpawn, world);
+			Optional<BlockPos> teleportData = TeleportSafety.getSafeBlockPos(worldSpawn, world);
 
 			if (teleportData.isPresent()) {
 				BlockPos safeBlockPos = teleportData.get();
@@ -112,9 +111,10 @@ public class worldspawn {
 					Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(),
 							safeBlockPos.getZ() + 0.5);
 
-					player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
-							true);
-					TeleporterWithDelayAndCooldown(player, world, teleportPos, false);
+					if (TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false)) {
+						player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
+								true);
+					}
 				}
 
 			} else {
@@ -130,7 +130,7 @@ public class worldspawn {
 								.append(getTranslatedText("commands.teleport_commands.common.forceTeleport", player)
 										.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
 										.withStyle(style -> style.withClickEvent(
-												new ClickEvent.RunCommand("/worldspawn true"))))
+												new ClickEvent.RunCommand("worldspawn true"))))
 								.append("\n"),
 						false);
 			}
@@ -143,12 +143,12 @@ public class worldspawn {
 						.withStyle(ChatFormatting.AQUA), true);
 			} else {
 
-				player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
-						true);
-				TeleporterWithDelayAndCooldown(player, world,
-						new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5), false);
+				if (TeleportService.teleportWithDelayAndCooldown(player, world,
+						new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5), false)) {
+					player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
+							true);
+				}
 			}
 		}
 	}
-
 }

@@ -2,31 +2,53 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.util.RandomSource;
-
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.TeleporterWithDelayAndCooldown;
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class rtp {
 
-	private static final int MAX_ATTEMPTS = 64;
+	private static final int MAX_ATTEMPTS = 4096;
+	private static final int ATTEMPTS_PER_TICK = 256;
+	private static final Map<UUID, RtpSearchJob> SEARCH_JOBS = new ConcurrentHashMap<>();
+	private static boolean tickHookRegistered = false;
 
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
+		initTickHook();
 		commandDispatcher.register(tpc$buildRtpCommand("rtp"));
 		commandDispatcher.register(tpc$buildRtpCommand("wild"));
+	}
+
+	private static void initTickHook() {
+		if (tickHookRegistered) {
+			return;
+		}
+		tickHookRegistered = true;
+		ServerTickEvents.END_SERVER_TICK.register(rtp::onServerTick);
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> tpc$buildRtpCommand(String commandName) {
@@ -35,7 +57,7 @@ public class rtp {
 				.executes(context -> {
 					final ServerPlayer player = context.getSource().getPlayerOrException();
 
-					if (!ConfigManager.CONFIG.getWild().isEnabled()) {
+					if (!ConfigManager.CONFIG.getRtp().isEnabled()) {
 						player.displayClientMessage(
 								getTranslatedText("commands.teleport_commands.rtp.disabled", player)
 										.withStyle(ChatFormatting.RED),
@@ -43,8 +65,9 @@ public class rtp {
 						return 1;
 					}
 
-					int radius = ConfigManager.CONFIG.getWild().getRadius();
-					if (radius < 1) {
+					int radius = ConfigManager.CONFIG.getRtp().getRadius();
+					if (radius < ConfigManager.ConfigClass.Rtp.MIN_RADIUS
+							|| radius > ConfigManager.ConfigClass.Rtp.MAX_RADIUS) {
 						player.displayClientMessage(
 								getTranslatedText("commands.teleport_commands.rtp.invalidRadius", player)
 										.withStyle(ChatFormatting.RED),
@@ -53,7 +76,7 @@ public class rtp {
 					}
 
 					try {
-						return randomTeleport(player, radius);
+						return enqueueRandomTeleport(player, radius);
 					} catch (Exception e) {
 						Constants.LOGGER.error("Error while executing /rtp!", e);
 						player.displayClientMessage(
@@ -65,73 +88,134 @@ public class rtp {
 				});
 	}
 
-	private static int randomTeleport(ServerPlayer player, int radius) {
-		ServerLevel world = player.level();
-		Optional<BlockPos> safePos = findSafeRandomPosition(world, player.blockPosition(), radius, world.random);
-
-		if (safePos.isEmpty()) {
-			player.displayClientMessage(
-					getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
-							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
-					true);
-			return 1;
-		}
-
-		BlockPos blockPos = safePos.get();
-		Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
-		player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
-		TeleporterWithDelayAndCooldown(player, world, teleportPos, false);
+	private static int enqueueRandomTeleport(ServerPlayer player, int radius) {
+		SEARCH_JOBS.put(player.getUUID(), new RtpSearchJob(
+				player,
+				player.blockPosition().immutable(),
+				player.level().dimension(),
+				radius,
+				MAX_ATTEMPTS));
 		return 0;
 	}
 
-	private static Optional<BlockPos> findSafeRandomPosition(ServerLevel world, BlockPos center, int radius,
-			RandomSource random) {
-		int minY = world.getMinY() + 1;
-		int maxY = world.getMaxY() - 2;
-		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-			int[] offset = randomOffsetInSphere(random, radius);
-			int x = center.getX() + offset[0];
-			int y = center.getY() + offset[1];
-			int z = center.getZ() + offset[2];
+	private static void onServerTick(MinecraftServer server) {
+		if (SEARCH_JOBS.isEmpty()) {
+			return;
+		}
 
-			if (y < minY || y > maxY) {
+		for (RtpSearchJob job : new ArrayList<>(SEARCH_JOBS.values())) {
+			ServerPlayer player = job.player();
+			UUID uuid = player.getUUID();
+			if (player.hasDisconnected()) {
+				SEARCH_JOBS.remove(uuid);
+				continue;
+			}
+			if (!player.level().dimension().equals(job.centerDimension())) {
+				SEARCH_JOBS.remove(uuid);
 				continue;
 			}
 
-			BlockPos pos = new BlockPos(x, y, z);
-			if (isSafeTeleportPos(world, pos)) {
-				return Optional.of(pos);
+			ServerLevel world = player.level();
+			int budget = Math.min(ATTEMPTS_PER_TICK, job.remainingAttempts());
+			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.random,
+					budget);
+			if (safePos.isPresent()) {
+				BlockPos blockPos = safePos.get();
+				Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
+				if (TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false)) {
+					player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
+				}
+				SEARCH_JOBS.remove(uuid);
+				continue;
+			}
+
+			int remaining = job.remainingAttempts() - budget;
+			if (remaining <= 0) {
+				player.displayClientMessage(
+						getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
+								.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+						true);
+				SEARCH_JOBS.remove(uuid);
+				continue;
+			}
+
+			SEARCH_JOBS.put(uuid, new RtpSearchJob(
+					player,
+					job.center(),
+					job.centerDimension(),
+					job.radius(),
+					remaining));
+		}
+	}
+
+	private static Optional<BlockPos> findSafeRandomPosition(ServerLevel world, BlockPos center, int radius,
+			RandomSource random, int attemptBudget) {
+		int minY = world.getMinY() + 1;
+		int maxY = world.getMaxY();
+		int r2 = radius * radius;
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos headPos = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos headTopPos = new BlockPos.MutableBlockPos();
+		int centerX = center.getX();
+		int centerY = center.getY();
+		int centerZ = center.getZ();
+
+		for (int attempt = 0; attempt < attemptBudget; attempt++) {
+			int dx = random.nextInt(radius * 2 + 1) - radius;
+			int dz = random.nextInt(radius * 2 + 1) - radius;
+			int horizontalR2 = dx * dx + dz * dz;
+			if (horizontalR2 >= r2) {
+				continue;
+			}
+
+			int x = centerX + dx;
+			int z = centerZ + dz;
+
+			int yMin = Math.max(minY, centerY - radius + 1);
+			int yMax = Math.min(maxY, centerY + radius);
+			yMax = Math.min(yMax, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
+			if (yMin > yMax) {
+				continue;
+			}
+
+			int dy = (yMin + random.nextInt(yMax - yMin + 1)) - centerY;
+			if (horizontalR2 + dy * dy > r2) {
+				continue;
+			}
+			int y = centerY + dy;
+
+			pos.set(x, y, z);
+			if (isSafeTeleportPos(world, pos, belowPos, headPos, headTopPos)) {
+				return Optional.of(pos.immutable());
 			}
 		}
 
 		return Optional.empty();
 	}
 
-	private static int[] randomOffsetInSphere(RandomSource random, int radius) {
-		int r2 = radius * radius;
-		while (true) {
-			int x = random.nextInt(radius * 2 + 1) - radius;
-			int y = random.nextInt(radius * 2 + 1) - radius;
-			int z = random.nextInt(radius * 2 + 1) - radius;
-			if (x * x + y * y + z * z <= r2) {
-				return new int[] { x, y, z };
-			}
-		}
-	}
-
-	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos) {
-		BlockPos below = pos.below();
-		BlockState belowState = world.getBlockState(below);
+	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos, BlockPos.MutableBlockPos belowPos,
+			BlockPos.MutableBlockPos headPos, BlockPos.MutableBlockPos headTopPos) {
+		belowPos.set(pos.getX(), pos.getY() - 1, pos.getZ());
+		BlockState belowState = world.getBlockState(belowPos);
 		if (belowState.isAir() || !belowState.getFluidState().isEmpty()) {
 			return false;
 		}
-		if (belowState.getCollisionShape(world, below).isEmpty()) {
+		if (belowState.getCollisionShape(world, belowPos).isEmpty()) {
 			return false;
 		}
 
 		BlockState feetState = world.getBlockState(pos);
-		BlockState headState = world.getBlockState(pos.above());
-		BlockState headTopState = world.getBlockState(pos.above(2));
-		return feetState.isAir() && headState.isAir() && headTopState.isAir();
+		headPos.set(pos.getX(), pos.getY() + 1, pos.getZ());
+		BlockState headState = world.getBlockState(headPos);
+		return feetState.isAir() && headState.isAir();
+	}
+
+	private record RtpSearchJob(
+			ServerPlayer player,
+			BlockPos center,
+			ResourceKey<Level> centerDimension,
+			int radius,
+			int remainingAttempts) {
 	}
 }

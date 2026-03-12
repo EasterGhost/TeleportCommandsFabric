@@ -1,10 +1,11 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TeleportCooldownManager {
-	private static final HashMap<String, Long> lastTeleportTime = new HashMap<>();
-	private static final HashMap<String, Long> scheduledTeleports = new HashMap<>();
+	private static final Map<String, Long> lastTeleportTime = new ConcurrentHashMap<>();
+	private static final Map<String, Long> scheduledTeleports = new ConcurrentHashMap<>();
 
 	/**
 	 * Check if a player has an active teleport cooldown

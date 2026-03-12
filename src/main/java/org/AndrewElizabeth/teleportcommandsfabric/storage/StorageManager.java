@@ -1,16 +1,23 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 
-import java.io.FileReader;
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,8 +31,8 @@ public class StorageManager {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final int defaultVersion = new StorageClass().getVersion();
 
-	/// Initializes the StorageManager class and loads the storage from the
-	/// filesystem.
+	/// Initializes the StorageManager class and loads the storage from
+	/// the filesystem.
 	public static void StorageInit() {
 		STORAGE_FOLDER = TeleportCommands.SAVE_DIR.resolve("TeleportCommands/");
 		STORAGE_FILE = STORAGE_FOLDER.resolve("storage.json");
@@ -52,8 +59,9 @@ public class StorageManager {
 
 		StorageMigrator();
 
-		FileReader reader = new FileReader(STORAGE_FILE.toFile());
-		STORAGE = GSON.fromJson(reader, StorageClass.class);
+		try (BufferedReader reader = Files.newBufferedReader(STORAGE_FILE, StandardCharsets.UTF_8)) {
+			STORAGE = GSON.fromJson(reader, StorageClass.class);
+		}
 		if (STORAGE == null) {
 			Constants.LOGGER.warn("Storage file was empty! Initializing storage");
 			STORAGE = new StorageClass();
@@ -69,8 +77,13 @@ public class StorageManager {
 	/// This function checks what version the storage file is and migrates it to the
 	/// current version of the mod.
 	public static void StorageMigrator() throws Exception {
-		FileReader reader = new FileReader(STORAGE_FILE.toFile());
-		JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+		JsonObject jsonObject;
+		try (BufferedReader reader = Files.newBufferedReader(STORAGE_FILE, StandardCharsets.UTF_8)) {
+			jsonObject = GSON.fromJson(reader, JsonObject.class);
+		}
+		if (jsonObject == null) {
+			jsonObject = new JsonObject();
+		}
 
 		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
@@ -85,8 +98,8 @@ public class StorageManager {
 
 					JsonArray players = jsonObject.get("Players").getAsJsonArray();
 
-					for (JsonElement playerElement : players) {
-						JsonObject player = playerElement.getAsJsonObject();
+					for (int i = players.size() - 1; i >= 0; i--) {
+						JsonObject player = players.get(i).getAsJsonObject();
 
 						String UUID = player.has("Player_UUID")
 								? player.get("Player_UUID").getAsString()
@@ -96,7 +109,7 @@ public class StorageManager {
 
 						if (UUID == null || UUID.isBlank()) {
 							// remove it then, it's an invalid entry 0.0
-							players.remove(player); // may return true or false for success, but idc
+							players.remove(i);
 
 						} else {
 							player.remove("Player_UUID");
@@ -105,11 +118,18 @@ public class StorageManager {
 					}
 				}
 
-				jsonObject.addProperty("version", 1);
 			}
 
+			// In v2.0.0 NamedLocation.y switched to precise double-based storage.
+			if (version < Constants.STORAGE_VERSION) {
+				normalizeNamedLocationYAsDouble(jsonObject);
+			}
+
+			// Always bump to the latest supported schema version after migrations.
+			jsonObject.addProperty("version", defaultVersion);
+
 			// Save the storage :3
-			byte[] json = GSON.toJson(jsonObject, JsonArray.class).getBytes();
+			byte[] json = GSON.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
 			Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
 
@@ -127,35 +147,95 @@ public class StorageManager {
 
 	/// Saves the storage to the filesystem
 	public static void StorageSaver() throws Exception {
-		byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes();
+		byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
 
 		Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 				StandardOpenOption.CREATE);
 	}
 
+	private static void normalizeNamedLocationYAsDouble(JsonObject root) {
+		normalizeLocationsArrayY(root.getAsJsonArray("Warps"));
+
+		if (root.has("Players") && root.get("Players").isJsonArray()) {
+			JsonArray players = root.getAsJsonArray("Players");
+			for (JsonElement element : players) {
+				if (!element.isJsonObject()) {
+					continue;
+				}
+				JsonObject player = element.getAsJsonObject();
+				normalizeLocationsArrayY(player.getAsJsonArray("Homes"));
+			}
+		}
+	}
+
+	private static void normalizeLocationsArrayY(JsonArray locations) {
+		if (locations == null) {
+			return;
+		}
+		for (JsonElement element : locations) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+			JsonObject location = element.getAsJsonObject();
+			if (!location.has("y")) {
+				continue;
+			}
+
+			JsonElement yValue = location.get("y");
+			if (!yValue.isJsonPrimitive() || !yValue.getAsJsonPrimitive().isNumber()) {
+				continue;
+			}
+
+			location.addProperty("y", yValue.getAsDouble());
+		}
+	}
+
 	public static class StorageClass {
-		private final int version = 1;
+		private final int version = Constants.STORAGE_VERSION;
 		private final ArrayList<NamedLocation> Warps = new ArrayList<>();
 		private final ArrayList<Player> Players = new ArrayList<>();
 
 		/// Cleans up any values in the storage class
 		public void cleanup() throws Exception {
-			Players.removeIf(player -> {
-				// Remove players with invalid UUID's
-				if (player.getUUID().isBlank()) {
-					return true;
+			for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
+				Player player = iterator.next();
+
+				// Remove null/corrupt player entries from malformed storage files.
+				if (player == null) {
+					iterator.remove();
+					continue;
 				}
 
-				List<NamedLocation> homes = player.getHomes();
+				// Remove players with invalid UUID's
+				String uuid = player.getUUID();
+				if (uuid == null || uuid.isBlank()) {
+					iterator.remove();
+					continue;
+				}
 
 				// Delete any homes with an invalid world_id (if enabled in config)
 				if (ConfigManager.CONFIG.home.isDeleteInvalid()) {
-					homes.removeIf(home -> home.getWorld().isEmpty());
+					List<NamedLocation> homesSnapshot = new ArrayList<>(player.getHomes());
+					for (NamedLocation home : homesSnapshot) {
+						if (home.getWorld().isEmpty()) {
+							player.deleteHomeNoSave(home);
+						}
+					}
+
+					// Clear dangling default home after invalid entries are removed.
+					String defaultHome = player.getDefaultHome();
+					if (defaultHome == null) {
+						player.setDefaultHomeNoSave("");
+					} else if (!defaultHome.isEmpty() && player.getHome(defaultHome).isEmpty()) {
+						player.setDefaultHomeNoSave("");
+					}
 				}
 
 				// Remove players with no homes
-				return homes.isEmpty();
-			});
+				if (player.getHomes().isEmpty()) {
+					iterator.remove();
+				}
+			}
 
 			// Delete any warps with an invalid world_id (if enabled in config)
 			if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {

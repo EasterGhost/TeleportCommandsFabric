@@ -1,10 +1,14 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 
-import java.io.FileReader;
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -40,8 +44,9 @@ public class ConfigManager {
 
 		ConfigMigrator();
 
-		FileReader reader = new FileReader(CONFIG_FILE.toFile());
-		CONFIG = GSON.fromJson(reader, ConfigClass.class);
+		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
+			CONFIG = GSON.fromJson(reader, ConfigClass.class);
+		}
 		if (CONFIG == null) {
 			Constants.LOGGER.warn("Config file was empty! Loading defaults...");
 			CONFIG = new ConfigClass();
@@ -55,19 +60,30 @@ public class ConfigManager {
 	/// This function checks what version the config file is and migrates it to the
 	/// current version of the mod.
 	public static void ConfigMigrator() throws Exception {
-		FileReader reader = new FileReader(CONFIG_FILE.toFile());
-		JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+		JsonObject jsonObject;
+		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
+			jsonObject = GSON.fromJson(reader, JsonObject.class);
+		}
+		if (jsonObject == null) {
+			jsonObject = new JsonObject();
+		}
 
 		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
 
 		if (version < defaultVersion) {
 			Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
 
-			// Add any necessary migrations here based on version
-			// For now, no migrations needed
+			// Rename legacy "wild" section to "rtp" if needed.
+			if (jsonObject.has("wild") && !jsonObject.has("rtp")) {
+				jsonObject.add("rtp", jsonObject.get("wild"));
+				jsonObject.remove("wild");
+			}
+
+			// Always bump to the latest supported schema version after migrations.
+			jsonObject.addProperty("version", defaultVersion);
 
 			// Save the config
-			byte[] json = GSON.toJson(jsonObject, JsonObject.class).getBytes();
+			byte[] json = GSON.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
 			Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
 
@@ -84,7 +100,7 @@ public class ConfigManager {
 	}
 
 	public static void ConfigSaver() throws Exception {
-		byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes();
+		byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes(StandardCharsets.UTF_8);
 
 		Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 				StandardOpenOption.CREATE);
@@ -98,14 +114,14 @@ public class ConfigManager {
 	}
 
 	public static class ConfigClass {
-		private final int version = 1;
+		private final int version = Constants.CONFIG_VERSION;
 		public Teleporting teleporting = new Teleporting();
 		public Back back = new Back();
 		public Home home = new Home();
 		public Tpa tpa = new Tpa();
 		public Warp warp = new Warp();
 		public WorldSpawn worldSpawn = new WorldSpawn();
-		public Wild wild = new Wild();
+		public Rtp rtp = new Rtp();
 		public Xaero xaero = new Xaero();
 
 		public int getVersion() {
@@ -138,8 +154,8 @@ public class ConfigManager {
 			return worldSpawn;
 		}
 
-		public Wild getWild() {
-			return wild;
+		public Rtp getRtp() {
+			return rtp;
 		}
 
 		public Xaero getXaero() {
@@ -149,8 +165,10 @@ public class ConfigManager {
 		// ===== Configuration Sections =====
 
 		public static final class Teleporting {
-			private int delay = 5;
-			private int cooldown = 5;
+			private int delay = 0;
+			private int cooldown = 3;
+			private boolean preloadEnabled = false;
+			private int preloadRadiusChunks = 1;
 
 			public int getDelay() {
 				return delay;
@@ -166,6 +184,22 @@ public class ConfigManager {
 
 			public void setCooldown(int cooldown) {
 				this.cooldown = cooldown;
+			}
+
+			public boolean isPreloadEnabled() {
+				return preloadEnabled;
+			}
+
+			public void setPreloadEnabled(boolean preloadEnabled) {
+				this.preloadEnabled = preloadEnabled;
+			}
+
+			public int getPreloadRadiusChunks() {
+				return preloadRadiusChunks;
+			}
+
+			public void setPreloadRadiusChunks(int preloadRadiusChunks) {
+				this.preloadRadiusChunks = preloadRadiusChunks;
 			}
 		}
 
@@ -192,7 +226,7 @@ public class ConfigManager {
 
 		public final class Home {
 			private boolean enabled = true;
-			private int playerMaximum = 20;
+			private int playerMaximum = 10;
 			private boolean deleteInvalid = false;
 
 			public boolean isEnabled() {
@@ -222,7 +256,7 @@ public class ConfigManager {
 
 		public final class Tpa {
 			private boolean enabled = true;
-			private int requestExpireTime = 300; // seconds
+			private int requestExpireTime = 120; // seconds
 
 			public boolean isEnabled() {
 				return enabled;
@@ -271,9 +305,11 @@ public class ConfigManager {
 			}
 		}
 
-		public final class Wild {
+		public final class Rtp {
+			public static final int MIN_RADIUS = 1;
+			public static final int MAX_RADIUS = 128;
 			private boolean enabled = true;
-			private int radius = 500;
+			private int radius = 32;
 
 			public boolean isEnabled() {
 				return enabled;
@@ -288,7 +324,7 @@ public class ConfigManager {
 			}
 
 			public void setRadius(int radius) {
-				this.radius = radius;
+				this.radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
 			}
 		}
 
@@ -315,7 +351,7 @@ public class ConfigManager {
 
 		public final class Xaero {
 			private boolean enabled = true;
-			private int syncIntervalSeconds = 60;
+			private int syncIntervalSeconds = 10;
 			private boolean persistWaypointSets = true;
 			private String warpSetName = "TeleportCommands Warps";
 			private String homeSetName = "TeleportCommands Homes";

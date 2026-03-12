@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncRequestPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
+
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class XaeroSyncServer {
 	private static final Set<UUID> XAERO_CLIENTS = ConcurrentHashMap.newKeySet();
 	private static final Map<UUID, Long> LAST_SYNC = new ConcurrentHashMap<>();
+	private static final Map<UUID, Long> LAST_REQUEST = new ConcurrentHashMap<>();
 	private static boolean initialized;
 
 	private XaeroSyncServer() {
@@ -46,20 +48,30 @@ public final class XaeroSyncServer {
 			UUID uuid = handler.player.getUUID();
 			XAERO_CLIENTS.remove(uuid);
 			LAST_SYNC.remove(uuid);
+			LAST_REQUEST.remove(uuid);
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(XaeroSyncServer::onServerTick);
 	}
 
 	private static void handleSyncRequest(ServerPlayer player) {
-		Constants.LOGGER.info("Xaero sync request from {}", player.getName().getString());
 		if (!isEnabled()) {
 			return;
 		}
 
-		XAERO_CLIENTS.add(player.getUUID());
+		UUID uuid = player.getUUID();
+		long now = System.currentTimeMillis();
+		long lastRequest = LAST_REQUEST.getOrDefault(uuid, 0L);
+		long requestIntervalMs = getRequestIntervalMs();
+		if (now - lastRequest < requestIntervalMs) {
+			Constants.LOGGER.debug("Xaero sync request throttled for {}", player.getName().getString());
+			return;
+		}
+
+		LAST_REQUEST.put(uuid, now);
+		XAERO_CLIENTS.add(uuid);
 		sendSync(player);
-		LAST_SYNC.put(player.getUUID(), System.currentTimeMillis());
+		LAST_SYNC.put(uuid, now);
 	}
 
 	private static void onServerTick(MinecraftServer server) {
@@ -135,5 +147,17 @@ public final class XaeroSyncServer {
 			Constants.LOGGER.error("Xaero sync config error", e);
 			return false;
 		}
+	}
+
+	private static long getRequestIntervalMs() {
+		try {
+			int configured = ConfigManager.CONFIG.getXaero().getSyncIntervalSeconds();
+			if (configured > 0) {
+				return configured * 1000L;
+			}
+		} catch (Exception e) {
+			Constants.LOGGER.error("Xaero sync interval read error", e);
+		}
+		return Constants.SYNC_INTERVAL_MS;
 	}
 }
