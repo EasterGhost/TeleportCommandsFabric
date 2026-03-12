@@ -24,8 +24,6 @@ import java.util.Set;
 public final class XaeroCompat {
 	private static final String DEFAULT_SET_SENTINEL = "default";
 	private static final String CURRENT_SET_SENTINEL = "current";
-	private static final String LEGACY_WARP_SET_NAME = "TeleportCommands Warps";
-	private static final String LEGACY_HOME_SET_NAME = "TeleportCommands Homes";
 	private static final String PERSIST_WARP_PREFIX = "TPC-W ";
 	private static final String PERSIST_HOME_PREFIX = "TPC-H ";
 	private static final Set<String> WARP_SYNCED_WORLDS = new HashSet<>();
@@ -215,9 +213,7 @@ public final class XaeroCompat {
 		}
 		String normalized = setName.trim().toLowerCase();
 		return DEFAULT_SET_SENTINEL.equals(normalized)
-				|| CURRENT_SET_SENTINEL.equals(normalized)
-				|| LEGACY_WARP_SET_NAME.equals(setName)
-				|| LEGACY_HOME_SET_NAME.equals(setName);
+				|| CURRENT_SET_SENTINEL.equals(normalized);
 	}
 
 	private enum EntryType {
