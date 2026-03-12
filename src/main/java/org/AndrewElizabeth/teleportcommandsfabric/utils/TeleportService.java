@@ -55,6 +55,11 @@ public final class TeleportService {
 	 */
 	public static boolean teleportWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords,
 			boolean bypassDelay) {
+		return teleportWithDelayAndCooldown(player, world, coords, bypassDelay, null);
+	}
+
+	public static boolean teleportWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords,
+			boolean bypassDelay, Runnable onSuccess) {
 		String uuid = player.getStringUUID();
 		int delay = ConfigManager.CONFIG.getTeleporting().getDelay();
 		int cooldown = ConfigManager.CONFIG.getTeleporting().getCooldown();
@@ -68,7 +73,7 @@ public final class TeleportService {
 		}
 
 		if (delay == 0 || bypassDelay) {
-			teleportWithManagedPreload(player, world, coords);
+			teleportWithManagedPreload(player, world, coords, onSuccess);
 			TeleportCooldownManager.updateLastTeleportTime(uuid);
 			return true;
 		}
@@ -98,7 +103,7 @@ public final class TeleportService {
 					return;
 				}
 
-				teleportWithManagedPreload(player, world, coords);
+				teleportWithManagedPreload(player, world, coords, onSuccess);
 				TeleportCooldownManager.updateLastTeleportTime(uuid);
 				TeleportCooldownManager.cancelScheduledTeleport(uuid);
 			});
@@ -107,12 +112,13 @@ public final class TeleportService {
 		return true;
 	}
 
-	private static void teleportWithManagedPreload(ServerPlayer player, ServerLevel world, Vec3 coords) {
+	private static void teleportWithManagedPreload(ServerPlayer player, ServerLevel world, Vec3 coords,
+			Runnable onSuccess) {
 		ConfigManager.ConfigClass.Teleporting teleportConfig = ConfigManager.CONFIG.getTeleporting();
 		boolean preloadEnabled = teleportConfig.isPreloadEnabled();
 		int radiusChunks = Math.max(0, teleportConfig.getPreloadRadiusChunks());
 		if (!preloadEnabled) {
-			teleport(player, world, coords);
+			finishSuccessfulTeleport(teleport(player, world, coords), onSuccess);
 			return;
 		}
 
@@ -127,9 +133,15 @@ public final class TeleportService {
 				if (player.hasDisconnected()) {
 					return;
 				}
-				teleport(player, world, coords);
+				finishSuccessfulTeleport(teleport(player, world, coords), onSuccess);
 			});
 		}, ONE_TICK_MS, TimeUnit.MILLISECONDS);
+	}
+
+	private static void finishSuccessfulTeleport(boolean success, Runnable onSuccess) {
+		if (success && onSuccess != null) {
+			onSuccess.run();
+		}
 	}
 
 	private static List<ChunkPos> collectChunkSquare(BlockPos centerPos, int radiusChunks) {
@@ -153,7 +165,11 @@ public final class TeleportService {
 	/**
 	 * Immediate teleport without cooldown or delay checks.
 	 */
-	public static void teleport(ServerPlayer player, ServerLevel world, Vec3 coords) {
+	public static boolean teleport(ServerPlayer player, ServerLevel world, Vec3 coords) {
+		if (player.hasDisconnected()) {
+			return false;
+		}
+
 		boolean crossDimension = player.level() != world;
 
 		world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 1, player.getZ(), 20, 0.0D, 0.0D,
@@ -179,7 +195,7 @@ public final class TeleportService {
 					0.0D, 1.0D, 0.0D, 0.01);
 			world.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
 					0.0D, 0.0D, 0.0D, 0.03);
-			return;
+			return true;
 		}
 
 		TELEPORT_SCHEDULER.schedule(() -> {
@@ -197,5 +213,6 @@ public final class TeleportService {
 						0.0D, 0.0D, 0.0D, 0.03);
 			});
 		}, 100, TimeUnit.MILLISECONDS);
+		return true;
 	}
 }

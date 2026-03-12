@@ -156,13 +156,15 @@ public class back {
 					teleportBlockPos.getZ() + 0.5);
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
-			if (!TeleportService.teleportWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false)) {
-				return; // On cooldown, message already sent
+			Runnable onTeleportSuccess = null;
+			if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
+				String playerUuid = player.getStringUUID();
+				onTeleportSuccess = () -> DeathLocationStorage.removeDeathLocation(playerUuid);
 			}
 
-			// Delete the death location after teleport if configured
-			if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
-				DeathLocationStorage.removeDeathLocation(player.getStringUUID());
+			if (!TeleportService.teleportWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false,
+					onTeleportSuccess)) {
+				return; // On cooldown, message already sent
 			}
 		}
 	}
