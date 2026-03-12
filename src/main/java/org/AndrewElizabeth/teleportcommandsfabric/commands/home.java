@@ -27,8 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
-import static net.minecraft.commands.Commands.argument;
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class home {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {

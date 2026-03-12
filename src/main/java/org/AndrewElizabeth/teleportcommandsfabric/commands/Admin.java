@@ -6,6 +6,10 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+
+import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -14,15 +18,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.lang.Deprecated;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 @Deprecated(since = "1.3", forRemoval = true)
 public class Admin {
@@ -64,7 +66,8 @@ public class Admin {
 			builder) -> SharedSuggestionProvider.suggest(getModuleNamesByState(false), builder);
 	private static final SuggestionProvider<CommandSourceStack> enabled_commands_suggester = (context,
 			builder) -> SharedSuggestionProvider.suggest(getModuleNamesByState(true), builder);
-		@Deprecated(since = "1.3", forRemoval = true)
+
+	@Deprecated(since = "1.3", forRemoval = true)
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(
 				Commands.literal("teleportcommands")
@@ -232,7 +235,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.xaero.syncIntervalSeconds",
 																		argInt(context, "seconds"))))))))
-					// Admin subcommands reload / enable / disable / help
+						// Admin subcommands reload / enable / disable / help
 						.then(Commands.literal("reload")
 								.requires(Admin::isOpOrConsole)
 								.executes(context -> {

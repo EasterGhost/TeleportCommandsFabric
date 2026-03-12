@@ -25,8 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.TeleporterWithDelayAndCooldown;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class rtp {
 

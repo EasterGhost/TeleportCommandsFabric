@@ -18,9 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
-import static net.minecraft.commands.Commands.argument;
-
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 import static net.minecraft.world.level.Level.OVERWORLD;
 
 public class worldspawn {

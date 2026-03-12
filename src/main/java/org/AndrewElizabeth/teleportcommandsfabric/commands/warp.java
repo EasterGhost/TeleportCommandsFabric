@@ -24,9 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.Optional;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.*;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
-import static net.minecraft.commands.Commands.argument;
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class warp {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
