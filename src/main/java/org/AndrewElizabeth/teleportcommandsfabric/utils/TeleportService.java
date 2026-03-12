@@ -73,8 +73,10 @@ public final class TeleportService {
 		}
 
 		if (delay == 0 || bypassDelay) {
-			teleportWithManagedPreload(player, world, coords, onSuccess);
-			TeleportCooldownManager.updateLastTeleportTime(uuid);
+			teleportWithManagedPreload(player, world, coords, () -> {
+				TeleportCooldownManager.updateLastTeleportTime(uuid);
+				runOnSuccess(onSuccess);
+			});
 			return true;
 		}
 
@@ -103,8 +105,10 @@ public final class TeleportService {
 					return;
 				}
 
-				teleportWithManagedPreload(player, world, coords, onSuccess);
-				TeleportCooldownManager.updateLastTeleportTime(uuid);
+				teleportWithManagedPreload(player, world, coords, () -> {
+					TeleportCooldownManager.updateLastTeleportTime(uuid);
+					runOnSuccess(onSuccess);
+				});
 				TeleportCooldownManager.cancelScheduledTeleport(uuid);
 			});
 		}, delay, TimeUnit.SECONDS);
@@ -140,6 +144,12 @@ public final class TeleportService {
 
 	private static void finishSuccessfulTeleport(boolean success, Runnable onSuccess) {
 		if (success && onSuccess != null) {
+			runOnSuccess(onSuccess);
+		}
+	}
+
+	private static void runOnSuccess(Runnable onSuccess) {
+		if (onSuccess != null) {
 			onSuccess.run();
 		}
 	}
