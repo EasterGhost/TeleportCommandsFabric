@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
@@ -201,6 +202,16 @@ public class warp {
 					}
 					return 0;
 				}));
+
+		commandDispatcher.register(Commands.literal("mapwarp")
+				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.then(Commands.argument("name", StringArgumentType.string())
+						.suggests(new WarpSuggestionProvider())
+						.then(Commands.argument("visible", BoolArgumentType.bool())
+								.executes(context -> setWarpXaeroVisibility(
+										context.getSource().getPlayerOrException(),
+										StringArgumentType.getString(context, "name"),
+										BoolArgumentType.getBool(context, "visible"))))));
 	}
 
 	private static void SetWarp(ServerPlayer player, String warpName) throws Exception {
@@ -395,6 +406,16 @@ public class warp {
 			message.append(Component.literal(name)
 					.withStyle(ChatFormatting.AQUA));
 
+			if (canModify) {
+				message.append(" ")
+						.append(getTranslatedText(
+								currentWarp.isXaeroVisible()
+										? "commands.teleport_commands.common.mapVisible"
+										: "commands.teleport_commands.common.mapHidden",
+								player)
+								.withStyle(currentWarp.isXaeroVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
+			}
+
 			// linebreak
 			message.append("\n");
 
@@ -456,7 +477,21 @@ public class warp {
 										.withClickEvent(
 												new ClickEvent.SuggestCommand(
 														String.format("/delwarp \"%s\"",
-																currentWarp.getName())))));
+																currentWarp.getName())))))
+						.append(" ")
+						.append(getTranslatedText(
+								currentWarp.isXaeroVisible()
+										? "commands.teleport_commands.common.hideFromMap"
+										: "commands.teleport_commands.common.showOnMap",
+								player)
+								.withStyle(currentWarp.isXaeroVisible() ? ChatFormatting.GRAY : ChatFormatting.GOLD)
+								.withStyle(style -> style
+										.withClickEvent(
+												new ClickEvent.RunCommand(
+														String.format(
+																"mapwarp \"%s\" %s",
+																currentWarp.getName(),
+																currentWarp.isXaeroVisible() ? "false" : "true")))));
 			}
 
 			// linebreak
@@ -465,6 +500,56 @@ public class warp {
 
 		// send the message
 		player.displayClientMessage(message, false);
+	}
+
+	private static int setWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible) {
+		if (!ConfigManager.CONFIG.getWarp().isEnabled()) {
+			player.displayClientMessage(
+					getTranslatedText("commands.teleport_commands.warp.disabled", player)
+							.withStyle(ChatFormatting.RED),
+					true);
+			return 1;
+		}
+
+		try {
+			Optional<NamedLocation> optionalWarp = STORAGE.getWarp(warpName.toLowerCase());
+			if (optionalWarp.isEmpty()) {
+				player.displayClientMessage(
+						getTranslatedText("commands.teleport_commands.warp.notFound", player)
+								.withStyle(ChatFormatting.RED),
+						true);
+				return 1;
+			}
+
+			NamedLocation warp = optionalWarp.get();
+			if (warp.isXaeroVisible() == visible) {
+				player.displayClientMessage(
+						getTranslatedText(
+								visible
+										? "commands.teleport_commands.warp.mapAlreadyShown"
+										: "commands.teleport_commands.warp.mapAlreadyHidden",
+								player).withStyle(ChatFormatting.AQUA),
+						true);
+				return 1;
+			}
+
+			warp.setXaeroVisible(visible);
+			player.displayClientMessage(
+					getTranslatedText(
+							visible
+									? "commands.teleport_commands.warp.mapShown"
+									: "commands.teleport_commands.warp.mapHidden",
+							player).withStyle(ChatFormatting.GREEN),
+					true);
+			return 0;
+		} catch (Exception e) {
+			Constants.LOGGER.error("Error while updating warp Xaero visibility!", e);
+			player.displayClientMessage(
+					getTranslatedText("commands.teleport_commands.warps.error", player)
+							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+					true);
+			return 1;
+		}
 	}
 
 }

@@ -14,13 +14,19 @@ public class NamedLocation {
 	private final double y;
 	private final int z;
 	private final String world;
+	private boolean xaeroVisible;
 
 	public NamedLocation(String name, int x, double y, int z, String world) {
+		this(name, x, y, z, world, true);
+	}
+
+	public NamedLocation(String name, int x, double y, int z, String world, boolean xaeroVisible) {
 		this.name = name;
 		this.x = x;
 		this.y = y;
 		this.z = z;
 		this.world = world;
+		this.xaeroVisible = xaeroVisible;
 	}
 
 	// -----
@@ -58,10 +64,19 @@ public class NamedLocation {
 		return WorldResolver.getDimensionById(world);
 	}
 
+	public boolean isXaeroVisible() {
+		return xaeroVisible;
+	}
+
 	// -----
 
 	public void setName(String name) throws Exception {
 		this.name = name;
+		StorageManager.StorageSaver();
+	}
+
+	public void setXaeroVisible(boolean xaeroVisible) throws Exception {
+		this.xaeroVisible = xaeroVisible;
 		StorageManager.StorageSaver();
 	}
 

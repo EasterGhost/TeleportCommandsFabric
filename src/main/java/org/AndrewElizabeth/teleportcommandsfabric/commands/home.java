@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
@@ -230,6 +231,16 @@ public class home {
 					}
 					return 0;
 				}));
+
+		commandDispatcher.register(Commands.literal("maphome")
+				.requires(source -> source.getPlayer() != null)
+				.then(Commands.argument("name", StringArgumentType.string())
+						.suggests(new HomeSuggestionProvider())
+						.then(Commands.argument("visible", BoolArgumentType.bool())
+								.executes(context -> setHomeXaeroVisibility(
+										context.getSource().getPlayerOrException(),
+										StringArgumentType.getString(context, "name"),
+										BoolArgumentType.getBool(context, "visible"))))));
 	}
 
 	// -----
@@ -524,6 +535,14 @@ public class home {
 								.withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
 			}
 
+			message.append(" ")
+					.append(getTranslatedText(
+							currentHome.isXaeroVisible()
+									? "commands.teleport_commands.common.mapVisible"
+									: "commands.teleport_commands.common.mapHidden",
+							player)
+							.withStyle(currentHome.isXaeroVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
+
 			// linebreak
 			message.append("\n");
 
@@ -582,7 +601,19 @@ public class home {
 					.withStyle(ChatFormatting.RED)
 					.withStyle(style -> style.withClickEvent(
 							new ClickEvent.SuggestCommand(
-									String.format("/delhome \"%s\"", currentHome.getName())))));
+									String.format("/delhome \"%s\"", currentHome.getName())))))
+					.append(" ")
+					.append(getTranslatedText(
+							currentHome.isXaeroVisible()
+									? "commands.teleport_commands.common.hideFromMap"
+									: "commands.teleport_commands.common.showOnMap",
+							player)
+							.withStyle(currentHome.isXaeroVisible() ? ChatFormatting.GRAY : ChatFormatting.GOLD)
+							.withStyle(style -> style.withClickEvent(
+									new ClickEvent.RunCommand(String.format(
+											"maphome \"%s\" %s",
+											currentHome.getName(),
+											currentHome.isXaeroVisible() ? "false" : "true")))));
 
 			// linebreak
 			message.append("\n");
@@ -590,6 +621,65 @@ public class home {
 
 		// send the message
 		player.displayClientMessage(message, false);
+	}
+
+	private static int setHomeXaeroVisibility(ServerPlayer player, String homeName, boolean visible) {
+		if (!ConfigManager.CONFIG.getHome().isEnabled()) {
+			player.displayClientMessage(
+					getTranslatedText("commands.teleport_commands.home.disabled", player)
+							.withStyle(ChatFormatting.RED),
+					true);
+			return 1;
+		}
+
+		try {
+			Optional<Player> optionalPlayerStorage = STORAGE.getPlayer(player.getStringUUID());
+			if (optionalPlayerStorage.isEmpty()) {
+				player.displayClientMessage(
+						getTranslatedText("commands.teleport_commands.home.homeless", player)
+								.withStyle(ChatFormatting.AQUA),
+						true);
+				return 1;
+			}
+
+			Optional<NamedLocation> optionalHome = optionalPlayerStorage.get().getHome(homeName.toLowerCase());
+			if (optionalHome.isEmpty()) {
+				player.displayClientMessage(
+						getTranslatedText("commands.teleport_commands.home.notFound", player)
+								.withStyle(ChatFormatting.RED),
+						true);
+				return 1;
+			}
+
+			NamedLocation home = optionalHome.get();
+			if (home.isXaeroVisible() == visible) {
+				player.displayClientMessage(
+						getTranslatedText(
+								visible
+										? "commands.teleport_commands.home.mapAlreadyShown"
+										: "commands.teleport_commands.home.mapAlreadyHidden",
+								player).withStyle(ChatFormatting.AQUA),
+						true);
+				return 1;
+			}
+
+			home.setXaeroVisible(visible);
+			player.displayClientMessage(
+					getTranslatedText(
+							visible
+									? "commands.teleport_commands.home.mapShown"
+									: "commands.teleport_commands.home.mapHidden",
+							player).withStyle(ChatFormatting.GREEN),
+					true);
+			return 0;
+		} catch (Exception e) {
+			Constants.LOGGER.error("Error while updating home Xaero visibility! => ", e);
+			player.displayClientMessage(
+					getTranslatedText("commands.teleport_commands.homes.error", player)
+							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+					true);
+			return 1;
+		}
 	}
 
 }

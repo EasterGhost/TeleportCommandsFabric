@@ -117,6 +117,9 @@ public final class XaeroSyncServer {
 		List<XaeroSyncEntry> homes = new ArrayList<>();
 
 		for (NamedLocation warp : StorageManager.STORAGE.getWarps()) {
+			if (!warp.isXaeroVisible()) {
+				continue;
+			}
 			String worldId = warp.getWorldString();
 			if (worldId == null || worldId.isBlank()) {
 				continue;
@@ -126,6 +129,9 @@ public final class XaeroSyncServer {
 
 		StorageManager.STORAGE.getPlayer(player.getStringUUID()).ifPresent(playerData -> {
 			for (NamedLocation home : playerData.getHomes()) {
+				if (!home.isXaeroVisible()) {
+					continue;
+				}
 				String worldId = home.getWorldString();
 				if (worldId == null || worldId.isBlank()) {
 					continue;

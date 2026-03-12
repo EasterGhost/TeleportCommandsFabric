@@ -93,3 +93,7 @@ Version history below is based on the repository tag history, local commit histo
 ### Fixed
 
 - Fix a vital crash when teleport to same location due to a wrong datastructure used.
+
+## [1.0] - 2025
+
+It is old teleportcommands mod just edit the version compatibility of minecraft.

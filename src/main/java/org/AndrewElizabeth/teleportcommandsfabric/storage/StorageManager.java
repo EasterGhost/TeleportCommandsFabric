@@ -123,6 +123,7 @@ public class StorageManager {
 			// In v2.0.0 NamedLocation.y switched to precise double-based storage.
 			if (version < Constants.STORAGE_VERSION) {
 				normalizeNamedLocationYAsDouble(jsonObject);
+				ensureNamedLocationXaeroVisible(jsonObject);
 			}
 
 			// Always bump to the latest supported schema version after migrations.
@@ -164,6 +165,36 @@ public class StorageManager {
 				}
 				JsonObject player = element.getAsJsonObject();
 				normalizeLocationsArrayY(player.getAsJsonArray("Homes"));
+			}
+		}
+	}
+
+	private static void ensureNamedLocationXaeroVisible(JsonObject root) {
+		ensureLocationsArrayXaeroVisible(root.getAsJsonArray("Warps"));
+
+		if (root.has("Players") && root.get("Players").isJsonArray()) {
+			JsonArray players = root.getAsJsonArray("Players");
+			for (JsonElement element : players) {
+				if (!element.isJsonObject()) {
+					continue;
+				}
+				JsonObject player = element.getAsJsonObject();
+				ensureLocationsArrayXaeroVisible(player.getAsJsonArray("Homes"));
+			}
+		}
+	}
+
+	private static void ensureLocationsArrayXaeroVisible(JsonArray locations) {
+		if (locations == null) {
+			return;
+		}
+		for (JsonElement element : locations) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+			JsonObject location = element.getAsJsonObject();
+			if (!location.has("xaeroVisible")) {
+				location.addProperty("xaeroVisible", true);
 			}
 		}
 	}
