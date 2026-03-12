@@ -7,7 +7,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.common.DeathLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -112,7 +114,8 @@ public class back {
 
 		// Sets the teleportBlockPos based on if it should do safety checking
 		if (!safetyDisabled) {
-			Optional<BlockPos> safeBlockPos = getSafeBlockPos(deathLocation.getBlockPos(), deathLocationWorld);
+			Optional<BlockPos> safeBlockPos = TeleportSafety.getSafeBlockPos(deathLocation.getBlockPos(),
+					deathLocationWorld);
 
 			// Check if there is a safe BlockPos
 			if (safeBlockPos.isEmpty()) {
@@ -153,7 +156,7 @@ public class back {
 					teleportBlockPos.getZ() + 0.5);
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
-			if (!tools.TeleporterWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false)) {
+			if (!TeleportService.teleportWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false)) {
 				return; // On cooldown, message already sent
 			}
 

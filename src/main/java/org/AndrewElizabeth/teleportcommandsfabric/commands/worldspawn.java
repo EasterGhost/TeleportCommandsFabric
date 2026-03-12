@@ -6,6 +6,8 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import net.minecraft.ChatFormatting;
@@ -95,7 +97,7 @@ public class worldspawn {
 				.pos();
 
 		if (!safetyDisabled) {
-			Optional<BlockPos> teleportData = getSafeBlockPos(worldSpawn, world);
+			Optional<BlockPos> teleportData = TeleportSafety.getSafeBlockPos(worldSpawn, world);
 
 			if (teleportData.isPresent()) {
 				BlockPos safeBlockPos = teleportData.get();
@@ -111,7 +113,7 @@ public class worldspawn {
 
 					player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
 							true);
-					TeleporterWithDelayAndCooldown(player, world, teleportPos, false);
+					TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false);
 				}
 
 			} else {
@@ -142,7 +144,7 @@ public class worldspawn {
 
 				player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player),
 						true);
-				TeleporterWithDelayAndCooldown(player, world,
+				TeleportService.teleportWithDelayAndCooldown(player, world,
 						new Vec3(worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5), false);
 			}
 		}

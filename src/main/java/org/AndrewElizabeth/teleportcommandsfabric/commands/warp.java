@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.WarpSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import net.minecraft.ChatFormatting;
@@ -300,7 +301,7 @@ public class warp {
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player),
 					true);
-			tools.TeleporterWithDelayAndCooldown(player, warpWorld, teleportPos, false);
+			TeleportService.teleportWithDelayAndCooldown(player, warpWorld, teleportPos, false);
 		}
 	}
 

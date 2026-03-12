@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.HomeSuggestionProvider;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import net.minecraft.ChatFormatting;
@@ -365,7 +366,7 @@ public class home {
 					teleportBlockPos.getZ() + 0.5);
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);
-			tools.TeleporterWithDelayAndCooldown(player, homeWorld, teleportPos, false);
+			TeleportService.teleportWithDelayAndCooldown(player, homeWorld, teleportPos, false);
 		}
 	}
 

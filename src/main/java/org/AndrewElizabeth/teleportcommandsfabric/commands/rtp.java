@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
@@ -122,7 +123,7 @@ public class rtp {
 				BlockPos blockPos = safePos.get();
 				Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
 				player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
-				TeleporterWithDelayAndCooldown(player, world, teleportPos, false);
+				TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false);
 				SEARCH_JOBS.remove(uuid);
 				continue;
 			}

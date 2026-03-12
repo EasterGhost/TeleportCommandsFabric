@@ -7,6 +7,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.tpaSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -320,7 +322,7 @@ public class tpa {
 			ServerPlayer destinationPlayer = tpaStorage.get().here ? ToPlayer : FromPlayer;
 			ServerPlayer toSentPlayer = tpaStorage.get().here ? FromPlayer : ToPlayer;
 
-			Optional<BlockPos> teleportData = getSafeBlockPos(destinationPlayer.blockPosition(),
+			Optional<BlockPos> teleportData = TeleportSafety.getSafeBlockPos(destinationPlayer.blockPosition(),
 					destinationPlayer.level());
 
 			boolean teleportSuccess;
@@ -328,11 +330,11 @@ public class tpa {
 				BlockPos safeBlockPos = teleportData.get();
 				Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(), safeBlockPos.getZ() + 0.5);
 
-				teleportSuccess = TeleporterWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(), teleportPos,
+				teleportSuccess = TeleportService.teleportWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(), teleportPos,
 						false);
 			} else {
 				// if no safe location then just teleport to the player
-				teleportSuccess = TeleporterWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(),
+				teleportSuccess = TeleportService.teleportWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(),
 						destinationPlayer.position(), false);
 			}
 
