@@ -325,11 +325,10 @@ public class home {
 
 		if (optionalWorld.isEmpty()) {
 			Constants.LOGGER.warn(
-					"({}) Error while going to the home \"{}\"! \nCouldn't find a world with the id: \"{}\" \nAvailable worlds: {}",
+					"({}) Error while going to the home \"{}\"! \nCouldn't find a world with the id: \"{}\"",
 					player.getName().getString(),
 					home.getName(),
-					home.getWorldString(),
-					tools.getWorldIds());
+					home.getWorldString());
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
 					.withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);

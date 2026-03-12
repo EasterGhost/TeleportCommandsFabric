@@ -261,11 +261,10 @@ public class warp {
 
 		if (optionalWorld.isEmpty()) {
 			Constants.LOGGER.warn(
-					"({}) Error while going to the warp \"{}\"! \nCouldn't find a world with the id: \"{}\" \nAvailable worlds: {}",
+					"({}) Error while going to the warp \"{}\"! \nCouldn't find a world with the id: \"{}\"",
 					player.getName().getString(),
 					warp.getName(),
-					warp.getWorldString(),
-					tools.getWorldIds());
+					warp.getWorldString());
 
 			player.displayClientMessage(
 					getTranslatedText("commands.teleport_commands.common.worldNotFound", player)

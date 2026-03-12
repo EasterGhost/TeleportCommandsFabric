@@ -381,13 +381,6 @@ public class tools {
 				.findFirst();
 	}
 
-	// Gets the ids of all the worlds
-	public static List<String> getWorldIds() {
-		return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)
-				.map(level -> getDimensionId(level.dimension()))
-				.toList();
-	}
-
 	// checks if a BlockPos is safe, used by the teleportSafetyChecker.
 	private static boolean isBlockPosSafe(BlockPos bottomPlayer, ServerLevel world) {
 

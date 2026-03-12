@@ -99,10 +99,9 @@ public class back {
 
 		if (deathLocationWorld == null) {
 			Constants.LOGGER.warn(
-					"({}) Error while going back! \nCouldn't find a world with the id: \"{}\" \nAvailable worlds: {}",
+					"({}) Error while going back! \nCouldn't find a world with the id: \"{}\"",
 					player.getName().getString(),
-					deathLocation.getWorldString(),
-					tools.getWorldIds());
+					deathLocation.getWorldString());
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
 					.withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
