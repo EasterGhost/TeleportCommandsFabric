@@ -372,6 +372,15 @@ public class tools {
 		return raw;
 	}
 
+	public static Optional<ServerLevel> getWorldById(String worldId) {
+		if (TeleportCommands.SERVER == null || worldId == null || worldId.isBlank()) {
+			return Optional.empty();
+		}
+		return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)
+				.filter(level -> Objects.equals(getDimensionId(level.dimension()), worldId))
+				.findFirst();
+	}
+
 	// Gets the ids of all the worlds
 	public static List<String> getWorldIds() {
 		return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)

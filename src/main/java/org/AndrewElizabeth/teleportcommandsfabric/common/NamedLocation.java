@@ -1,16 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.common;
 
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-public class NamedLocation {
+public class NamedLocation implements WorldLocated {
 	private String name;
 	private final int x;
 	private final double y;
@@ -55,15 +48,6 @@ public class NamedLocation {
 	public String getWorldString() {
 		return this.world;
 	}
-
-	// function to quickly filter the worlds and get the ServerLevel for the string
-	public Optional<ServerLevel> getWorld() {
-		return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false) // woa, this looks
-																									// silly
-				.filter(level -> Objects.equals(tools.getDimensionId(level.dimension()), this.world))
-				.findFirst();
-	}
-
 	// -----
 
 	public void setName(String name) throws Exception {

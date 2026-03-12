@@ -1,15 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.common;
 
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-public class DeathLocation {
+public class DeathLocation implements WorldLocated {
 	private BlockPos pos;
 	private String world;
 
@@ -27,14 +20,6 @@ public class DeathLocation {
 	public String getWorldString() {
 		return world;
 	}
-
-	// function to quickly filter the worlds and get the ServerLevel for the string
-	public Optional<ServerLevel> getWorld() {
-		return StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false) // woa, this looks silly
-				.filter(level -> Objects.equals(tools.getDimensionId(level.dimension()), this.world))
-				.findFirst();
-	}
-
 	// ----- note to self: these don't need to be saved since this class isn't a
 	// part of the storage :3
 
