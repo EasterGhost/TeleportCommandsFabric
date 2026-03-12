@@ -165,9 +165,9 @@ public class ConfigManager {
 		// ===== Configuration Sections =====
 
 		public static final class Teleporting {
-			private int delay = 5;
-			private int cooldown = 5;
-			private boolean preloadEnabled = true;
+			private int delay = 0;
+			private int cooldown = 3;
+			private boolean preloadEnabled = false;
 			private int preloadRadiusChunks = 1;
 
 			public int getDelay() {
@@ -226,7 +226,7 @@ public class ConfigManager {
 
 		public final class Home {
 			private boolean enabled = true;
-			private int playerMaximum = 20;
+			private int playerMaximum = 10;
 			private boolean deleteInvalid = false;
 
 			public boolean isEnabled() {
@@ -256,7 +256,7 @@ public class ConfigManager {
 
 		public final class Tpa {
 			private boolean enabled = true;
-			private int requestExpireTime = 300; // seconds
+			private int requestExpireTime = 120; // seconds
 
 			public boolean isEnabled() {
 				return enabled;
@@ -309,7 +309,7 @@ public class ConfigManager {
 			public static final int MIN_RADIUS = 1;
 			public static final int MAX_RADIUS = 128;
 			private boolean enabled = true;
-			private int radius = 500;
+			private int radius = 32;
 
 			public boolean isEnabled() {
 				return enabled;
@@ -351,7 +351,7 @@ public class ConfigManager {
 
 		public final class Xaero {
 			private boolean enabled = true;
-			private int syncIntervalSeconds = 60;
+			private int syncIntervalSeconds = 10;
 			private boolean persistWaypointSets = true;
 			private String warpSetName = "TeleportCommands Warps";
 			private String homeSetName = "TeleportCommands Homes";

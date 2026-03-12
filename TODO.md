@@ -1,4 +1,15 @@
-## Update in 1.3.1
+## New features
 
-- Delete unused LEGACY code in XaeroCompat.java
-- Edit some default value of config
+- Maybe add optional switch for each warps and homes
+
+## Improvements
+
+- Maybe update i18n
+
+## Bug Fix
+
+- none
+
+## Others
+
+- none
