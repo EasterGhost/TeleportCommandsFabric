@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.client;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncEntry;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+
 import xaero.common.minimap.waypoints.Waypoint;
 import xaero.hud.minimap.BuiltInHudModules;
 import xaero.hud.minimap.module.MinimapSession;

@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncDataPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPackets;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncRequestPayload;
+
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;

@@ -1,10 +1,11 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.admin;
 
+import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 
 final class AdminHelpFormatter {
 

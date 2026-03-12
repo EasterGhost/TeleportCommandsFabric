@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
@@ -10,10 +11,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.HomeSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -26,6 +23,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+import java.util.Optional;
+
 import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
@@ -34,7 +34,7 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("sethome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
@@ -85,7 +85,7 @@ public class home {
 					}
 					return 0;
 				})
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new HomeSuggestionProvider())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> {
@@ -116,7 +116,7 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("delhome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new HomeSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context, "name");
@@ -146,9 +146,9 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("renamehome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new HomeSuggestionProvider())
-						.then(argument("newName", StringArgumentType.string())
+						.then(Commands.argument("newName", StringArgumentType.string())
 								.executes(context -> {
 									final String name = StringArgumentType.getString(context, "name");
 									final String newName = StringArgumentType.getString(context, "newName");
@@ -178,7 +178,7 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("defaulthome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string()).suggests(new HomeSuggestionProvider())
+				.then(Commands.argument("name", StringArgumentType.string()).suggests(new HomeSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
@@ -239,7 +239,7 @@ public class home {
 		String worldString = WorldResolver.getDimensionId(player.level().dimension());
 
 		// Gets the player's storage and creates it if it doesn't exist
-		Player playerStorage = StorageManager.STORAGE.addPlayer(player.getStringUUID());
+		Player playerStorage = STORAGE.addPlayer(player.getStringUUID());
 
 		int maxHomes = ConfigManager.CONFIG.home.getPlayerMaximum();
 		boolean homeExists = playerStorage.getHome(homeName).isPresent();

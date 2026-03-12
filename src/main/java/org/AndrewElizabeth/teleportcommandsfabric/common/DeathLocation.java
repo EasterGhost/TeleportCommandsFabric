@@ -1,9 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.common;
 
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-
-import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import java.util.Optional;
 

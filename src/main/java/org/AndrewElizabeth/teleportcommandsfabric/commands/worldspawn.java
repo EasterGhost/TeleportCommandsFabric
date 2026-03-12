@@ -2,10 +2,12 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -15,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -48,7 +51,7 @@ public class worldspawn {
 					}
 					return 0;
 				})
-				.then(argument("Disable Safety", BoolArgumentType.bool())
+				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> {
 							final boolean safety = BoolArgumentType.getBool(context, "Disable Safety");
@@ -144,5 +147,4 @@ public class worldspawn {
 			}
 		}
 	}
-
 }

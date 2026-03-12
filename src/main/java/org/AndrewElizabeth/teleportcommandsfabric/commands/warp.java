@@ -2,13 +2,13 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.server.permissions.Permissions;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.WarpSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -17,6 +17,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.Optional;
 
+import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class warp {
@@ -31,7 +33,7 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("setwarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
 									"name");
@@ -64,7 +66,7 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("warp")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
@@ -98,7 +100,7 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("delwarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
@@ -132,9 +134,9 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("renamewarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
-						.then(argument("newName", StringArgumentType.string())
+						.then(Commands.argument("newName", StringArgumentType.string())
 								.executes(context -> {
 									final String name = StringArgumentType
 											.getString(context, "name");
