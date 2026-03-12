@@ -171,7 +171,7 @@ public class rtp {
 
 			int yMin = Math.max(minY, centerY - radius + 1);
 			int yMax = Math.min(maxY, centerY + radius);
-			yMax = Math.min(yMax, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1);
+			yMax = Math.min(yMax, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
 			if (yMin > yMax) {
 				continue;
 			}
@@ -205,9 +205,7 @@ public class rtp {
 		BlockState feetState = world.getBlockState(pos);
 		headPos.set(pos.getX(), pos.getY() + 1, pos.getZ());
 		BlockState headState = world.getBlockState(headPos);
-		headTopPos.set(pos.getX(), pos.getY() + 2, pos.getZ());
-		BlockState headTopState = world.getBlockState(headTopPos);
-		return feetState.isAir() && headState.isAir() && headTopState.isAir();
+		return feetState.isAir() && headState.isAir();
 	}
 
 	private record RtpSearchJob(
