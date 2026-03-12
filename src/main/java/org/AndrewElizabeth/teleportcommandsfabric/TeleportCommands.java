@@ -7,8 +7,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.commands.admin.AdminCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.xaero.XaeroSyncServer;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -60,7 +60,7 @@ public class TeleportCommands implements ModInitializer {
 	// Runs when the playerDeath mixin calls it, updates the /back command position
 	public static void onPlayerDeath(ServerPlayer player) {
 		BlockPos pos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
-		String world = tools.getDimensionId(player.level().dimension());
+		String world = WorldResolver.getDimensionId(player.level().dimension());
 		String uuid = player.getStringUUID();
 
 		DeathLocationStorage.setDeathLocation(uuid, pos, world);

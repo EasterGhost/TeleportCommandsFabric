@@ -8,6 +8,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.HomeSuggestionProvider;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import java.util.List;
 import java.util.Optional;
@@ -236,7 +237,7 @@ public class home {
 	// Adds a new home to the homeList of a player
 	private static void SetHome(ServerPlayer player, String homeName) throws Exception {
 		homeName = homeName.toLowerCase();
-		String worldString = tools.getDimensionId(player.level().dimension());
+		String worldString = WorldResolver.getDimensionId(player.level().dimension());
 
 		// Gets the player's storage and creates it if it doesn't exist
 		Player playerStorage = StorageManager.STORAGE.addPlayer(player.getStringUUID());

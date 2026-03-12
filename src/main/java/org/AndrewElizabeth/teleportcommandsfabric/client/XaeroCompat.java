@@ -2,7 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.client;
 
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncEntry;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import xaero.common.minimap.waypoints.Waypoint;
 import xaero.hud.minimap.BuiltInHudModules;
 import xaero.hud.minimap.module.MinimapSession;
@@ -101,7 +101,7 @@ public final class XaeroCompat {
 			String worldId) {
 		if (currentRoot != null) {
 			for (MinimapWorld world : currentRoot.getAllWorldsIterable()) {
-				String currentId = tools.getDimensionId(world.getDimId());
+				String currentId = WorldResolver.getDimensionId(world.getDimId());
 				if (worldId.equals(currentId)) {
 					return world;
 				}
@@ -109,7 +109,7 @@ public final class XaeroCompat {
 		}
 		for (MinimapWorldRootContainer root : worldManager.getRootContainers()) {
 			for (MinimapWorld world : root.getAllWorldsIterable()) {
-				String currentId = tools.getDimensionId(world.getDimId());
+				String currentId = WorldResolver.getDimensionId(world.getDimId());
 				if (worldId.equals(currentId)) {
 					return world;
 				}

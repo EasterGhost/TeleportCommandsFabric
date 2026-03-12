@@ -1,9 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.common;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
-public class NamedLocation implements WorldLocated {
+import java.util.Optional;
+
+public class NamedLocation {
 	private String name;
 	private final int x;
 	private final double y;
@@ -48,6 +52,11 @@ public class NamedLocation implements WorldLocated {
 	public String getWorldString() {
 		return this.world;
 	}
+
+	public Optional<ServerLevel> getWorld() {
+		return WorldResolver.getDimensionById(world);
+	}
+
 	// -----
 
 	public void setName(String name) throws Exception {

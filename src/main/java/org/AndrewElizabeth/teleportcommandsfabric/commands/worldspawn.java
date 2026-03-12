@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -14,10 +15,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
-
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
 import static net.minecraft.commands.Commands.argument;
@@ -84,10 +83,7 @@ public class worldspawn {
 	private static void toWorldSpawn(ServerPlayer player, boolean safetyDisabled) throws NullPointerException {
 		// Get world from config
 		String worldId = ConfigManager.CONFIG.getWorldSpawn().getWorld_id();
-		ServerLevel world = StreamSupport.stream(TeleportCommands.SERVER.getAllLevels().spliterator(), false)
-				.filter(level -> Objects.equals(getDimensionId(level.dimension()), worldId))
-				.findFirst()
-				.orElse(null);
+		ServerLevel world = WorldResolver.getDimensionById(worldId).orElse(null);
 
 		if (world == null) {
 			Constants.LOGGER.error("World not found: {}, falling back to overworld", worldId);

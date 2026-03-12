@@ -1,8 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.common;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
-public class DeathLocation implements WorldLocated {
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+
+import java.util.Optional;
+
+public class DeathLocation {
 	private BlockPos pos;
 	private String world;
 
@@ -20,6 +25,11 @@ public class DeathLocation implements WorldLocated {
 	public String getWorldString() {
 		return world;
 	}
+
+	public Optional<ServerLevel> getWorld() {
+		return WorldResolver.getDimensionById(world);
+	}
+
 	// ----- note to self: these don't need to be saved since this class isn't a
 	// part of the storage :3
 

@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.WarpSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -205,7 +206,7 @@ public class warp {
 		// System.out.println(warpName);
 		warpName = warpName.toLowerCase();
 
-		String worldString = tools.getDimensionId(player.level().dimension());
+		String worldString = WorldResolver.getDimensionId(player.level().dimension());
 
 		// Create the NamedLocation
 		NamedLocation warp = new NamedLocation(
