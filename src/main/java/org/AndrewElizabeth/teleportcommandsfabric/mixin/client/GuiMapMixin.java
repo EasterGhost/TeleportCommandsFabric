@@ -77,12 +77,16 @@ public class GuiMapMixin {
 		}
 
 		if ("W".equals(normalizedSymbol)) {
-			return "warp " + normalizedName;
+			return "warp " + tpc$quoteCommandArgument(normalizedName);
 		}
 		if ("H".equals(normalizedSymbol)) {
-			return "home " + normalizedName;
+			return "home " + tpc$quoteCommandArgument(normalizedName);
 		}
 		return null;
+	}
+
+	private static String tpc$quoteCommandArgument(String value) {
+		return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
 	}
 
 	private static String tpc$stripTaggedPrefix(String name) {
