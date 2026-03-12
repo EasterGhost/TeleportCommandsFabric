@@ -51,7 +51,7 @@ final class AdminStatusFormatter {
 		String actionKey = enabled
 				? "commands.teleport_commands.admin.action.disable"
 				: "commands.teleport_commands.admin.action.enable";
-		String command = "/teleportcommands " + (enabled ? "disable " : "enable ") + moduleKey;
+		String command = "teleportcommands " + (enabled ? "disable " : "enable ") + moduleKey;
 		MutableComponent state = AdminMessages.t(source,
 				enabled
 						? "commands.teleport_commands.admin.stat.enabled"

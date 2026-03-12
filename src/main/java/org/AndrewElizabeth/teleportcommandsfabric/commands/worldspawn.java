@@ -130,7 +130,7 @@ public class worldspawn {
 								.append(getTranslatedText("commands.teleport_commands.common.forceTeleport", player)
 										.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
 										.withStyle(style -> style.withClickEvent(
-												new ClickEvent.RunCommand("/worldspawn true"))))
+												new ClickEvent.RunCommand("worldspawn true"))))
 								.append("\n"),
 						false);
 			}

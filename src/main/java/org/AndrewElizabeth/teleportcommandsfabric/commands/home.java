@@ -559,7 +559,7 @@ public class home {
 							.withStyle(ChatFormatting.GREEN)
 							.withStyle(style -> style.withClickEvent(
 									new ClickEvent.RunCommand(
-											String.format("/home \"%s\"", currentHome.getName())))))
+											String.format("home \"%s\"", currentHome.getName())))))
 					.append(" ")
 					.append(getTranslatedText("commands.teleport_commands.common.rename", player)
 							.withStyle(ChatFormatting.BLUE)
@@ -574,7 +574,7 @@ public class home {
 						.withStyle(ChatFormatting.DARK_AQUA)
 						.withStyle(style -> style.withClickEvent(
 								new ClickEvent.RunCommand(
-										String.format("/defaulthome \"%s\"", currentHome.getName())))))
+										String.format("defaulthome \"%s\"", currentHome.getName())))))
 						.append(" ");
 			}
 

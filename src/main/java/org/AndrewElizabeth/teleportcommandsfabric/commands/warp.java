@@ -435,7 +435,7 @@ public class warp {
 							.withStyle(ChatFormatting.GREEN)
 							.withStyle(style -> style.withClickEvent(
 									new ClickEvent.RunCommand(
-											String.format("/warp \"%s\"",
+											String.format("warp \"%s\"",
 													currentWarp.getName())))))
 					.append(" ");
 
