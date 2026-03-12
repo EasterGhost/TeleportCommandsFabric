@@ -68,7 +68,8 @@ public final class TeleportSafety {
 				|| !world.getBlockState(belowPlayer).getCollisionShape(world, belowPlayer).isEmpty())
 				&& (world.getBlockState(bottomPlayer).getCollisionShape(world, bottomPlayer).isEmpty()
 						&& !UNSAFE_COLLISION_FREE_BLOCKS.contains(bottomPlayerId))
-				&& (!UNSAFE_COLLISION_FREE_BLOCKS.contains(topPlayerId))) {
+				&& (world.getBlockState(topPlayer).getCollisionShape(world, topPlayer).isEmpty()
+						&& !UNSAFE_COLLISION_FREE_BLOCKS.contains(topPlayerId))) {
 			return true;
 		}
 		return false;
