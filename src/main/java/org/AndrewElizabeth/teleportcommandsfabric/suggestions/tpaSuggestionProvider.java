@@ -25,7 +25,7 @@ public class tpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 		try {
 			ServerPlayer player = context.getSource().getPlayerOrException();
 
-			List<tpa.tpaArrayClass> playerTpaList = tpa.tpaList.stream()
+			List<tpa.tpaArrayClass> playerTpaList = tpa.getRequests().stream()
 					.filter(tpa -> Objects.equals(player.getStringUUID(), tpa.RecPlayer))
 					.toList();
 			PlayerList playerList = context.getSource().getServer().getPlayerList();
