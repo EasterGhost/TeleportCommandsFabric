@@ -27,6 +27,7 @@ public final class AdminCommands {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(Commands.literal("teleportcommands")
 				.then(buildConfigNode())
+				.then(buildStatusNode())
 				.then(buildReloadNode())
 				.then(buildDisableNode())
 				.then(buildEnableNode())
@@ -52,12 +53,14 @@ public final class AdminCommands {
 						"delay",
 						"seconds",
 						0,
+						() -> ConfigManager.CONFIG.getTeleporting().getDelay(),
 						value -> ConfigManager.CONFIG.getTeleporting().setDelay(value),
 						"commands.teleport_commands.admin.config.teleporting.delay"))
 				.then(AdminConfigNodeFactory.intNode(
 						"cooldown",
 						"seconds",
 						0,
+						() -> ConfigManager.CONFIG.getTeleporting().getCooldown(),
 						value -> ConfigManager.CONFIG.getTeleporting().setCooldown(value),
 						"commands.teleport_commands.admin.config.teleporting.cooldown"));
 	}
@@ -66,6 +69,7 @@ public final class AdminCommands {
 		return Commands.literal("back")
 				.then(AdminConfigNodeFactory.boolNode(
 						"deleteAfterTeleport",
+						() -> ConfigManager.CONFIG.getBack().isDeleteAfterTeleport(),
 						value -> ConfigManager.CONFIG.getBack().setDeleteAfterTeleport(value),
 						"commands.teleport_commands.admin.config.back.deleteAfterTeleport"));
 	}
@@ -76,10 +80,12 @@ public final class AdminCommands {
 						"max",
 						"count",
 						0,
+						() -> ConfigManager.CONFIG.getHome().getPlayerMaximum(),
 						value -> ConfigManager.CONFIG.getHome().setPlayerMaximum(value),
 						"commands.teleport_commands.admin.config.home.max"))
 				.then(AdminConfigNodeFactory.boolNode(
 						"deleteInvalid",
+						() -> ConfigManager.CONFIG.getHome().isDeleteInvalid(),
 						value -> ConfigManager.CONFIG.getHome().setDeleteInvalid(value),
 						"commands.teleport_commands.admin.config.home.deleteInvalid"));
 	}
@@ -90,6 +96,7 @@ public final class AdminCommands {
 						"expireTime",
 						"seconds",
 						0,
+						() -> ConfigManager.CONFIG.getTpa().getRequestExpireTime(),
 						value -> ConfigManager.CONFIG.getTpa().setRequestExpireTime(value),
 						"commands.teleport_commands.admin.config.tpa.expireTime"));
 	}
@@ -100,10 +107,12 @@ public final class AdminCommands {
 						"max",
 						"count",
 						0,
+						() -> ConfigManager.CONFIG.getWarp().getMaximum(),
 						value -> ConfigManager.CONFIG.getWarp().setMaximum(value),
 						"commands.teleport_commands.admin.config.warp.max"))
 				.then(AdminConfigNodeFactory.boolNode(
 						"deleteInvalid",
+						() -> ConfigManager.CONFIG.getWarp().isDeleteInvalid(),
 						value -> ConfigManager.CONFIG.getWarp().setDeleteInvalid(value),
 						"commands.teleport_commands.admin.config.warp.deleteInvalid"));
 	}
@@ -113,6 +122,7 @@ public final class AdminCommands {
 				.then(AdminConfigNodeFactory.stringNode(
 						"world",
 						"worldId",
+						() -> ConfigManager.CONFIG.getWorldSpawn().getWorld_id(),
 						value -> ConfigManager.CONFIG.getWorldSpawn().setWorld_id(value),
 						"commands.teleport_commands.admin.config.worldspawn.world"));
 	}
@@ -124,6 +134,7 @@ public final class AdminCommands {
 						"blocks",
 						ConfigManager.ConfigClass.Rtp.MIN_RADIUS,
 						ConfigManager.ConfigClass.Rtp.MAX_RADIUS,
+						() -> ConfigManager.CONFIG.getRtp().getRadius(),
 						value -> ConfigManager.CONFIG.getRtp().setRadius(value),
 						"commands.teleport_commands.admin.config.rtp.radius"));
 	}
@@ -134,6 +145,7 @@ public final class AdminCommands {
 						"syncIntervalSeconds",
 						"seconds",
 						0,
+						() -> ConfigManager.CONFIG.getXaero().getSyncIntervalSeconds(),
 						value -> ConfigManager.CONFIG.getXaero().setSyncIntervalSeconds(value),
 						"commands.teleport_commands.admin.config.xaero.syncIntervalSeconds"));
 	}
@@ -156,6 +168,17 @@ public final class AdminCommands {
 							() -> AdminMessages.t(context.getSource(),
 									"commands.teleport_commands.admin.reload.success"),
 							true);
+					return 0;
+				});
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildStatusNode() {
+		return Commands.literal("status")
+				.requires(AdminCommands::isOpOrConsole)
+				.executes(context -> {
+					context.getSource().sendSuccess(
+							() -> AdminStatusFormatter.build(context.getSource()),
+							false);
 					return 0;
 				});
 	}
@@ -209,8 +232,8 @@ public final class AdminCommands {
 						AdminMessages.t(context.getSource(), toggle.labelKey()),
 						AdminMessages.t(context.getSource(),
 								enabled
-										? "commands.teleport_commands.admin.state.enabled"
-										: "commands.teleport_commands.admin.state.disabled")));
+										? "commands.teleport_commands.admin.stat.enabled"
+										: "commands.teleport_commands.admin.stat.disabled")));
 	}
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {

@@ -20,6 +20,7 @@ final class AdminHelpFormatter {
 		append(message, AdminMessages.t(source,
 				"commands.teleport_commands.admin.help.section.admin"), ChatFormatting.GOLD, true);
 		append(message, Component.literal("/teleportcommands help"), ChatFormatting.YELLOW, false);
+		append(message, Component.literal("/teleportcommands status"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal("/teleportcommands reload"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal("/teleportcommands enable <back|home|tpa|warp|worldspawn|rtp|xaero>"),
 				ChatFormatting.YELLOW, false);

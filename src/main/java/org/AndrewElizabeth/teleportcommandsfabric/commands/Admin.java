@@ -106,7 +106,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.back.deleteAfterTeleport",
 																		translate(context.getSource(),
-																				"commands.teleport_commands.admin.state.enabled")))))
+																				"commands.teleport_commands.admin.stat.enabled")))))
 												.then(Commands.literal("false")
 														.executes(context -> setAndSave(
 																context,
@@ -115,7 +115,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.back.deleteAfterTeleport",
 																		translate(context.getSource(),
-																				"commands.teleport_commands.admin.state.disabled")))))))
+																				"commands.teleport_commands.admin.stat.disabled")))))))
 								// Config home max / deleteInvalid (true/false)
 								.then(Commands.literal("home")
 										.then(Commands.literal("max")
@@ -137,7 +137,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.home.deleteInvalid",
 																		translate(context.getSource(),
-																				"commands.teleport_commands.admin.state.enabled")))))
+																				"commands.teleport_commands.admin.stat.enabled")))))
 												.then(Commands.literal("false")
 														.executes(context -> setAndSave(
 																context,
@@ -146,7 +146,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.home.deleteInvalid",
 																		translate(context.getSource(),
-																				"commands.teleport_commands.admin.state.disabled")))))))
+																				"commands.teleport_commands.admin.stat.disabled")))))))
 								// Config tpa expireTime
 								.then(Commands.literal("tpa")
 										.then(Commands.literal("expireTime")
@@ -182,7 +182,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.warp.deleteInvalid",
 																		translate(context.getSource(),
-																				"commands.teleport_commands.admin.state.enabled")))))
+																				"commands.teleport_commands.admin.stat.enabled")))))
 												.then(Commands.literal("false")
 														.executes(context -> setAndSave(
 																context,
@@ -191,7 +191,7 @@ public class Admin {
 																translate(context.getSource(),
 																		"commands.teleport_commands.admin.config.warp.deleteInvalid",
 																		translate(context.getSource(),
-																				"commands.teleport_commands.admin.state.disabled")))))))
+																				"commands.teleport_commands.admin.stat.disabled")))))))
 								// Config worldspawn world
 								.then(Commands.literal("worldspawn")
 										.then(Commands.literal("world")
@@ -309,8 +309,8 @@ public class Admin {
 							"commands.teleport_commands.admin.module.status",
 							translate(context.getSource(), module.labelKey()),
 							translate(context.getSource(), enabled
-									? "commands.teleport_commands.admin.state.enabled"
-									: "commands.teleport_commands.admin.state.disabled")));
+									? "commands.teleport_commands.admin.stat.enabled"
+									: "commands.teleport_commands.admin.stat.disabled")));
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error while {} a command! => ", enabled ? "enabling" : "disabling", e);
 			throw new SimpleCommandExceptionType(

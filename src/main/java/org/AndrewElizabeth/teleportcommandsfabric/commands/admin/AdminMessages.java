@@ -45,4 +45,15 @@ final class AdminMessages {
 					.create();
 		}
 	}
+
+	static int sendCurrentValue(CommandSourceStack source, String name, MutableComponent value) {
+		source.sendSuccess(
+				() -> t(source,
+						"commands.teleport_commands.admin.config.current",
+						Component.literal(name),
+						value)
+						.withStyle(ChatFormatting.YELLOW),
+				false);
+		return 0;
+	}
 }
