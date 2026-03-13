@@ -320,7 +320,7 @@ public class ConfigManager {
 			}
 
 			public int getRadius() {
-				return radius;
+				return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
 			}
 
 			public void setRadius(int radius) {

@@ -2,8 +2,13 @@ package org.AndrewElizabeth.teleportcommandsfabric;
 
 import com.mojang.brigadier.CommandDispatcher;
 
-import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.admin.AdminCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.back.back;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.home.home;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.rtp.rtp;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.tpa.tpa;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.warp.warp;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.worldspawn.worldspawn;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.*;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.xaero.XaeroSyncServer;

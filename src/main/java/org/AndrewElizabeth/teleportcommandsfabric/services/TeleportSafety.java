@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.utils;
+package org.AndrewElizabeth.teleportcommandsfabric.services;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -15,8 +15,6 @@ public final class TeleportSafety {
 	private TeleportSafety() {
 	}
 
-	// checks a 7x7x7 location around the player in order to find a safe place to
-	// teleport them to.
 	public static Optional<BlockPos> getSafeBlockPos(BlockPos blockPos, ServerLevel world) {
 		int row = 1;
 		int rows = 3;
@@ -26,35 +24,30 @@ public final class TeleportSafety {
 		int blockPosZ = blockPos.getZ();
 
 		if (isBlockPosSafe(blockPos, world)) {
-			return Optional.of(blockPos); // safe location found!
+			return Optional.of(blockPos);
+		}
 
-		} else {
-			// find a safe location in an x row radius
-			while (row <= rows) {
-				for (int z = -row; z <= row; z++) {
-					for (int x = -row; x <= row; x++) {
-						for (int y = -row; y <= row; y++) {
+		while (row <= rows) {
+			for (int z = -row; z <= row; z++) {
+				for (int x = -row; x <= row; x++) {
+					for (int y = -row; y <= row; y++) {
+						if ((x == -row || x == row) || (z == -row || z == row) || (y == -row || y == row)) {
+							BlockPos newPos = new BlockPos(blockPosX + x, blockPosY + y, blockPosZ + z);
 
-							// checks if we are on the outer layer of the row, not on the inside
-							if ((x == -row || x == row) || (z == -row || z == row) || (y == -row || y == row)) {
-								BlockPos newPos = new BlockPos(blockPosX + x, blockPosY + y, blockPosZ + z);
-
-								if (isBlockPosSafe(newPos, world)) {
-									return Optional.of(newPos);
-								}
+							if (isBlockPosSafe(newPos, world)) {
+								return Optional.of(newPos);
 							}
 						}
 					}
 				}
-
-				row++;
 			}
 
-			return Optional.empty(); // no safe location found!
+			row++;
 		}
+
+		return Optional.empty();
 	}
 
-	// checks if a BlockPos is safe, used by the teleportSafetyChecker.
 	private static boolean isBlockPosSafe(BlockPos bottomPlayer, ServerLevel world) {
 		BlockPos belowPlayer = new BlockPos(bottomPlayer.getX(), bottomPlayer.getY() - 1, bottomPlayer.getZ());
 		String belowPlayerId = world.getBlockState(belowPlayer).getBlock().getDescriptionId();

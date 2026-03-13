@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.suggestions;
+package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -6,8 +6,8 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 
 import net.minecraft.commands.CommandSourceStack;
 
@@ -19,12 +19,11 @@ public class WarpSuggestionProvider implements SuggestionProvider<CommandSourceS
 	public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context,
 			SuggestionsBuilder builder) {
 		try {
-			List<NamedLocation> WarpStorage = StorageManager.STORAGE.getWarps();
-			for (NamedLocation currentWarp : WarpStorage) {
+			List<NamedLocation> warpStorage = StorageManager.STORAGE.getWarps();
+			for (NamedLocation currentWarp : warpStorage) {
 				builder.suggest(currentWarp.getName());
 			}
 
-			// Build and return the suggestions
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting warp suggestions! ", e);

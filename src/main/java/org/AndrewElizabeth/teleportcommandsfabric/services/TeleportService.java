@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.utils;
+package org.AndrewElizabeth.teleportcommandsfabric.services;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
@@ -44,15 +44,6 @@ public final class TeleportService {
 	private TeleportService() {
 	}
 
-	/**
-	 * Teleport with delay and cooldown checks.
-	 *
-	 * @param player Player to teleport
-	 * @param world Target world
-	 * @param coords Target coordinates
-	 * @param bypassDelay If true, skip delay but still check cooldown
-	 * @return true if teleport was initiated, false if on cooldown
-	 */
 	public static boolean teleportWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords,
 			boolean bypassDelay) {
 		return teleportWithDelayAndCooldown(player, world, coords, bypassDelay, null);
@@ -172,9 +163,6 @@ public final class TeleportService {
 		}
 	}
 
-	/**
-	 * Immediate teleport without cooldown or delay checks.
-	 */
 	public static boolean teleport(ServerPlayer player, ServerLevel world, Vec3 coords) {
 		if (player.hasDisconnected()) {
 			return false;
