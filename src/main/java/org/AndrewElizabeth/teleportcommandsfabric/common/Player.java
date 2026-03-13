@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Collections.unmodifiableList;
 
 public class Player {
 	private final String UUID;
-	private String DefaultHome = "";
+	private UUID DefaultHomeUuid;
 	private final ArrayList<NamedLocation> Homes = new ArrayList<>();
 
 	public Player(String uuid) {
@@ -24,8 +25,14 @@ public class Player {
 		return UUID;
 	}
 
+	public UUID getDefaultHomeUuid() {
+		return DefaultHomeUuid;
+	}
+
 	public String getDefaultHome() {
-		return DefaultHome;
+		return getHomeByUuid(DefaultHomeUuid)
+				.map(NamedLocation::getName)
+				.orElse("");
 	}
 
 	// returns all homes
@@ -40,15 +47,40 @@ public class Player {
 				.findFirst();
 	}
 
+	public Optional<NamedLocation> getHomeByUuid(UUID uuid) {
+		return Homes.stream()
+				.filter(home -> Objects.equals(home.getUuid(), uuid))
+				.findFirst();
+	}
+
 	// -----
 
 	public void setDefaultHome(String defaultHome) throws Exception {
-		setDefaultHomeNoSave(defaultHome);
+		setDefaultHomeByNameNoSave(defaultHome);
 		StorageManager.StorageSaver();
 	}
 
+	public void setDefaultHomeByNameNoSave(String defaultHome) {
+		if (defaultHome == null || defaultHome.isBlank()) {
+			this.DefaultHomeUuid = null;
+			return;
+		}
+		this.DefaultHomeUuid = getHome(defaultHome)
+				.map(NamedLocation::getUuid)
+				.orElse(null);
+	}
+
 	public void setDefaultHomeNoSave(String defaultHome) {
-		this.DefaultHome = defaultHome;
+		setDefaultHomeByNameNoSave(defaultHome);
+	}
+
+	public void setDefaultHomeByUuid(UUID defaultHomeUuid) throws Exception {
+		setDefaultHomeByUuidNoSave(defaultHomeUuid);
+		StorageManager.StorageSaver();
+	}
+
+	public void setDefaultHomeByUuidNoSave(UUID defaultHomeUuid) {
+		this.DefaultHomeUuid = defaultHomeUuid;
 	}
 
 	// Adds a NamedLocation to the home list, returns true if it already exists
@@ -72,6 +104,20 @@ public class Player {
 	}
 
 	public void deleteHomeNoSave(NamedLocation home) {
-		Homes.remove(home);
+		Homes.removeIf(existing -> Objects.equals(existing.getUuid(), home.getUuid()));
+		if (Objects.equals(DefaultHomeUuid, home.getUuid())) {
+			DefaultHomeUuid = null;
+		}
+	}
+
+	public boolean ensureDefaultHomeUuid() {
+		if (DefaultHomeUuid == null) {
+			return false;
+		}
+		if (getHomeByUuid(DefaultHomeUuid).isPresent()) {
+			return false;
+		}
+		DefaultHomeUuid = null;
+		return true;
 	}
 }

@@ -124,7 +124,7 @@ public final class XaeroSyncServer {
 			if (worldId == null || worldId.isBlank()) {
 				continue;
 			}
-			warps.add(new XaeroSyncEntry(warp.getName(), worldId, warp.getX(), warp.getY(), warp.getZ()));
+			warps.add(new XaeroSyncEntry(warp.getUuid(), warp.getName(), worldId, warp.getX(), warp.getY(), warp.getZ()));
 		}
 
 		StorageManager.STORAGE.getPlayer(player.getStringUUID()).ifPresent(playerData -> {
@@ -136,7 +136,7 @@ public final class XaeroSyncServer {
 				if (worldId == null || worldId.isBlank()) {
 					continue;
 				}
-				homes.add(new XaeroSyncEntry(home.getName(), worldId, home.getX(), home.getY(), home.getZ()));
+				homes.add(new XaeroSyncEntry(home.getUuid(), home.getName(), worldId, home.getX(), home.getY(), home.getZ()));
 			}
 		});
 

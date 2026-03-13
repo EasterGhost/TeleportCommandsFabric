@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Collections.unmodifiableList;
 
@@ -124,6 +125,8 @@ public class StorageManager {
 			if (version < Constants.STORAGE_VERSION) {
 				normalizeNamedLocationYAsDouble(jsonObject);
 				ensureNamedLocationXaeroVisible(jsonObject);
+				ensureNamedLocationUuid(jsonObject);
+				migrateDefaultHomeToUuid(jsonObject);
 			}
 
 			// Always bump to the latest supported schema version after migrations.
@@ -184,6 +187,84 @@ public class StorageManager {
 		}
 	}
 
+	private static void ensureNamedLocationUuid(JsonObject root) {
+		ensureLocationsArrayUuid(root.getAsJsonArray("Warps"));
+
+		if (root.has("Players") && root.get("Players").isJsonArray()) {
+			JsonArray players = root.getAsJsonArray("Players");
+			for (JsonElement element : players) {
+				if (!element.isJsonObject()) {
+					continue;
+				}
+				JsonObject player = element.getAsJsonObject();
+				ensureLocationsArrayUuid(player.getAsJsonArray("Homes"));
+			}
+		}
+	}
+
+	private static void ensureLocationsArrayUuid(JsonArray locations) {
+		if (locations == null) {
+			return;
+		}
+		for (JsonElement element : locations) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+			JsonObject location = element.getAsJsonObject();
+			if (!location.has("uuid") || location.get("uuid").isJsonNull()
+					|| location.get("uuid").getAsString().isBlank()) {
+				location.addProperty("uuid", UUID.randomUUID().toString());
+			}
+		}
+	}
+
+	private static void migrateDefaultHomeToUuid(JsonObject root) {
+		if (!root.has("Players") || !root.get("Players").isJsonArray()) {
+			return;
+		}
+
+		JsonArray players = root.getAsJsonArray("Players");
+		for (JsonElement element : players) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+			JsonObject player = element.getAsJsonObject();
+
+			String defaultHomeUuid = player.has("DefaultHomeUuid") && !player.get("DefaultHomeUuid").isJsonNull()
+					? player.get("DefaultHomeUuid").getAsString()
+					: "";
+			if (!defaultHomeUuid.isBlank()) {
+				player.remove("DefaultHome");
+				continue;
+			}
+
+			String defaultHomeName = player.has("DefaultHome") && !player.get("DefaultHome").isJsonNull()
+					? player.get("DefaultHome").getAsString()
+					: "";
+			String resolvedUuid = "";
+
+			if (!defaultHomeName.isBlank() && player.has("Homes") && player.get("Homes").isJsonArray()) {
+				JsonArray homes = player.getAsJsonArray("Homes");
+				for (JsonElement homeElement : homes) {
+					if (!homeElement.isJsonObject()) {
+						continue;
+					}
+					JsonObject home = homeElement.getAsJsonObject();
+					String name = home.has("name") && !home.get("name").isJsonNull() ? home.get("name").getAsString() : "";
+					if (defaultHomeName.equals(name)) {
+						resolvedUuid = home.has("uuid") && !home.get("uuid").isJsonNull()
+								? home.get("uuid").getAsString()
+								: "";
+						break;
+					}
+				}
+			}
+
+			player.addProperty("DefaultHomeUuid", resolvedUuid);
+			player.remove("DefaultHome");
+		}
+	}
+
 	private static void ensureLocationsArrayXaeroVisible(JsonArray locations) {
 		if (locations == null) {
 			return;
@@ -228,6 +309,7 @@ public class StorageManager {
 
 		/// Cleans up any values in the storage class
 		public void cleanup() throws Exception {
+			boolean changed = false;
 			for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
 				Player player = iterator.next();
 
@@ -248,32 +330,42 @@ public class StorageManager {
 				if (ConfigManager.CONFIG.home.isDeleteInvalid()) {
 					List<NamedLocation> homesSnapshot = new ArrayList<>(player.getHomes());
 					for (NamedLocation home : homesSnapshot) {
+						changed |= home.ensureUuid();
 						if (home.getWorld().isEmpty()) {
 							player.deleteHomeNoSave(home);
+							changed = true;
 						}
 					}
 
-					// Clear dangling default home after invalid entries are removed.
-					String defaultHome = player.getDefaultHome();
-					if (defaultHome == null) {
-						player.setDefaultHomeNoSave("");
-					} else if (!defaultHome.isEmpty() && player.getHome(defaultHome).isEmpty()) {
-						player.setDefaultHomeNoSave("");
+					changed |= player.ensureDefaultHomeUuid();
+				}
+
+				if (!ConfigManager.CONFIG.home.isDeleteInvalid()) {
+					for (NamedLocation home : player.getHomes()) {
+						changed |= home.ensureUuid();
 					}
+					changed |= player.ensureDefaultHomeUuid();
 				}
 
 				// Remove players with no homes
 				if (player.getHomes().isEmpty()) {
 					iterator.remove();
+					changed = true;
 				}
 			}
 
 			// Delete any warps with an invalid world_id (if enabled in config)
+			for (NamedLocation warp : Warps) {
+				changed |= warp.ensureUuid();
+			}
 			if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {
-				Warps.removeIf(warp -> warp.getWorld().isEmpty());
+				boolean removed = Warps.removeIf(warp -> warp.getWorld().isEmpty());
+				changed |= removed;
 			}
 
-			StorageSaver();
+			if (changed) {
+				StorageSaver();
+			}
 		}
 
 		public int getVersion() {
@@ -289,6 +381,12 @@ public class StorageManager {
 		public Optional<NamedLocation> getWarp(String name) {
 			return Warps.stream()
 					.filter(warp -> Objects.equals(warp.getName(), name))
+					.findFirst();
+		}
+
+		public Optional<NamedLocation> getWarpByUuid(UUID uuid) {
+			return Warps.stream()
+					.filter(warp -> Objects.equals(warp.getUuid(), uuid))
 					.findFirst();
 		}
 
@@ -337,7 +435,7 @@ public class StorageManager {
 
 		// Remove a warp, if the warp isn't found then nothing will happen
 		public void removeWarp(NamedLocation warp) throws Exception {
-			Warps.remove(warp);
+			Warps.removeIf(existing -> Objects.equals(existing.getUuid(), warp.getUuid()));
 			StorageSaver();
 		}
 	}
