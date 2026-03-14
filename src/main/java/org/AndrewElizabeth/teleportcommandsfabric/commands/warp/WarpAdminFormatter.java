@@ -34,16 +34,28 @@ final class WarpAdminFormatter {
 		String coords = String.format("[X%d Y%d Z%d]", currentWarp.getX(), currentWarp.getY(), currentWarp.getZ());
 		String dimension = String.format(" [%s]", currentWarp.getWorldString());
 		boolean visible = currentWarp.isXaeroVisible();
+		MutableComponent toggleButton = getTranslatedText(
+				visible
+						? "commands.teleport_commands.common.hideFromMap"
+						: "commands.teleport_commands.common.showOnMap",
+				player)
+				.withStyle(visible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
+				.withStyle(style -> style.withClickEvent(
+						new ClickEvent.RunCommand(String.format(
+								"gwarpmap \"%s\" %s",
+								currentWarp.getName(),
+								visible ? "false" : "true"))));
 
 		message.append("\n");
 		message.append(Component.literal(name).withStyle(ChatFormatting.AQUA));
 		message.append(" ")
 				.append(getTranslatedText(
 						visible
-								? "commands.teleport_commands.common.mapVisible"
-								: "commands.teleport_commands.common.mapHidden",
+								? "commands.teleport_commands.warpmap.globalVisible"
+								: "commands.teleport_commands.warpmap.globalHidden",
 						player)
 						.withStyle(visible ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
+		message.append(" ").append(toggleButton);
 
 		message.append("\n");
 		message.append(Component.literal("     | ")
@@ -63,25 +75,6 @@ final class WarpAdminFormatter {
 						.withStyle(style -> style.withHoverEvent(
 								new HoverEvent.ShowText(
 										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))));
-
-		message.append("\n");
-		message.append(Component.literal("     | ").withStyle(ChatFormatting.AQUA))
-				.append(getTranslatedText("commands.teleport_commands.common.tp", player)
-						.withStyle(ChatFormatting.GREEN)
-						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.RunCommand(String.format("warp \"%s\"", currentWarp.getName())))))
-				.append(" ")
-				.append(getTranslatedText(
-						visible
-								? "commands.teleport_commands.common.hideFromMap"
-								: "commands.teleport_commands.common.showOnMap",
-						player)
-						.withStyle(visible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
-						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.RunCommand(String.format(
-										"gwarpmap \"%s\" %s",
-										currentWarp.getName(),
-										visible ? "false" : "true")))));
 
 		message.append("\n");
 	}

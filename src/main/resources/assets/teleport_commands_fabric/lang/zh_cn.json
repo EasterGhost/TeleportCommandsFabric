@@ -66,6 +66,8 @@
   "commands.teleport_commands.warps.warps": "传送点:",
   "commands.teleport_commands.gwarpmap.error": "获取传送点地图管理列表时发生错误!",
   "commands.teleport_commands.gwarpmap.warps": "传送点地图显示管理:",
+  "commands.teleport_commands.gwarpmap.globalVisible": "[全局地图: 开]",
+  "commands.teleport_commands.gwarpmap.globalHidden": "[全局地图: 关]",
 
   "commands.teleport_commands.tpa.self": "嗯，这件事很简单喵~",
   "commands.teleport_commands.tpa.alreadySent": "请求已发送至 %0%",
