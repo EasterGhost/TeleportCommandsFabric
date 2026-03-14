@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.services;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.PreviousTeleportLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
 
 import net.minecraft.ChatFormatting;
@@ -20,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,16 +48,21 @@ public final class TeleportService {
 
 	public static boolean teleportWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords,
 			boolean bypassDelay) {
-		return teleportWithDelayAndCooldown(player, world, coords, bypassDelay, null);
+		return teleportWithDelayAndCooldown(player, world, coords, bypassDelay, null, true);
 	}
 
 	public static boolean teleportWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords,
 			boolean bypassDelay, Runnable onSuccess) {
-		String uuid = player.getStringUUID();
+		return teleportWithDelayAndCooldown(player, world, coords, bypassDelay, onSuccess, true);
+	}
+
+	public static boolean teleportWithDelayAndCooldown(ServerPlayer player, ServerLevel world, Vec3 coords,
+			boolean bypassDelay, Runnable onSuccess, boolean recordPreviousLocation) {
+		UUID playerUuid = player.getUUID();
 		int delay = ConfigManager.CONFIG.getTeleporting().getDelay();
 		int cooldown = ConfigManager.CONFIG.getTeleporting().getCooldown();
 
-		int remainingCooldown = TeleportCooldownManager.getRemainingCooldown(uuid, cooldown);
+		int remainingCooldown = TeleportCooldownManager.getRemainingCooldown(playerUuid, cooldown);
 		if (remainingCooldown > 0) {
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.cooldown", player,
 					Component.literal(String.valueOf(remainingCooldown)))
@@ -64,47 +71,61 @@ public final class TeleportService {
 		}
 
 		if (delay == 0 || bypassDelay) {
+			recordPreviousTeleportLocation(player, recordPreviousLocation);
 			teleportWithManagedPreload(player, world, coords, () -> {
-				TeleportCooldownManager.updateLastTeleportTime(uuid);
+				TeleportCooldownManager.updateLastTeleportTime(playerUuid);
 				runOnSuccess(onSuccess);
 			});
 			return true;
 		}
 
-		long teleportId = TeleportCooldownManager.scheduleTeleport(uuid);
+		long teleportId = TeleportCooldownManager.scheduleTeleport(playerUuid);
 		player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.delayStart", player,
 				Component.literal(String.valueOf(delay)))
 				.withStyle(ChatFormatting.YELLOW), true);
 
 		TELEPORT_SCHEDULER.schedule(() -> {
-			if (!TeleportCooldownManager.isScheduledTeleportValid(uuid, teleportId)) {
+			if (!TeleportCooldownManager.isScheduledTeleportValid(playerUuid, teleportId)) {
 				return;
 			}
 			if (player.hasDisconnected()) {
-				TeleportCooldownManager.cancelScheduledTeleport(uuid);
+				TeleportCooldownManager.cancelScheduledTeleport(playerUuid);
 				return;
 			}
 			if (TeleportCommands.SERVER == null) {
 				return;
 			}
 			TeleportCommands.SERVER.execute(() -> {
-				if (!TeleportCooldownManager.isScheduledTeleportValid(uuid, teleportId)) {
+				if (!TeleportCooldownManager.isScheduledTeleportValid(playerUuid, teleportId)) {
 					return;
 				}
 				if (player.hasDisconnected()) {
-					TeleportCooldownManager.cancelScheduledTeleport(uuid);
+					TeleportCooldownManager.cancelScheduledTeleport(playerUuid);
 					return;
 				}
 
+				recordPreviousTeleportLocation(player, recordPreviousLocation);
 				teleportWithManagedPreload(player, world, coords, () -> {
-					TeleportCooldownManager.updateLastTeleportTime(uuid);
+					TeleportCooldownManager.updateLastTeleportTime(playerUuid);
 					runOnSuccess(onSuccess);
 				});
-				TeleportCooldownManager.cancelScheduledTeleport(uuid);
+				TeleportCooldownManager.cancelScheduledTeleport(playerUuid);
 			});
 		}, delay, TimeUnit.SECONDS);
 
 		return true;
+	}
+
+	private static void recordPreviousTeleportLocation(ServerPlayer player, boolean recordPreviousLocation) {
+		if (!recordPreviousLocation) {
+			return;
+		}
+
+		UUID playerUuid = player.getUUID();
+		BlockPos pos = player.blockPosition();
+		String worldId = org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver
+				.getDimensionId(player.level().dimension());
+		PreviousTeleportLocationStorage.setPreviousTeleportLocation(playerUuid, pos, worldId);
 	}
 
 	private static void teleportWithManagedPreload(ServerPlayer player, ServerLevel world, Vec3 coords,

@@ -2,6 +2,10 @@
   "commands.teleport_commands.back.go": "正在返回",
   "commands.teleport_commands.back.same": "成功返回",
   "commands.teleport_commands.back.disabled": "Back 功能目前已禁用。",
+  "commands.teleport_commands.back.tryTp": "没有找到死亡点。可以尝试",
+  "commands.teleport_commands.back.tp.go": "正在返回上一次传送前的位置",
+  "commands.teleport_commands.back.tp.same": "已经位于上一次传送前的位置",
+  "commands.teleport_commands.back.tp.none": "没有记录到上一次传送前的位置。",
 
   "commands.teleport_commands.worldspawn.go": "正在前往世界生成点",
   "commands.teleport_commands.worldspawn.same": "成功前往世界生成点",

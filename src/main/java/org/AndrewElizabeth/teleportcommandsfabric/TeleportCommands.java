@@ -45,6 +45,7 @@ public class TeleportCommands implements ModInitializer {
 		ConfigManager.ConfigInit(); // Load config before anything depends on it
 		StorageManager.StorageInit(); // Initialize the storage file
 		DeathLocationStorage.clearDeathLocations(); // Clear data of death locations.
+		PreviousTeleportLocationStorage.clearPreviousTeleportLocations(); // Clear in-memory return locations.
 		TeleportCooldownManager.clearAll(); // Clear teleport cooldowns and scheduled teleports
 		XaeroSyncServer.initialize(); // Register Xaero sync handlers
 	}

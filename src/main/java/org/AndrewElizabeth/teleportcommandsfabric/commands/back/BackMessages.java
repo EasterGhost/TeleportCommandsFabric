@@ -40,6 +40,24 @@ public final class BackMessages {
 		send(player, "commands.teleport_commands.common.noLocation", ChatFormatting.RED);
 	}
 
+	public static void sendTryBackTpPrompt(ServerPlayer player) {
+		player.displayClientMessage(
+				Component.empty()
+						.append(getTranslatedText("commands.teleport_commands.back.tryTp", player)
+								.withStyle(ChatFormatting.YELLOW))
+						.append(" ")
+						.append(Component.literal("[/back tp] ?")
+								.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
+								.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand("back tp"))
+										.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
+												Component.literal("/back tp"))))),
+				false);
+	}
+
+	public static void sendNoPreviousTeleportLocation(ServerPlayer player) {
+		send(player, "commands.teleport_commands.back.tp.none", ChatFormatting.RED);
+	}
+
 	public static void sendWorldNotFound(ServerPlayer player) {
 		send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
 	}
@@ -48,11 +66,19 @@ public final class BackMessages {
 		send(player, "commands.teleport_commands.back.same", ChatFormatting.AQUA);
 	}
 
+	public static void sendPreviousTeleportSame(ServerPlayer player) {
+		send(player, "commands.teleport_commands.back.tp.same", ChatFormatting.AQUA);
+	}
+
 	public static void sendGo(ServerPlayer player) {
 		player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
 	}
 
-	public static void sendUnsafeTeleportPrompt(ServerPlayer player) {
+	public static void sendPreviousTeleportGo(ServerPlayer player) {
+		player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.tp.go", player), true);
+	}
+
+	public static void sendUnsafeTeleportPrompt(ServerPlayer player, String command) {
 		player.displayClientMessage(
 				Component.empty()
 						.append(getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
@@ -63,7 +89,7 @@ public final class BackMessages {
 						.append("\n")
 						.append(getTranslatedText("commands.teleport_commands.common.forceTeleport", player)
 								.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
-								.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand("back true"))))
+								.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command))))
 						.append("\n"),
 				false);
 	}

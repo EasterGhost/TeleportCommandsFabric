@@ -2,6 +2,10 @@
   "commands.teleport_commands.back.go": "Going back",
   "commands.teleport_commands.back.same": "Already back",
   "commands.teleport_commands.back.disabled": "Back is currently disabled.",
+  "commands.teleport_commands.back.tryTp": "No death location found. Try",
+  "commands.teleport_commands.back.tp.go": "Returning to your previous teleport location",
+  "commands.teleport_commands.back.tp.same": "Already at your previous teleport location",
+  "commands.teleport_commands.back.tp.none": "No previous teleport location has been recorded.",
 
   "commands.teleport_commands.worldspawn.go": "Going to the worldspawn",
   "commands.teleport_commands.worldspawn.same": "Already at the worldspawn",

@@ -245,7 +245,7 @@ public class ConfigManager {
 
 		public final class Back {
 			private boolean enabled = true;
-			private boolean deleteAfterTeleport = false;
+			private boolean deleteAfterTeleport = true;
 
 			public boolean isEnabled() {
 				return enabled;
