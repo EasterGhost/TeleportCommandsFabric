@@ -24,6 +24,8 @@ import java.util.Set;
 public final class XaeroCompat {
 	private static final String DEFAULT_SET_SENTINEL = "default";
 	private static final String CURRENT_SET_SENTINEL = "current";
+	private static final String LEGACY_WARP_SET_SENTINEL = "teleportcommands warps";
+	private static final String LEGACY_HOME_SET_SENTINEL = "teleportcommands homes";
 	private static final String PERSIST_WARP_PREFIX = "TPC-W ";
 	private static final String PERSIST_HOME_PREFIX = "TPC-H ";
 	private static final Set<String> WARP_SYNCED_WORLDS = new HashSet<>();
@@ -176,7 +178,7 @@ public final class XaeroCompat {
 			return;
 		}
 
-		String setName = type == EntryType.WARP ? warpSetName : homeSetName;
+		String setName = normalizeSetName(type == EntryType.WARP ? warpSetName : homeSetName, type);
 		boolean useDefaultSet = isDefaultSet(setName);
 		WaypointSet set = useDefaultSet ? world.getCurrentWaypointSet() : world.getWaypointSet(setName);
 		if (set == null && !useDefaultSet) {
@@ -226,6 +228,28 @@ public final class XaeroCompat {
 		String normalized = setName.trim().toLowerCase();
 		return DEFAULT_SET_SENTINEL.equals(normalized)
 				|| CURRENT_SET_SENTINEL.equals(normalized);
+	}
+
+	private static String normalizeSetName(String setName, EntryType type) {
+		if (setName == null) {
+			return null;
+		}
+
+		String trimmed = setName.trim();
+		String normalized = trimmed.toLowerCase();
+		if (DEFAULT_SET_SENTINEL.equals(normalized) || CURRENT_SET_SENTINEL.equals(normalized)) {
+			return DEFAULT_SET_SENTINEL;
+		}
+
+		if (type == EntryType.WARP && LEGACY_WARP_SET_SENTINEL.equals(normalized)) {
+			return DEFAULT_SET_SENTINEL;
+		}
+
+		if (type == EntryType.HOME && LEGACY_HOME_SET_SENTINEL.equals(normalized)) {
+			return DEFAULT_SET_SENTINEL;
+		}
+
+		return trimmed;
 	}
 
 	private enum EntryType {

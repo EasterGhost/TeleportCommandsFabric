@@ -125,5 +125,5 @@ bin/
 # Ignore Wiki pages
 TeleportCommandsFabric.wiki/
 
-# Draft docs
+# Ignore drafts
 docs/drafts/
