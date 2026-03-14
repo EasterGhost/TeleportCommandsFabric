@@ -103,4 +103,14 @@ final class WarpMessages {
 			return 1;
 		}
 	}
+
+	static int executeSilently(String errorLogMessage, WarpAction action) {
+		try {
+			action.run();
+			return 0;
+		} catch (Exception e) {
+			Constants.LOGGER.error(errorLogMessage, e);
+			return 1;
+		}
+	}
 }

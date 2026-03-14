@@ -149,16 +149,17 @@ public class warp {
 									final String warpName = StringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
-									if (!WarpMessages.ensureEnabled(player)) {
-										return 1;
-									}
+									return handleMapVisibility(player, warpName, visible, false);
+								})
+								.then(Commands.argument("silent", BoolArgumentType.bool())
+										.executes(context -> {
+											final ServerPlayer player = context.getSource().getPlayerOrException();
+											final String warpName = StringArgumentType.getString(context, "name");
+											final boolean visible = BoolArgumentType.getBool(context, "visible");
+											final boolean silent = BoolArgumentType.getBool(context, "silent");
 
-									return WarpMessages.execute(
-											player,
-											"Error while updating warp Xaero visibility!",
-											"commands.teleport_commands.warps.error",
-											() -> setWarpXaeroVisibility(player, warpName, visible));
-								})));
+											return handleMapVisibility(player, warpName, visible, silent);
+										}))));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildAdminMapListNode() {
@@ -306,8 +307,30 @@ public class warp {
 		player.displayClientMessage(WarpAdminFormatter.buildWarpMapList(player, warps), false);
 	}
 
-	private static void setWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible) throws Exception {
-		Optional<NamedLocation> optionalWarp = resolveWarpForCommand(warpName, player);
+	private static int handleMapVisibility(ServerPlayer player, String warpName, boolean visible, boolean silent) {
+		if (!silent && !WarpMessages.ensureEnabled(player)) {
+			return 1;
+		}
+		if (silent && !org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG.getWarp().isEnabled()) {
+			return 1;
+		}
+
+		if (silent) {
+			return WarpMessages.executeSilently(
+					"Error while updating warp Xaero visibility!",
+					() -> setWarpXaeroVisibility(player, warpName, visible, true));
+		}
+
+		return WarpMessages.execute(
+				player,
+				"Error while updating warp Xaero visibility!",
+				"commands.teleport_commands.warps.error",
+				() -> setWarpXaeroVisibility(player, warpName, visible, false));
+	}
+
+	private static void setWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible, boolean silent)
+			throws Exception {
+		Optional<NamedLocation> optionalWarp = resolveWarpForCommand(warpName, player, silent);
 		if (optionalWarp.isEmpty()) {
 			return;
 		}
@@ -316,7 +339,9 @@ public class warp {
 		NamedLocation warp = optionalWarp.get();
 		boolean currentlyVisible = !playerData.isWarpHidden(warp.getUuid());
 		if (currentlyVisible == visible) {
-			WarpMessages.sendPlayerMapVisibilityAlready(player, visible);
+			if (!silent) {
+				WarpMessages.sendPlayerMapVisibilityAlready(player, visible);
+			}
 			return;
 		}
 
@@ -325,8 +350,10 @@ public class warp {
 		} else {
 			playerData.hideWarp(warp.getUuid());
 		}
-		WarpMessages.sendPlayerMapVisibilityChanged(player, visible);
-		printWarps(player.createCommandSourceStack(), player);
+		if (!silent) {
+			WarpMessages.sendPlayerMapVisibilityChanged(player, visible);
+			printWarps(player.createCommandSourceStack(), player);
+		}
 	}
 
 	private static void setGlobalWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible)
@@ -347,11 +374,15 @@ public class warp {
 		printAdminWarpMap(player);
 	}
 
-	private static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player) {
+	private static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player, boolean silent) {
 		Optional<NamedLocation> optionalWarp = LocationResolver.resolveWarp(warpName);
-		if (optionalWarp.isEmpty()) {
+		if (optionalWarp.isEmpty() && !silent) {
 			WarpMessages.sendNotFound(player);
 		}
 		return optionalWarp;
+	}
+
+	private static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player) {
+		return resolveWarpForCommand(warpName, player, false);
 	}
 }

@@ -184,16 +184,17 @@ public class home {
 									final String homeName = StringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
-									if (!HomeMessages.ensureEnabled(player)) {
-										return 1;
-									}
+									return handleMapVisibility(player, homeName, visible, false);
+								})
+								.then(Commands.argument("silent", BoolArgumentType.bool())
+										.executes(context -> {
+											final ServerPlayer player = context.getSource().getPlayerOrException();
+											final String homeName = StringArgumentType.getString(context, "name");
+											final boolean visible = BoolArgumentType.getBool(context, "visible");
+											final boolean silent = BoolArgumentType.getBool(context, "silent");
 
-									return HomeMessages.execute(
-											player,
-											"Error while updating home Xaero visibility! => ",
-											"commands.teleport_commands.homes.error",
-											() -> setHomeXaeroVisibility(player, homeName, visible));
-								})));
+											return handleMapVisibility(player, homeName, visible, silent);
+										}))));
 	}
 
 	private static void setHome(ServerPlayer player, String homeName) throws Exception {
@@ -377,36 +378,69 @@ public class home {
 		player.displayClientMessage(HomeFormatter.buildHomeList(player, playerStorage, homes), false);
 	}
 
-	private static void setHomeXaeroVisibility(ServerPlayer player, String homeName, boolean visible) throws Exception {
+	private static int handleMapVisibility(ServerPlayer player, String homeName, boolean visible, boolean silent) {
+		if (!silent && !HomeMessages.ensureEnabled(player)) {
+			return 1;
+		}
+		if (silent && !org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG.getHome().isEnabled()) {
+			return 1;
+		}
+
+		if (silent) {
+			return HomeMessages.executeSilently(
+					"Error while updating home Xaero visibility! => ",
+					() -> setHomeXaeroVisibility(player, homeName, visible, true));
+		}
+
+		return HomeMessages.execute(
+				player,
+				"Error while updating home Xaero visibility! => ",
+				"commands.teleport_commands.homes.error",
+				() -> setHomeXaeroVisibility(player, homeName, visible, false));
+	}
+
+	private static void setHomeXaeroVisibility(ServerPlayer player, String homeName, boolean visible, boolean silent)
+			throws Exception {
 		Optional<Player> optionalPlayerStorage = STORAGE.getPlayer(player.getStringUUID());
 		if (optionalPlayerStorage.isEmpty()) {
-			HomeMessages.sendHomeless(player);
+			if (!silent) {
+				HomeMessages.sendHomeless(player);
+			}
 			return;
 		}
 
 		Optional<NamedLocation> optionalHome = resolveHomeForCommand(optionalPlayerStorage.get(), homeName, player,
-				ChatFormatting.RED);
+				ChatFormatting.RED, silent);
 		if (optionalHome.isEmpty()) {
 			return;
 		}
 
 		NamedLocation home = optionalHome.get();
 		if (home.isXaeroVisible() == visible) {
-			HomeMessages.sendMapVisibilityAlready(player, visible);
+			if (!silent) {
+				HomeMessages.sendMapVisibilityAlready(player, visible);
+			}
 			return;
 		}
 
 		home.setXaeroVisible(visible);
-		HomeMessages.sendMapVisibilityChanged(player, visible);
-		printHomes(player);
+		if (!silent) {
+			HomeMessages.sendMapVisibilityChanged(player, visible);
+			printHomes(player);
+		}
+	}
+
+	private static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,
+			ChatFormatting notFoundColor, boolean silent) {
+		Optional<NamedLocation> optionalHome = LocationResolver.resolveHome(playerStorage, homeName);
+		if (optionalHome.isEmpty() && !silent) {
+			HomeMessages.sendNotFound(player, notFoundColor);
+		}
+		return optionalHome;
 	}
 
 	private static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,
 			ChatFormatting notFoundColor) {
-		Optional<NamedLocation> optionalHome = LocationResolver.resolveHome(playerStorage, homeName);
-		if (optionalHome.isEmpty()) {
-			HomeMessages.sendNotFound(player, notFoundColor);
-		}
-		return optionalHome;
+		return resolveHomeForCommand(playerStorage, homeName, player, notFoundColor, false);
 	}
 }

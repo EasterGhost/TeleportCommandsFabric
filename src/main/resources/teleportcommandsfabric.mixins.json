@@ -11,7 +11,9 @@
 	"client": [
 		"client.ClientPlayNetworkHandlerMixin",
 		"client.GuiMapMixin",
+		"client.MapWaypointDeleteMixin",
 		"client.RightClickOptionAccessor",
+		"client.WaypointDeleteMixin",
 		"client.WaypointTeleportMixin"
 	],
 	"injectors": {

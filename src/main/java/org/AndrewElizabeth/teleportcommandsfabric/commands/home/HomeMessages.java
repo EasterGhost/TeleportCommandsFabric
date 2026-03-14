@@ -87,4 +87,14 @@ final class HomeMessages {
 			return 1;
 		}
 	}
+
+	static int executeSilently(String errorLogMessage, HomeAction action) {
+		try {
+			action.run();
+			return 0;
+		} catch (Exception e) {
+			Constants.LOGGER.error(errorLogMessage, e);
+			return 1;
+		}
+	}
 }
