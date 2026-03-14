@@ -79,6 +79,8 @@ public class ConfigManager {
 				jsonObject.remove("wild");
 			}
 
+			normalizeXaeroSetNames(jsonObject);
+
 			// Always bump to the latest supported schema version after migrations.
 			jsonObject.addProperty("version", defaultVersion);
 
@@ -97,6 +99,44 @@ public class ConfigManager {
 
 			throw new IllegalStateException(message);
 		}
+	}
+
+	private static void normalizeXaeroSetNames(JsonObject root) {
+		if (!root.has("xaero") || !root.get("xaero").isJsonObject()) {
+			return;
+		}
+
+		JsonObject xaero = root.getAsJsonObject("xaero");
+		normalizeXaeroSetName(xaero, "warpSetName", true);
+		normalizeXaeroSetName(xaero, "homeSetName", false);
+	}
+
+	private static void normalizeXaeroSetName(JsonObject xaero, String key, boolean warp) {
+		if (!xaero.has(key) || xaero.get(key).isJsonNull()) {
+			return;
+		}
+
+		String original = xaero.get(key).getAsString();
+		String normalized = original == null ? "" : original.trim().toLowerCase();
+		if (shouldFallbackToDefaultSet(normalized, warp)) {
+			xaero.addProperty(key, "Default");
+		}
+	}
+
+	private static boolean shouldFallbackToDefaultSet(String setName, boolean warp) {
+		if (setName == null || setName.isBlank()) {
+			return true;
+		}
+
+		if ("default".equals(setName) || "current".equals(setName)) {
+			return true;
+		}
+
+		if (warp) {
+			return "teleportcommands warps".equals(setName);
+		}
+
+		return "teleportcommands homes".equals(setName);
 	}
 
 	public static void ConfigSaver() throws Exception {
@@ -353,8 +393,8 @@ public class ConfigManager {
 			private boolean enabled = true;
 			private int syncIntervalSeconds = 10;
 			private boolean persistWaypointSets = true;
-			private String warpSetName = "TeleportCommands Warps";
-			private String homeSetName = "TeleportCommands Homes";
+			private String warpSetName = "Default";
+			private String homeSetName = "Default";
 
 			public boolean isEnabled() {
 				return enabled;
