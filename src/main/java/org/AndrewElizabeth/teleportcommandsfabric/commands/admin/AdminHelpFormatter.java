@@ -24,8 +24,6 @@ final class AdminHelpFormatter {
 		append(message, Component.literal(ROOT_COMMAND + " help"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " status"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " reload"), ChatFormatting.YELLOW, false);
-		append(message, Component.literal(ROOT_COMMAND + " warpmap <name> <true|false>"),
-				ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " enable <back|home|tpa|warp|worldspawn|rtp|xaero>"),
 				ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " disable <back|home|tpa|warp|worldspawn|rtp|xaero>"),

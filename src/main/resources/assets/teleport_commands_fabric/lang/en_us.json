@@ -64,6 +64,8 @@
 
   "commands.teleport_commands.warps.error": "An error occurred while getting the warps!",
   "commands.teleport_commands.warps.warps": "Warps:",
+  "commands.teleport_commands.gwarpmap.error": "An error occurred while getting the warp map list!",
+  "commands.teleport_commands.gwarpmap.warps": "Warp map visibility:",
 
   "commands.teleport_commands.tpa.self": "Well, that was easy",
   "commands.teleport_commands.tpa.alreadySent": "A request has already been sent to %0%",

@@ -1,16 +1,12 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.admin;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.warp.WarpSuggestionProvider;
-import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.services.LocationResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import net.minecraft.ChatFormatting;
@@ -19,8 +15,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.permissions.Permissions;
-
-import java.util.Optional;
 
 public final class AdminCommands {
 	private static final String PRIMARY_COMMAND = "tpc";
@@ -42,7 +36,6 @@ public final class AdminCommands {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildRootCommand(String literal) {
 		return Commands.literal(literal)
 				.then(buildConfigNode())
-				.then(buildWarpMapVisibilityNode())
 				.then(buildStatusNode())
 				.then(buildReloadNode())
 				.then(buildDisableNode())
@@ -166,18 +159,6 @@ public final class AdminCommands {
 						"commands.teleport_commands.admin.config.xaero.syncIntervalSeconds"));
 	}
 
-	private static LiteralArgumentBuilder<CommandSourceStack> buildWarpMapVisibilityNode() {
-		return Commands.literal("warpmap")
-				.requires(AdminCommands::isOpOrConsole)
-				.then(Commands.argument("name", StringArgumentType.string())
-						.suggests(new WarpSuggestionProvider())
-						.then(Commands.argument("visible", BoolArgumentType.bool())
-								.executes(context -> setWarpMapVisibility(
-										context.getSource(),
-										StringArgumentType.getString(context, "name"),
-										BoolArgumentType.getBool(context, "visible")))));
-	}
-
 	private static LiteralArgumentBuilder<CommandSourceStack> buildReloadNode() {
 		return Commands.literal("reload")
 				.requires(AdminCommands::isOpOrConsole)
@@ -266,47 +247,5 @@ public final class AdminCommands {
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {
 		return source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
-	}
-
-	private static int setWarpMapVisibility(CommandSourceStack source, String warpName, boolean visible)
-			throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-		Optional<NamedLocation> optionalWarp = LocationResolver.resolveWarp(warpName);
-		if (optionalWarp.isEmpty()) {
-			throw new SimpleCommandExceptionType(
-					AdminMessages.t(source, "commands.teleport_commands.warp.notFound")
-							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD))
-					.create();
-		}
-
-		NamedLocation warp = optionalWarp.get();
-		if (warp.isXaeroVisible() == visible) {
-			source.sendSuccess(
-					() -> AdminMessages.t(source,
-							visible
-									? "commands.teleport_commands.warp.mapAlreadyShown"
-									: "commands.teleport_commands.warp.mapAlreadyHidden")
-							.withStyle(ChatFormatting.YELLOW),
-					false);
-			return 0;
-		}
-
-		try {
-			warp.setXaeroVisible(visible);
-			source.sendSuccess(
-					() -> AdminMessages.t(source,
-							visible
-									? "commands.teleport_commands.warp.mapShown"
-									: "commands.teleport_commands.warp.mapHidden")
-							.withStyle(ChatFormatting.GREEN),
-					true);
-			return 0;
-		} catch (Exception e) {
-			Constants.LOGGER.error("Failed to update warp map visibility!", e);
-			throw new SimpleCommandExceptionType(
-					AdminMessages.t(source,
-							"commands.teleport_commands.admin.save.error",
-							Component.literal(e.getMessage())).withStyle(ChatFormatting.RED))
-					.create();
-		}
 	}
 }
