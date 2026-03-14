@@ -1,21 +1,22 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.AndrewElizabeth.teleportcommandsfabric.client.XaeroWaypointCommandHelper;
+
+import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.client.Minecraft;
 import xaero.common.minimap.waypoints.Waypoint;
 import xaero.hud.minimap.module.MinimapSession;
 import xaero.hud.minimap.waypoint.render.WaypointDeleter;
 import xaero.hud.minimap.world.MinimapWorld;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Mixin(WaypointDeleter.class)
 public class WaypointDeleteMixin {
