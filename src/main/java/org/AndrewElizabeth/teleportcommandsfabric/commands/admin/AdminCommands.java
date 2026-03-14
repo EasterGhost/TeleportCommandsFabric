@@ -246,7 +246,8 @@ public final class AdminCommands {
 
 		if (result == 0) {
 			context.getSource().sendSuccess(
-					() -> Component.literal("--------------------").withStyle(ChatFormatting.DARK_GRAY),
+					() -> Component.literal("\n===========================")
+							.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
 					false);
 			context.getSource().sendSuccess(
 					() -> AdminStatusFormatter.build(context.getSource()),

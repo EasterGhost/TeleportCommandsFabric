@@ -123,7 +123,7 @@ bin/
 .markdownlint.json
 
 # Ignore Wiki pages
-wiki/
+TeleportCommandsFabric.wiki/
 
 # Draft docs
 docs/drafts/
