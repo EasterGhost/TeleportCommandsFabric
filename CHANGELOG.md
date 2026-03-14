@@ -16,6 +16,7 @@ Version history below is based on the repository tag history, local commit histo
 ### Changed
 
 - Changed Xaero waypoint sync behavior to work cleanly with default waypoint-set usage while keeping TeleportCommands-managed waypoints identifiable.
+- Changed Xaero teleport interception in the default `Default` waypoint-set flow to recognize only TeleportCommands-tagged waypoints instead of matching generic `W` / `H` symbols.
 - Updated Xaero waypoint deletion handling so deleting synced waypoints can silently map back to `mapwarp` and `maphome` visibility changes instead of only removing the local marker.
 - Improved Xaero-related command interception and trusted command flow for smoother client-side interaction.
 - Refined global and per-player map visibility management so warp administration and personal visibility control are handled separately.
@@ -24,6 +25,7 @@ Version history below is based on the repository tag history, local commit histo
 
 - Fixed several Xaero interaction edge cases around waypoint teleport, deletion, and command routing.
 - Fixed command-side name matching for TeleportCommands-managed Xaero waypoints so normal default-set waypoints are less likely to be mistaken for `warp` or `home` entries.
+- Fixed clickable `rename`, `delete`, `maphome`, `mapwarp`, and related chat actions so names containing escaped characters such as `\\` and `\"` are passed correctly.
 
 ## [1.4] - 2026-03-16
 

@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper.quoteCommandArgument;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 final class WarpAdminFormatter {
@@ -31,6 +32,7 @@ final class WarpAdminFormatter {
 
 	private static void appendWarpEntry(MutableComponent message, ServerPlayer player, NamedLocation currentWarp) {
 		String name = String.format("  - %s", currentWarp.getName());
+		String quotedName = quoteCommandArgument(currentWarp.getName());
 		String coords = String.format("[X%d Y%d Z%d]", currentWarp.getX(), currentWarp.getY(), currentWarp.getZ());
 		String dimension = String.format(" [%s]", currentWarp.getWorldString());
 		boolean visible = currentWarp.isXaeroVisible();
@@ -41,10 +43,7 @@ final class WarpAdminFormatter {
 				player)
 				.withStyle(visible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
 				.withStyle(style -> style.withClickEvent(
-						new ClickEvent.RunCommand(String.format(
-								"gwarpmap \"%s\" %s",
-								currentWarp.getName(),
-								visible ? "false" : "true"))));
+						new ClickEvent.RunCommand("gwarpmap " + quotedName + " " + (visible ? "false" : "true"))));
 
 		message.append("\n");
 		message.append(Component.literal(name).withStyle(ChatFormatting.AQUA));

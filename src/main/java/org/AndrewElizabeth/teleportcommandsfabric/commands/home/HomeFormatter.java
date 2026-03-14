@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper.quoteCommandArgument;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 final class HomeFormatter {
@@ -33,6 +34,7 @@ final class HomeFormatter {
 	private static void appendHomeEntry(MutableComponent message, ServerPlayer player, Player playerStorage,
 			NamedLocation currentHome) {
 		String name = String.format("  - %s", currentHome.getName());
+		String quotedName = quoteCommandArgument(currentHome.getName());
 		String coords = String.format("[X%d Y%d Z%d]", currentHome.getX(), currentHome.getY(), currentHome.getZ());
 		String dimension = String.format(" [%s]", currentHome.getWorldString());
 
@@ -78,26 +80,26 @@ final class HomeFormatter {
 				.append(getTranslatedText("commands.teleport_commands.common.tp", player)
 						.withStyle(ChatFormatting.GREEN)
 						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.RunCommand(String.format("home \"%s\"", currentHome.getName())))))
+								new ClickEvent.RunCommand("home " + quotedName))))
 				.append(" ")
 				.append(getTranslatedText("commands.teleport_commands.common.rename", player)
 						.withStyle(ChatFormatting.BLUE)
 						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.SuggestCommand(String.format("/renamehome \"%s\" ", currentHome.getName())))))
+								new ClickEvent.SuggestCommand("/renamehome " + quotedName + " "))))
 				.append(" ");
 
 		if (!currentHome.getUuid().equals(playerStorage.getDefaultHomeUuid())) {
 			message.append(getTranslatedText("commands.teleport_commands.common.defaultPrompt", player)
 					.withStyle(ChatFormatting.DARK_AQUA)
 					.withStyle(style -> style.withClickEvent(
-							new ClickEvent.RunCommand(String.format("defaulthome \"%s\"", currentHome.getName())))))
+							new ClickEvent.RunCommand("defaulthome " + quotedName))))
 					.append(" ");
 		}
 
 		message.append(getTranslatedText("commands.teleport_commands.common.delete", player)
 				.withStyle(ChatFormatting.RED)
 				.withStyle(style -> style.withClickEvent(
-						new ClickEvent.SuggestCommand(String.format("/delhome \"%s\"", currentHome.getName())))))
+						new ClickEvent.SuggestCommand("/delhome " + quotedName))))
 				.append(" ")
 				.append(getTranslatedText(
 						currentHome.isXaeroVisible()
@@ -106,10 +108,8 @@ final class HomeFormatter {
 						player)
 						.withStyle(currentHome.isXaeroVisible() ? ChatFormatting.GRAY : ChatFormatting.GOLD)
 						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.RunCommand(String.format(
-										"maphome \"%s\" %s",
-										currentHome.getName(),
-										currentHome.isXaeroVisible() ? "false" : "true")))));
+								new ClickEvent.RunCommand(
+										"maphome " + quotedName + " " + (currentHome.isXaeroVisible() ? "false" : "true")))));
 
 		message.append("\n");
 	}
