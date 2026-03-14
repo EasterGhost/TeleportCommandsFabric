@@ -28,7 +28,7 @@ public class WarpSuggestionProvider implements SuggestionProvider<CommandSourceS
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting warp suggestions! ", e);
-			return null;
+			return builder.buildFuture();
 		}
 	}
 }

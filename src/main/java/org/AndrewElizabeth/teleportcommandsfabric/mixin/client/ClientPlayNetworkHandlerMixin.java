@@ -49,6 +49,12 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.startsWith("warp ")
 				|| normalized.equals("back true")
 				|| normalized.equals("worldspawn true")
+				|| normalized.equals("teleportcommands status")
+				|| normalized.startsWith("teleportcommands enable ")
+				|| normalized.startsWith("teleportcommands disable ")
+				|| normalized.equals("tpc status")
+				|| normalized.startsWith("tpc enable ")
+				|| normalized.startsWith("tpc disable ")
 				|| normalized.startsWith("teleportcommandsfabric:");
 	}
 }

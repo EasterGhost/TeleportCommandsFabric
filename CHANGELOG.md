@@ -1,0 +1,95 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
+
+## [1.4] - 2026-03-16
+
+### Added
+
+- Added `TeleportSafety` and `TeleportService` to centralize teleport safety checks, delayed teleport flow, cooldown handling, and preload behavior.
+- Added `TranslationHelper` with cached language file loading to reduce repeated JSON parsing during runtime.
+- Added `/tpc` as a short admin command alias while keeping `/teleportcommands` for compatibility.
+- Added support for quoted and escaped names in Xaero-triggered `home` and `warp` commands.
+
+### Changed
+
+- Refactored TPA request storage to use `requestId` as the primary internal index.
+- Refactored dimension lookup into `WorldResolver`.
+- Updated admin command presentation so help text and status actions prefer `/tpc`.
+- Updated README and Chinese README to document `/tpc` as the primary admin entry.
+- Cleaned duplicated and unused code, including unused planned legacy aliases in `XaeroCompat`.
+
+### Fixed
+
+- Fixed teleport cooldown timing so cooldown is counted when teleport actually succeeds.
+- Fixed delayed teleport success messaging so it is no longer shown too early.
+- Fixed `/back` death location deletion timing so it happens after a successful teleport instead of before.
+- Fixed a high-Y teleport safety issue.
+- Fixed RTP behavior when the player's dimension changes while a random-teleport search is still in progress.
+- Improved teleport safety logic and unified command-side teleport behavior.
+
+## [1.3] - 2026-03-09
+
+### Added
+
+- Added Xaero integration features, including syncing homes and warps to Xaero waypoints.
+- Added RTP / random teleport support, with compatibility for the legacy `/wild` command name.
+- Added admin runtime configuration and module management commands under a unified admin entry.
+- Added configurable sync interval, request expiration handling, join delay, and shared scheduler behavior for sync and TPA flows.
+- Added teleport preload experiments and precise Y-coordinate teleport support groundwork.
+
+### Changed
+
+- Refactored administrator commands into the newer admin command structure.
+- Renamed wild/random teleport naming to `rtp` while retaining `/wild` compatibility.
+- Moved away from unstable Xaero container code paths and deprecated internal usages.
+- Standardized config file encoding to UTF-8 and improved config/storage handling.
+- Updated project tooling to JDK 21 and refreshed project metadata, icon, and README content.
+
+### Fixed
+
+- Fixed several storage, timer, and crash issues across teleport and sync flows.
+- Fixed a bug where TPA failure could show the wrong message.
+- Fixed invalid-home cleanup behavior and several offline-player command edge cases.
+- Fixed crashes in single-player and container reuse issues affecting Xaero-related state.
+- Fixed language support and multiple smaller robustness issues in RTP and sync code.
+
+## [1.2] - 2026-02-20
+
+### Added
+
+- Initial public release of TeleportCommandsFabric for Minecraft 1.21.11.
+- Added the main teleport command set: `back`, `home`, `warp`, and `tpa`.
+- Added language/i18n support for teleport command messages.
+- Added configurable limits for homes and warps.
+- Added TPA permission control.
+- Added a client-side trusted-command confirmation bypass mixin for smoother command interactions.
+- Added project documentation, license metadata, and initial README content.
+
+### Changed
+
+- Refactored the teleport command structure and introduced configuration-driven behavior.
+- Improved TPA flow and updated translations and project metadata.
+
+### Fixed
+
+- Fixed missing or outdated translation strings, including TPA request-not-found messaging.
+- Performed early cleanup of assets, formatting, and build configuration issues.
+
+## [1.1] - 2026-01-20
+
+### Added
+
+- Established the initial TeleportCommandsFabric project structure and base mod configuration.
+- Added basic storage and configuration files for server-side teleport data.
+
+### Changed
+
+- Iterated on the early command structure and project layout in preparation for the first public 1.2 release.
+- Started building the overall direction of the mod as a server-focused teleport command toolkit.
+
+### Fixed
+
+- Fix a vital crash when teleport to same location due to a wrong datastructure used.

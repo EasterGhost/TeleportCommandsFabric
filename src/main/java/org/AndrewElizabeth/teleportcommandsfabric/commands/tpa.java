@@ -1,30 +1,41 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
-import java.util.*;
-import java.util.concurrent.*;
-
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.tpaSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class tpa {
 
-	public static final ArrayList<tpaArrayClass> tpaList = new ArrayList<>();
+	private static final Map<String, tpaArrayClass> requestsById = new ConcurrentHashMap<>();
 	private static final ScheduledExecutorService REQUEST_EXPIRATION_SCHEDULER = Executors
 			.newSingleThreadScheduledExecutor(runnable -> {
 				Thread thread = new Thread(runnable, "teleportcommands-tpa-expiration");
@@ -44,7 +55,7 @@ public class tpa {
 			RecPlayer = recPlayer;
 			RequestId = UUID.randomUUID().toString();
 			this.here = here;
-			tpaList.add(this);
+			requestsById.put(RequestId, this);
 		}
 	}
 
@@ -175,7 +186,7 @@ public class tpa {
 							} catch (Exception e) {
 								Constants.LOGGER.error("Error while denying a tpa(here) request! => ", e);
 								player.displayClientMessage(
-										getTranslatedText("commands.teleport_commands.home.setError", player)
+										getTranslatedText("commands.teleport_commands.common.error", player)
 												.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
 										true);
 								return 1;
@@ -203,7 +214,7 @@ public class tpa {
 									} catch (Exception e) {
 										Constants.LOGGER.error("Error while denying a tpa(here) request! => ", e);
 										player.displayClientMessage(
-												getTranslatedText("commands.teleport_commands.home.setError", player)
+												getTranslatedText("commands.teleport_commands.common.error", player)
 														.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
 												true);
 										return 1;
@@ -215,7 +226,7 @@ public class tpa {
 
 	private static void tpaCommandHandler(ServerPlayer FromPlayer, ServerPlayer ToPlayer, boolean here)
 			throws NullPointerException {
-		long playerTpaList = tpa.tpaList.stream()
+		long playerTpaList = getRequests().stream()
 				.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.InitPlayer))
 				.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.RecPlayer))
 				.count();
@@ -292,26 +303,14 @@ public class tpa {
 		}
 
 		// Check if there is a request
-		Optional<tpaArrayClass> tpaStorage;
-		if (requestId == null) {
-			tpaStorage = tpaList.stream()
-					.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-					.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-					.findFirst();
-		} else {
-			tpaStorage = tpaList.stream()
-					.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-					.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-					.filter(tpa -> Objects.equals(requestId, tpa.RequestId))
-					.findFirst();
-		}
+		Optional<tpaArrayClass> tpaStorage = findMatchingRequest(FromPlayer, ToPlayer, requestId);
 
 		if (tpaStorage.isPresent()) {
 			// Request found
 			ServerPlayer destinationPlayer = tpaStorage.get().here ? ToPlayer : FromPlayer;
 			ServerPlayer toSentPlayer = tpaStorage.get().here ? FromPlayer : ToPlayer;
 
-			Optional<BlockPos> teleportData = getSafeBlockPos(destinationPlayer.blockPosition(),
+			Optional<BlockPos> teleportData = TeleportSafety.getSafeBlockPos(destinationPlayer.blockPosition(),
 					destinationPlayer.level());
 
 			boolean teleportSuccess;
@@ -319,11 +318,11 @@ public class tpa {
 				BlockPos safeBlockPos = teleportData.get();
 				Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(), safeBlockPos.getZ() + 0.5);
 
-				teleportSuccess = TeleporterWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(), teleportPos,
+				teleportSuccess = TeleportService.teleportWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(), teleportPos,
 						false);
 			} else {
 				// if no safe location then just teleport to the player
-				teleportSuccess = TeleporterWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(),
+				teleportSuccess = TeleportService.teleportWithDelayAndCooldown(toSentPlayer, destinationPlayer.level(),
 						destinationPlayer.position(), false);
 			}
 
@@ -338,7 +337,7 @@ public class tpa {
 					.withStyle(ChatFormatting.WHITE), true);
 			ToPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.accepted", ToPlayer)
 					.withStyle(ChatFormatting.GREEN), true);
-			tpaList.remove(tpaStorage.get());
+			removeRequest(tpaStorage.get());
 			cancelExpiryTask(tpaStorage.get().RequestId);
 
 		} else {
@@ -355,22 +354,10 @@ public class tpa {
 					true);
 
 		} else {
-			Optional<tpaArrayClass> tpaStorage;
-			if (requestId == null) {
-				tpaStorage = tpaList.stream()
-						.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-						.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-						.findFirst();
-			} else {
-				tpaStorage = tpaList.stream()
-						.filter(tpa -> Objects.equals(ToPlayer.getStringUUID(), tpa.InitPlayer))
-						.filter(tpa -> Objects.equals(FromPlayer.getStringUUID(), tpa.RecPlayer))
-						.filter(tpa -> Objects.equals(requestId, tpa.RequestId))
-						.findFirst();
-			}
+			Optional<tpaArrayClass> tpaStorage = findMatchingRequest(FromPlayer, ToPlayer, requestId);
 
 			if (tpaStorage.isPresent()) {
-				tpaList.remove(tpaStorage.get());
+				removeRequest(tpaStorage.get());
 				cancelExpiryTask(tpaStorage.get().RequestId);
 
 				ToPlayer.displayClientMessage(getTranslatedText("commands.teleport_commands.tpa.denied", ToPlayer)
@@ -385,10 +372,11 @@ public class tpa {
 		}
 	}
 
-	private static void expireRequest(tpaArrayClass request, ServerPlayer fromPlayer, ServerPlayer toPlayer, String hereText) {
+	private static void expireRequest(tpaArrayClass request, ServerPlayer fromPlayer, ServerPlayer toPlayer,
+			String hereText) {
 		requestExpiryTasks.remove(request.RequestId);
 
-		boolean successful = tpaList.remove(request);
+		boolean successful = removeRequest(request);
 		if (!successful) {
 			return;
 		}
@@ -408,5 +396,32 @@ public class tpa {
 		if (expiryTask != null) {
 			expiryTask.cancel(false);
 		}
+	}
+
+	private static Optional<tpaArrayClass> findMatchingRequest(ServerPlayer recipient, ServerPlayer sender,
+			String requestId) {
+		if (requestId == null) {
+			return getRequests().stream()
+					.filter(tpa -> Objects.equals(sender.getStringUUID(), tpa.InitPlayer))
+					.filter(tpa -> Objects.equals(recipient.getStringUUID(), tpa.RecPlayer))
+					.findFirst();
+		}
+		tpaArrayClass request = requestsById.get(requestId);
+		if (request == null) {
+			return Optional.empty();
+		}
+		if (!Objects.equals(sender.getStringUUID(), request.InitPlayer)
+				|| !Objects.equals(recipient.getStringUUID(), request.RecPlayer)) {
+			return Optional.empty();
+		}
+		return Optional.of(request);
+	}
+
+	public static Collection<tpaArrayClass> getRequests() {
+		return requestsById.values();
+	}
+
+	private static boolean removeRequest(tpaArrayClass request) {
+		return requestsById.remove(request.RequestId, request);
 	}
 }

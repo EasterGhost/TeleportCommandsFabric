@@ -1,8 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.network;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import net.minecraft.network.FriendlyByteBuf;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;

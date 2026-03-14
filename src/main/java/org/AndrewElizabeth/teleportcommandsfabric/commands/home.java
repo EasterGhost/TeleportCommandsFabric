@@ -2,17 +2,16 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.HomeSuggestionProvider;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -25,16 +24,18 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+import java.util.Optional;
+
 import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
-import static net.minecraft.commands.Commands.argument;
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class home {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 
 		commandDispatcher.register(Commands.literal("sethome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
@@ -85,7 +86,7 @@ public class home {
 					}
 					return 0;
 				})
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new HomeSuggestionProvider())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> {
@@ -116,7 +117,7 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("delhome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new HomeSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context, "name");
@@ -146,9 +147,9 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("renamehome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new HomeSuggestionProvider())
-						.then(argument("newName", StringArgumentType.string())
+						.then(Commands.argument("newName", StringArgumentType.string())
 								.executes(context -> {
 									final String name = StringArgumentType.getString(context, "name");
 									final String newName = StringArgumentType.getString(context, "newName");
@@ -178,7 +179,7 @@ public class home {
 
 		commandDispatcher.register(Commands.literal("defaulthome")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string()).suggests(new HomeSuggestionProvider())
+				.then(Commands.argument("name", StringArgumentType.string()).suggests(new HomeSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
@@ -236,11 +237,10 @@ public class home {
 	// Adds a new home to the homeList of a player
 	private static void SetHome(ServerPlayer player, String homeName) throws Exception {
 		homeName = homeName.toLowerCase();
-		BlockPos blockPos = player.blockPosition();
-		String worldString = tools.getDimensionId(player.level().dimension());
+		String worldString = WorldResolver.getDimensionId(player.level().dimension());
 
 		// Gets the player's storage and creates it if it doesn't exist
-		Player playerStorage = StorageManager.STORAGE.addPlayer(player.getStringUUID());
+		Player playerStorage = STORAGE.addPlayer(player.getStringUUID());
 
 		int maxHomes = ConfigManager.CONFIG.home.getPlayerMaximum();
 		boolean homeExists = playerStorage.getHome(homeName).isPresent();
@@ -254,10 +254,15 @@ public class home {
 		}
 
 		// Create the NamedLocation
-		NamedLocation warp = new NamedLocation(homeName, blockPos, worldString);
+		NamedLocation home = new NamedLocation(
+				homeName,
+				player.getBlockX(),
+				player.getY(),
+				player.getBlockZ(),
+				worldString);
 
 		// Adds the home, returns true if the home already exists
-		boolean homeAlreadyExists = playerStorage.addHome(warp);
+		boolean homeAlreadyExists = playerStorage.addHome(home);
 
 		if (homeAlreadyExists) {
 			// Display error message that the home already exists
@@ -321,18 +326,21 @@ public class home {
 
 		if (optionalWorld.isEmpty()) {
 			Constants.LOGGER.warn(
-					"({}) Error while going to the home \"{}\"! \nCouldn't find a world with the id: \"{}\" \nAvailable worlds: {}",
+					"({}) Error while going to the home \"{}\"! \nCouldn't find a world with the id: \"{}\"",
 					player.getName().getString(),
 					home.getName(),
-					home.getWorldString(),
-					tools.getWorldIds());
+					home.getWorldString());
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
 					.withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
 
 			// Delete invalid home if configured
 			if (ConfigManager.CONFIG.getHome().isDeleteInvalid()) {
-				playerStorage.deleteHome(home);
+				playerStorage.deleteHomeNoSave(home);
+				if (home.getName().equals(playerStorage.getDefaultHome())) {
+					playerStorage.setDefaultHomeNoSave("");
+				}
+				StorageManager.StorageSaver();
 				Constants.LOGGER.info("Deleted invalid home '{}' for player {}", home.getName(),
 						player.getName().getString());
 				player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.deletedInvalid", player)
@@ -354,11 +362,12 @@ public class home {
 
 		} else {
 			// Teleport the player!
-			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
+			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, home.getYPrecise(),
 					teleportBlockPos.getZ() + 0.5);
 
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);
-			tools.TeleporterWithDelayAndCooldown(player, homeWorld, teleportPos, false);
+			if (TeleportService.teleportWithDelayAndCooldown(player, homeWorld, teleportPos, false)) {
+				player.displayClientMessage(getTranslatedText("commands.teleport_commands.home.go", player), true);
+			}
 		}
 	}
 
@@ -550,7 +559,7 @@ public class home {
 							.withStyle(ChatFormatting.GREEN)
 							.withStyle(style -> style.withClickEvent(
 									new ClickEvent.RunCommand(
-											String.format("/home \"%s\"", currentHome.getName())))))
+											String.format("home \"%s\"", currentHome.getName())))))
 					.append(" ")
 					.append(getTranslatedText("commands.teleport_commands.common.rename", player)
 							.withStyle(ChatFormatting.BLUE)
@@ -565,7 +574,7 @@ public class home {
 						.withStyle(ChatFormatting.DARK_AQUA)
 						.withStyle(style -> style.withClickEvent(
 								new ClickEvent.RunCommand(
-										String.format("/defaulthome \"%s\"", currentHome.getName())))))
+										String.format("defaulthome \"%s\"", currentHome.getName())))))
 						.append(" ");
 			}
 

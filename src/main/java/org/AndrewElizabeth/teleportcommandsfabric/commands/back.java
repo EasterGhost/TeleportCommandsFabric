@@ -2,14 +2,14 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
-
-import java.util.*;
-
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.common.DeathLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -20,8 +20,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.*;
-import static net.minecraft.commands.Commands.argument;
+import java.util.Optional;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class back {
 
@@ -51,7 +52,7 @@ public class back {
 					}
 					return 0;
 				})
-				.then(argument("Disable Safety", BoolArgumentType.bool())
+				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> {
 							final boolean safety = BoolArgumentType.getBool(context, "Disable Safety");
@@ -99,10 +100,9 @@ public class back {
 
 		if (deathLocationWorld == null) {
 			Constants.LOGGER.warn(
-					"({}) Error while going back! \nCouldn't find a world with the id: \"{}\" \nAvailable worlds: {}",
+					"({}) Error while going back! \nCouldn't find a world with the id: \"{}\"",
 					player.getName().getString(),
-					deathLocation.getWorldString(),
-					tools.getWorldIds());
+					deathLocation.getWorldString());
 
 			player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
 					.withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
@@ -114,7 +114,8 @@ public class back {
 
 		// Sets the teleportBlockPos based on if it should do safety checking
 		if (!safetyDisabled) {
-			Optional<BlockPos> safeBlockPos = getSafeBlockPos(deathLocation.getBlockPos(), deathLocationWorld);
+			Optional<BlockPos> safeBlockPos = TeleportSafety.getSafeBlockPos(deathLocation.getBlockPos(),
+					deathLocationWorld);
 
 			// Check if there is a safe BlockPos
 			if (safeBlockPos.isEmpty()) {
@@ -130,7 +131,7 @@ public class back {
 								.append(getTranslatedText("commands.teleport_commands.common.forceTeleport", player)
 										.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
 										.withStyle(
-												style -> style.withClickEvent(new ClickEvent.RunCommand("/back true"))))
+												style -> style.withClickEvent(new ClickEvent.RunCommand("back true"))))
 								.append("\n"),
 						false);
 				return;
@@ -154,15 +155,17 @@ public class back {
 			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
 					teleportBlockPos.getZ() + 0.5);
 
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
-			if (!tools.TeleporterWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false)) {
-				return; // On cooldown, message already sent
+			Runnable onTeleportSuccess = null;
+			if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
+				String playerUuid = player.getStringUUID();
+				onTeleportSuccess = () -> DeathLocationStorage.removeDeathLocation(playerUuid);
 			}
 
-			// Delete the death location after teleport if configured
-			if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
-				DeathLocationStorage.removeDeathLocation(player.getStringUUID());
+			if (!TeleportService.teleportWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false,
+					onTeleportSuccess)) {
+				return; // On cooldown, message already sent
 			}
+			player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
 		}
 	}
 }

@@ -1,17 +1,19 @@
 package org.AndrewElizabeth.teleportcommandsfabric;
 
 import com.mojang.brigadier.CommandDispatcher;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
+
 import org.AndrewElizabeth.teleportcommandsfabric.commands.*;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.admin.AdminCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.*;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.xaero.XaeroSyncServer;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.core.BlockPos;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -45,19 +47,19 @@ public class TeleportCommands implements ModInitializer {
 	// initialize commands, also allows me to easily disable any when there is a
 	// config
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+		AdminCommands.register(dispatcher);
 		back.register(dispatcher);
 		home.register(dispatcher);
 		tpa.register(dispatcher);
 		warp.register(dispatcher);
 		worldspawn.register(dispatcher);
 		rtp.register(dispatcher);
-		main.register(dispatcher);
 	}
 
 	// Runs when the playerDeath mixin calls it, updates the /back command position
 	public static void onPlayerDeath(ServerPlayer player) {
 		BlockPos pos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
-		String world = player.level().dimension().toString();
+		String world = WorldResolver.getDimensionId(player.level().dimension());
 		String uuid = player.getStringUUID();
 
 		DeathLocationStorage.setDeathLocation(uuid, pos, world);

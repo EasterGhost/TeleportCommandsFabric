@@ -43,8 +43,12 @@ public class Player {
 	// -----
 
 	public void setDefaultHome(String defaultHome) throws Exception {
-		this.DefaultHome = defaultHome;
+		setDefaultHomeNoSave(defaultHome);
 		StorageManager.StorageSaver();
+	}
+
+	public void setDefaultHomeNoSave(String defaultHome) {
+		this.DefaultHome = defaultHome;
 	}
 
 	// Adds a NamedLocation to the home list, returns true if it already exists
@@ -63,8 +67,11 @@ public class Player {
 	// -----
 
 	public void deleteHome(NamedLocation home) throws Exception {
-		Homes.remove(home);
-
+		deleteHomeNoSave(home);
 		StorageManager.StorageSaver();
+	}
+
+	public void deleteHomeNoSave(NamedLocation home) {
+		Homes.remove(home);
 	}
 }

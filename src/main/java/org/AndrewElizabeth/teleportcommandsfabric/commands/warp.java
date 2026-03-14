@@ -2,12 +2,14 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.server.permissions.Permissions;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.suggestions.WarpSuggestionProvider;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.tools;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -16,6 +18,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -23,16 +26,15 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.Optional;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.*;
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.tools.getTranslatedText;
-import static net.minecraft.commands.Commands.argument;
+import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public class warp {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 
 		commandDispatcher.register(Commands.literal("setwarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
 									"name");
@@ -65,7 +67,7 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("warp")
 				.requires(source -> source.getPlayer() != null)
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
@@ -99,7 +101,7 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("delwarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
 							final String name = StringArgumentType.getString(context,
@@ -133,9 +135,9 @@ public class warp {
 
 		commandDispatcher.register(Commands.literal("renamewarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
-						.then(argument("newName", StringArgumentType.string())
+						.then(Commands.argument("newName", StringArgumentType.string())
 								.executes(context -> {
 									final String name = StringArgumentType
 											.getString(context, "name");
@@ -202,14 +204,18 @@ public class warp {
 	}
 
 	private static void SetWarp(ServerPlayer player, String warpName) throws Exception {
-		System.out.println(warpName);
+		// System.out.println(warpName);
 		warpName = warpName.toLowerCase();
 
-		BlockPos blockPos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
-		String worldString = tools.getDimensionId(player.level().dimension());
+		String worldString = WorldResolver.getDimensionId(player.level().dimension());
 
 		// Create the NamedLocation
-		NamedLocation warp = new NamedLocation(warpName, blockPos, worldString);
+		NamedLocation warp = new NamedLocation(
+				warpName,
+				player.getBlockX(),
+				player.getY(),
+				player.getBlockZ(),
+				worldString);
 
 		int maxWarps = ConfigManager.CONFIG.warp.getMaximum();
 		boolean warpAlreadyExists = STORAGE.getWarp(warpName).isPresent();
@@ -257,11 +263,10 @@ public class warp {
 
 		if (optionalWorld.isEmpty()) {
 			Constants.LOGGER.warn(
-					"({}) Error while going to the warp \"{}\"! \nCouldn't find a world with the id: \"{}\" \nAvailable worlds: {}",
+					"({}) Error while going to the warp \"{}\"! \nCouldn't find a world with the id: \"{}\"",
 					player.getName().getString(),
 					warp.getName(),
-					warp.getWorldString(),
-					tools.getWorldIds());
+					warp.getWorldString());
 
 			player.displayClientMessage(
 					getTranslatedText("commands.teleport_commands.common.worldNotFound", player)
@@ -291,12 +296,13 @@ public class warp {
 
 		} else {
 			// Teleport the player!
-			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
+			Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, warp.getYPrecise(),
 					teleportBlockPos.getZ() + 0.5);
 
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player),
-					true);
-			tools.TeleporterWithDelayAndCooldown(player, warpWorld, teleportPos, false);
+			if (TeleportService.teleportWithDelayAndCooldown(player, warpWorld, teleportPos, false)) {
+				player.displayClientMessage(getTranslatedText("commands.teleport_commands.warp.go", player),
+						true);
+			}
 		}
 	}
 
@@ -429,7 +435,7 @@ public class warp {
 							.withStyle(ChatFormatting.GREEN)
 							.withStyle(style -> style.withClickEvent(
 									new ClickEvent.RunCommand(
-											String.format("/warp \"%s\"",
+											String.format("warp \"%s\"",
 													currentWarp.getName())))))
 					.append(" ");
 
