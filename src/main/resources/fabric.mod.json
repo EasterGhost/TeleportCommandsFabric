@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "teleport_commands_fabric",
+	"id": "teleportcommandsfabric",
 	"version": "${version}",
 	"name": "TeleportCommandsFabric",
 	"description": "A simple tpa command mod for Fabric.",
