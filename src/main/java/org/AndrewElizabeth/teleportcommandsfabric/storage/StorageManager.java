@@ -18,9 +18,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.unmodifiableList;
@@ -346,9 +348,10 @@ public class StorageManager {
 					}
 					changed |= player.ensureDefaultHomeUuid();
 				}
+				changed |= player.ensureHiddenWarpUuids();
 
-				// Remove players with no homes
-				if (player.getHomes().isEmpty()) {
+				// Remove players with no persisted player-specific state.
+				if (player.isEmpty()) {
 					iterator.remove();
 					changed = true;
 				}
@@ -361,6 +364,14 @@ public class StorageManager {
 			if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {
 				boolean removed = Warps.removeIf(warp -> warp.getWorld().isEmpty());
 				changed |= removed;
+			}
+
+			Set<UUID> existingWarpUuids = new HashSet<>();
+			for (NamedLocation warp : Warps) {
+				existingWarpUuids.add(warp.getUuid());
+			}
+			for (Player player : Players) {
+				changed |= player.cleanupHiddenWarpUuids(existingWarpUuids);
 			}
 
 			if (changed) {
@@ -436,6 +447,9 @@ public class StorageManager {
 		// Remove a warp, if the warp isn't found then nothing will happen
 		public void removeWarp(NamedLocation warp) throws Exception {
 			Warps.removeIf(existing -> Objects.equals(existing.getUuid(), warp.getUuid()));
+			for (Player player : Players) {
+				player.showWarpNoSave(warp.getUuid());
+			}
 			StorageSaver();
 		}
 	}

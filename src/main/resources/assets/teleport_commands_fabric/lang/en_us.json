@@ -57,6 +57,10 @@
   "commands.teleport_commands.warp.mapHidden": "Warp will no longer be shown on the Xaero map.",
   "commands.teleport_commands.warp.mapAlreadyShown": "Warp is already shown on the Xaero map.",
   "commands.teleport_commands.warp.mapAlreadyHidden": "Warp is already hidden from the Xaero map.",
+  "commands.teleport_commands.warp.playerMapShown": "Warp will now be shown on your Xaero map.",
+  "commands.teleport_commands.warp.playerMapHidden": "Warp will no longer be shown on your Xaero map.",
+  "commands.teleport_commands.warp.playerMapAlreadyShown": "Warp is already shown on your Xaero map.",
+  "commands.teleport_commands.warp.playerMapAlreadyHidden": "Warp is already hidden from your Xaero map.",
 
   "commands.teleport_commands.warps.error": "An error occurred while getting the warps!",
   "commands.teleport_commands.warps.warps": "Warps:",

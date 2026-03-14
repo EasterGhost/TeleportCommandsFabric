@@ -57,6 +57,10 @@
   "commands.teleport_commands.warp.mapHidden": "该传送点将不再显示在 Xaero 地图上。",
   "commands.teleport_commands.warp.mapAlreadyShown": "该传送点已经显示在 Xaero 地图上。",
   "commands.teleport_commands.warp.mapAlreadyHidden": "该传送点已经从 Xaero 地图上隐藏。",
+  "commands.teleport_commands.warp.playerMapShown": "该传送点现在会显示在你的 Xaero 地图上。",
+  "commands.teleport_commands.warp.playerMapHidden": "该传送点将不再显示在你的 Xaero 地图上。",
+  "commands.teleport_commands.warp.playerMapAlreadyShown": "该传送点已经显示在你的 Xaero 地图上。",
+  "commands.teleport_commands.warp.playerMapAlreadyHidden": "该传送点已经从你的 Xaero 地图上隐藏。",
 
   "commands.teleport_commands.warps.error": "获取传送点发生错误!",
   "commands.teleport_commands.warps.warps": "传送点:",

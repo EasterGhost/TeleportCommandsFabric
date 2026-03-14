@@ -3,9 +3,11 @@ package org.AndrewElizabeth.teleportcommandsfabric.common;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.unmodifiableList;
@@ -14,6 +16,7 @@ public class Player {
 	private final String UUID;
 	private UUID DefaultHomeUuid;
 	private final ArrayList<NamedLocation> Homes = new ArrayList<>();
+	private HashSet<UUID> HiddenWarpUuids = new HashSet<>();
 
 	public Player(String uuid) {
 		this.UUID = uuid;
@@ -40,6 +43,10 @@ public class Player {
 		return unmodifiableList(Homes);
 	}
 
+	public Set<UUID> getHiddenWarpUuids() {
+		return Set.copyOf(getOrCreateHiddenWarpUuids());
+	}
+
 	// returns a specific home based on the name (if there is one)
 	public Optional<NamedLocation> getHome(String name) {
 		return Homes.stream()
@@ -51,6 +58,10 @@ public class Player {
 		return Homes.stream()
 				.filter(home -> Objects.equals(home.getUuid(), uuid))
 				.findFirst();
+	}
+
+	public boolean isWarpHidden(UUID warpUuid) {
+		return getOrCreateHiddenWarpUuids().contains(warpUuid);
 	}
 
 	// -----
@@ -110,6 +121,32 @@ public class Player {
 		}
 	}
 
+	public void hideWarp(UUID warpUuid) throws Exception {
+		hideWarpNoSave(warpUuid);
+		StorageManager.StorageSaver();
+	}
+
+	public void hideWarpNoSave(UUID warpUuid) {
+		if (warpUuid != null) {
+			getOrCreateHiddenWarpUuids().add(warpUuid);
+		}
+	}
+
+	public void showWarp(UUID warpUuid) throws Exception {
+		showWarpNoSave(warpUuid);
+		StorageManager.StorageSaver();
+	}
+
+	public void showWarpNoSave(UUID warpUuid) {
+		if (warpUuid != null) {
+			getOrCreateHiddenWarpUuids().remove(warpUuid);
+		}
+	}
+
+	public boolean cleanupHiddenWarpUuids(Set<UUID> existingWarpUuids) {
+		return getOrCreateHiddenWarpUuids().removeIf(uuid -> !existingWarpUuids.contains(uuid));
+	}
+
 	public boolean ensureDefaultHomeUuid() {
 		if (DefaultHomeUuid == null) {
 			return false;
@@ -119,5 +156,26 @@ public class Player {
 		}
 		DefaultHomeUuid = null;
 		return true;
+	}
+
+	public boolean ensureHiddenWarpUuids() {
+		if (HiddenWarpUuids != null) {
+			return false;
+		}
+		HiddenWarpUuids = new HashSet<>();
+		return true;
+	}
+
+	public boolean isEmpty() {
+		return Homes.isEmpty()
+				&& DefaultHomeUuid == null
+				&& getOrCreateHiddenWarpUuids().isEmpty();
+	}
+
+	private HashSet<UUID> getOrCreateHiddenWarpUuids() {
+		if (HiddenWarpUuids == null) {
+			HiddenWarpUuids = new HashSet<>();
+		}
+		return HiddenWarpUuids;
 	}
 }

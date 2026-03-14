@@ -74,6 +74,22 @@ final class WarpMessages {
 				ChatFormatting.GREEN);
 	}
 
+	static void sendPlayerMapVisibilityAlready(ServerPlayer player, boolean visible) {
+		send(player,
+				visible
+						? "commands.teleport_commands.warp.playerMapAlreadyShown"
+						: "commands.teleport_commands.warp.playerMapAlreadyHidden",
+				ChatFormatting.AQUA);
+	}
+
+	static void sendPlayerMapVisibilityChanged(ServerPlayer player, boolean visible) {
+		send(player,
+				visible
+						? "commands.teleport_commands.warp.playerMapShown"
+						: "commands.teleport_commands.warp.playerMapHidden",
+				ChatFormatting.GREEN);
+	}
+
 	static int execute(ServerPlayer player, String errorLogMessage, String errorTranslationKey, WarpAction action) {
 		try {
 			action.run();

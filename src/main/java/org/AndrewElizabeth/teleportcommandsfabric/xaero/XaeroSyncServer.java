@@ -128,6 +128,9 @@ public final class XaeroSyncServer {
 		}
 
 		StorageManager.STORAGE.getPlayer(player.getStringUUID()).ifPresent(playerData -> {
+			Set<UUID> hiddenWarpUuids = playerData.getHiddenWarpUuids();
+			warps.removeIf(warp -> hiddenWarpUuids.contains(warp.uuid()));
+
 			for (NamedLocation home : playerData.getHomes()) {
 				if (!home.isXaeroVisible()) {
 					continue;

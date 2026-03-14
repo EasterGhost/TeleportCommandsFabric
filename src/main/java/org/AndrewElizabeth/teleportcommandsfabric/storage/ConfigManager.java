@@ -353,8 +353,8 @@ public class ConfigManager {
 			private boolean enabled = true;
 			private int syncIntervalSeconds = 10;
 			private boolean persistWaypointSets = true;
-			private String warpSetName = "TeleportCommands Warps";
-			private String homeSetName = "TeleportCommands Homes";
+			private String warpSetName = "Default";
+			private String homeSetName = "Default";
 
 			public boolean isEnabled() {
 				return enabled;

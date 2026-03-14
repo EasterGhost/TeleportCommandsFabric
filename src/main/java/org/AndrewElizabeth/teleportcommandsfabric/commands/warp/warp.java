@@ -7,6 +7,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 import org.AndrewElizabeth.teleportcommandsfabric.services.LocationResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.services.NamedLocationTeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
@@ -138,7 +139,7 @@ public class warp {
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode() {
 		return Commands.literal("mapwarp")
-				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.requires(source -> source.getPlayer() != null)
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(new WarpSuggestionProvider())
 						.then(Commands.argument("visible", BoolArgumentType.bool())
@@ -263,14 +264,20 @@ public class warp {
 			return;
 		}
 
+		Player playerData = STORAGE.addPlayer(player.getStringUUID());
 		NamedLocation warp = optionalWarp.get();
-		if (warp.isXaeroVisible() == visible) {
-			WarpMessages.sendMapVisibilityAlready(player, visible);
+		boolean currentlyVisible = !playerData.isWarpHidden(warp.getUuid());
+		if (currentlyVisible == visible) {
+			WarpMessages.sendPlayerMapVisibilityAlready(player, visible);
 			return;
 		}
 
-		warp.setXaeroVisible(visible);
-		WarpMessages.sendMapVisibilityChanged(player, visible);
+		if (visible) {
+			playerData.showWarp(warp.getUuid());
+		} else {
+			playerData.hideWarp(warp.getUuid());
+		}
+		WarpMessages.sendPlayerMapVisibilityChanged(player, visible);
 	}
 
 	private static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player) {

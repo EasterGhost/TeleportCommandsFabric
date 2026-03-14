@@ -12,6 +12,7 @@ import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
@@ -37,19 +38,17 @@ final class WarpFormatter {
 		String coords = String.format("[X%d Y%d Z%d]", currentWarp.getX(), currentWarp.getY(), currentWarp.getZ());
 		String dimension = String.format(" [%s]", currentWarp.getWorldString());
 		boolean canModify = source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
+		boolean playerVisible = isVisibleForPlayer(player, currentWarp.getUuid());
 
 		message.append("\n");
 		message.append(Component.literal(name).withStyle(ChatFormatting.AQUA));
-
-		if (canModify) {
-			message.append(" ")
-					.append(getTranslatedText(
-							currentWarp.isXaeroVisible()
-									? "commands.teleport_commands.common.mapVisible"
-									: "commands.teleport_commands.common.mapHidden",
-							player)
-							.withStyle(currentWarp.isXaeroVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
-		}
+		message.append(" ")
+				.append(getTranslatedText(
+						playerVisible
+								? "commands.teleport_commands.common.mapVisible"
+								: "commands.teleport_commands.common.mapHidden",
+						player)
+						.withStyle(playerVisible ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
 
 		message.append("\n");
 		message.append(Component.literal("     | ")
@@ -87,21 +86,29 @@ final class WarpFormatter {
 					.append(getTranslatedText("commands.teleport_commands.common.delete", player)
 							.withStyle(ChatFormatting.RED)
 							.withStyle(style -> style.withClickEvent(
-									new ClickEvent.SuggestCommand(String.format("/delwarp \"%s\"", currentWarp.getName())))))
-					.append(" ")
-					.append(getTranslatedText(
-							currentWarp.isXaeroVisible()
-									? "commands.teleport_commands.common.hideFromMap"
-									: "commands.teleport_commands.common.showOnMap",
-							player)
-							.withStyle(currentWarp.isXaeroVisible() ? ChatFormatting.GRAY : ChatFormatting.GOLD)
-							.withStyle(style -> style.withClickEvent(
-									new ClickEvent.RunCommand(String.format(
-											"mapwarp \"%s\" %s",
-											currentWarp.getName(),
-											currentWarp.isXaeroVisible() ? "false" : "true")))));
+									new ClickEvent.SuggestCommand(String.format("/delwarp \"%s\"", currentWarp.getName())))));
 		}
 
+		message.append(" ")
+				.append(getTranslatedText(
+						playerVisible
+								? "commands.teleport_commands.common.hideFromMap"
+								: "commands.teleport_commands.common.showOnMap",
+						player)
+						.withStyle(playerVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
+						.withStyle(style -> style.withClickEvent(
+								new ClickEvent.RunCommand(String.format(
+										"mapwarp \"%s\" %s",
+										currentWarp.getName(),
+										playerVisible ? "false" : "true")))));
+
 		message.append("\n");
+	}
+
+	private static boolean isVisibleForPlayer(ServerPlayer player, UUID warpUuid) {
+		return org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE
+				.getPlayer(player.getStringUUID())
+				.map(playerData -> !playerData.isWarpHidden(warpUuid))
+				.orElse(true);
 	}
 }
