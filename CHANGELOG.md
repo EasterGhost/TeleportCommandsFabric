@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
-## [1.4] - Unreleased
+## [1.4] - 2026-03-16
 
 ### Added
 
