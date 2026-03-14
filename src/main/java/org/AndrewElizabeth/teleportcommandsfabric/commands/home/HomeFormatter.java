@@ -69,7 +69,8 @@ final class HomeFormatter {
 										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))))
 				.append(Component.literal(dimension)
 						.withStyle(ChatFormatting.DARK_PURPLE)
-						.withStyle(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(currentHome.getWorldString())))
+						.withStyle(style -> style
+								.withClickEvent(new ClickEvent.CopyToClipboard(currentHome.getWorldString())))
 						.withStyle(style -> style.withHoverEvent(
 								new HoverEvent.ShowText(
 										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))));
@@ -109,7 +110,8 @@ final class HomeFormatter {
 						.withStyle(currentHome.isXaeroVisible() ? ChatFormatting.GRAY : ChatFormatting.GOLD)
 						.withStyle(style -> style.withClickEvent(
 								new ClickEvent.RunCommand(
-										"maphome " + quotedName + " " + (currentHome.isXaeroVisible() ? "false" : "true")))));
+										"maphome " + quotedName + " "
+												+ (currentHome.isXaeroVisible() ? "false" : "true")))));
 
 		message.append("\n");
 	}

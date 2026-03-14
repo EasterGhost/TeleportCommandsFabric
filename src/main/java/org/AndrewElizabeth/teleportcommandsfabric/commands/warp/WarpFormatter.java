@@ -66,7 +66,8 @@ final class WarpFormatter {
 										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))))
 				.append(Component.literal(dimension)
 						.withStyle(ChatFormatting.DARK_PURPLE)
-						.withStyle(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(currentWarp.getWorldString())))
+						.withStyle(style -> style
+								.withClickEvent(new ClickEvent.CopyToClipboard(currentWarp.getWorldString())))
 						.withStyle(style -> style.withHoverEvent(
 								new HoverEvent.ShowText(
 										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))));
