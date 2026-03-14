@@ -49,6 +49,10 @@ public class WaypointTeleportMixin {
 			return null;
 		}
 
+		if (waypoint.getPurpose() == xaero.hud.minimap.waypoint.WaypointPurpose.DEATH) {
+			return "back death";
+		}
+
 		String name = waypoint.getName();
 		String symbol = waypoint.getInitials();
 		if (name == null) {
