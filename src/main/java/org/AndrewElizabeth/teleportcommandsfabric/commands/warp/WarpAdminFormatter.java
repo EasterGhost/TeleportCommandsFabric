@@ -36,8 +36,8 @@ final class WarpAdminFormatter {
 		boolean visible = currentWarp.isXaeroVisible();
 		MutableComponent toggleButton = getTranslatedText(
 				visible
-						? "commands.teleport_commands.common.hideFromMap"
-						: "commands.teleport_commands.common.showOnMap",
+						? "commands.teleport_commands.gwarpmap.hideFromMap"
+						: "commands.teleport_commands.gwarpmap.showOnMap",
 				player)
 				.withStyle(visible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
 				.withStyle(style -> style.withClickEvent(

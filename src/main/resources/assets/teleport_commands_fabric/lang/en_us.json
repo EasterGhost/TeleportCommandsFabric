@@ -68,6 +68,8 @@
   "commands.teleport_commands.gwarpmap.warps": "Warp map visibility:",
   "commands.teleport_commands.gwarpmap.globalVisible": "[Global Map: On]",
   "commands.teleport_commands.gwarpmap.globalHidden": "[Global Map: Off]",
+  "commands.teleport_commands.gwarpmap.showOnMap": "[Show On Global Map]",
+  "commands.teleport_commands.gwarpmap.hideFromMap": "[Hide From Global Map]",
 
   "commands.teleport_commands.tpa.self": "Well, that was easy",
   "commands.teleport_commands.tpa.alreadySent": "A request has already been sent to %0%",

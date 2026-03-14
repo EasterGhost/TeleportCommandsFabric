@@ -8,7 +8,8 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
 final class AdminStatusFormatter {
-	private static final String ROOT_COMMAND = "tpc";
+	private static final String RUN_ROOT_COMMAND = "tpc";
+	private static final String DISPLAY_ROOT_COMMAND = "/tpc";
 
 	private AdminStatusFormatter() {
 	}
@@ -52,7 +53,8 @@ final class AdminStatusFormatter {
 		String actionKey = enabled
 				? "commands.teleport_commands.admin.action.disable"
 				: "commands.teleport_commands.admin.action.enable";
-		String command = ROOT_COMMAND + " " + (enabled ? "disable " : "enable ") + moduleKey;
+		String runCommand = RUN_ROOT_COMMAND + " " + (enabled ? "disable " : "enable ") + moduleKey;
+		String displayCommand = DISPLAY_ROOT_COMMAND + " " + (enabled ? "disable " : "enable ") + moduleKey;
 		MutableComponent state = AdminMessages.t(source,
 				enabled
 						? "commands.teleport_commands.admin.stat.enabled"
@@ -63,11 +65,11 @@ final class AdminStatusFormatter {
 				.append("]")
 				.withStyle(style -> style
 						.withColor(enabled ? ChatFormatting.RED : ChatFormatting.GREEN)
-						.withClickEvent(new ClickEvent.RunCommand(command))
+						.withClickEvent(new ClickEvent.RunCommand(runCommand))
 						.withHoverEvent(new HoverEvent.ShowText(
 								AdminMessages.t(source,
 										"commands.teleport_commands.admin.action.hover",
-										Component.literal(command)))));
+										Component.literal(displayCommand)))));
 		MutableComponent line = AdminMessages.t(source,
 				"commands.teleport_commands.admin.stat.entry",
 				moduleName,

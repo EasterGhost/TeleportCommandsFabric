@@ -233,7 +233,7 @@ public final class AdminCommands {
 					.create();
 		}
 
-		return AdminMessages.setAndSave(
+		int result = AdminMessages.setAndSave(
 				context,
 				() -> toggle.setter().accept(enabled),
 				AdminMessages.t(context.getSource(),
@@ -243,6 +243,17 @@ public final class AdminCommands {
 								enabled
 										? "commands.teleport_commands.admin.stat.enabled"
 										: "commands.teleport_commands.admin.stat.disabled")));
+
+		if (result == 0) {
+			context.getSource().sendSuccess(
+					() -> Component.literal("--------------------").withStyle(ChatFormatting.DARK_GRAY),
+					false);
+			context.getSource().sendSuccess(
+					() -> AdminStatusFormatter.build(context.getSource()),
+					false);
+		}
+
+		return result;
 	}
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {

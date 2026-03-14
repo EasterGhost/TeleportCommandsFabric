@@ -175,7 +175,7 @@ public class warp {
 					return WarpMessages.execute(
 							player,
 							"Error while printing warp map visibility list!",
-							"commands.teleport_commands.warpmap.error",
+							"commands.teleport_commands.gwarpmap.error",
 							() -> printAdminWarpMap(player));
 				})
 				.then(Commands.argument("name", StringArgumentType.string())
@@ -193,7 +193,7 @@ public class warp {
 									return WarpMessages.execute(
 											player,
 											"Error while updating global warp Xaero visibility!",
-											"commands.teleport_commands.warpmap.error",
+											"commands.teleport_commands.gwarpmap.error",
 											() -> setGlobalWarpXaeroVisibility(player, warpName, visible));
 								})));
 	}
@@ -326,6 +326,7 @@ public class warp {
 			playerData.hideWarp(warp.getUuid());
 		}
 		WarpMessages.sendPlayerMapVisibilityChanged(player, visible);
+		printWarps(player.createCommandSourceStack(), player);
 	}
 
 	private static void setGlobalWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible)
@@ -343,6 +344,7 @@ public class warp {
 
 		warp.setXaeroVisible(visible);
 		WarpMessages.sendMapVisibilityChanged(player, visible);
+		printAdminWarpMap(player);
 	}
 
 	private static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player) {

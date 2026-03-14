@@ -398,6 +398,7 @@ public class home {
 
 		home.setXaeroVisible(visible);
 		HomeMessages.sendMapVisibilityChanged(player, visible);
+		printHomes(player);
 	}
 
 	private static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,
