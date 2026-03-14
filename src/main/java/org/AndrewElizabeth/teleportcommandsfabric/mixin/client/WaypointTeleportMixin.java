@@ -9,8 +9,6 @@ import xaero.common.minimap.waypoints.Waypoint;
 import xaero.hud.minimap.waypoint.WaypointTeleport;
 import xaero.hud.minimap.world.MinimapWorld;
 
-import java.util.Locale;
-
 @Mixin(WaypointTeleport.class)
 public class WaypointTeleportMixin {
 	private static final String WARP_TAG_PREFIX = "TPC-W ";
@@ -54,7 +52,6 @@ public class WaypointTeleportMixin {
 		}
 
 		String name = waypoint.getName();
-		String symbol = waypoint.getInitials();
 		if (name == null) {
 			return null;
 		}
@@ -64,11 +61,10 @@ public class WaypointTeleportMixin {
 			return null;
 		}
 
-		String normalizedSymbol = symbol == null ? "" : symbol.trim().toUpperCase(Locale.ROOT);
-		if ("W".equals(normalizedSymbol) || name.startsWith(WARP_TAG_PREFIX)) {
+		if (name.startsWith(WARP_TAG_PREFIX)) {
 			return "warp " + tpc$quoteCommandArgument(normalizedName);
 		}
-		if ("H".equals(normalizedSymbol) || name.startsWith(HOME_TAG_PREFIX)) {
+		if (name.startsWith(HOME_TAG_PREFIX)) {
 			return "home " + tpc$quoteCommandArgument(normalizedName);
 		}
 		return null;

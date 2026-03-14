@@ -11,8 +11,6 @@ import xaero.map.gui.dropdown.rightclick.RightClickOption;
 import xaero.map.mods.gui.Waypoint;
 
 import java.util.ArrayList;
-import java.util.Locale;
-
 @Mixin(GuiMap.class)
 public class GuiMapMixin {
 	private static final String TELEPORT_OPTION_KEY = "gui.xaero_right_click_map_teleport";
@@ -64,22 +62,20 @@ public class GuiMapMixin {
 	}
 
 	private static String tpc$buildTeleportCommand(Waypoint waypoint) {
-		String symbol = waypoint.getSymbol();
 		String name = waypoint.getName();
-		if (symbol == null || name == null) {
+		if (name == null) {
 			return null;
 		}
 
-		String normalizedSymbol = symbol.trim().toUpperCase(Locale.ROOT);
 		String normalizedName = tpc$stripTaggedPrefix(name);
 		if (normalizedName.isBlank()) {
 			return null;
 		}
 
-		if ("W".equals(normalizedSymbol)) {
+		if (name.startsWith(WARP_TAG_PREFIX)) {
 			return "warp " + tpc$quoteCommandArgument(normalizedName);
 		}
-		if ("H".equals(normalizedSymbol)) {
+		if (name.startsWith(HOME_TAG_PREFIX)) {
 			return "home " + tpc$quoteCommandArgument(normalizedName);
 		}
 		return null;
