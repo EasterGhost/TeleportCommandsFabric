@@ -51,8 +51,8 @@ final class WarpAdminFormatter {
 		message.append(" ")
 				.append(getTranslatedText(
 						visible
-								? "commands.teleport_commands.warpmap.globalVisible"
-								: "commands.teleport_commands.warpmap.globalHidden",
+								? "commands.teleport_commands.gwarpmap.globalVisible"
+								: "commands.teleport_commands.gwarpmap.globalHidden",
 						player)
 						.withStyle(visible ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
 		message.append(" ").append(toggleButton);
