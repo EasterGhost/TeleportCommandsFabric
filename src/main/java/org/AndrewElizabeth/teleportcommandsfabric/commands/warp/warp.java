@@ -32,6 +32,7 @@ public class warp {
 		commandDispatcher.register(buildRenameNode());
 		commandDispatcher.register(buildListNode());
 		commandDispatcher.register(buildMapVisibilityNode());
+		commandDispatcher.register(buildAdminMapListNode());
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildSetNode() {
@@ -160,6 +161,43 @@ public class warp {
 								})));
 	}
 
+	private static LiteralArgumentBuilder<CommandSourceStack> buildAdminMapListNode() {
+		return Commands.literal("gwarpmap")
+				.requires(source -> source.getPlayer() != null
+						&& source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.executes(context -> {
+					final ServerPlayer player = context.getSource().getPlayerOrException();
+
+					if (!WarpMessages.ensureEnabled(player)) {
+						return 1;
+					}
+
+					return WarpMessages.execute(
+							player,
+							"Error while printing warp map visibility list!",
+							"commands.teleport_commands.warpmap.error",
+							() -> printAdminWarpMap(player));
+				})
+				.then(Commands.argument("name", StringArgumentType.string())
+						.suggests(new WarpSuggestionProvider())
+						.then(Commands.argument("visible", BoolArgumentType.bool())
+								.executes(context -> {
+									final ServerPlayer player = context.getSource().getPlayerOrException();
+									final String warpName = StringArgumentType.getString(context, "name");
+									final boolean visible = BoolArgumentType.getBool(context, "visible");
+
+									if (!WarpMessages.ensureEnabled(player)) {
+										return 1;
+									}
+
+									return WarpMessages.execute(
+											player,
+											"Error while updating global warp Xaero visibility!",
+											"commands.teleport_commands.warpmap.error",
+											() -> setGlobalWarpXaeroVisibility(player, warpName, visible));
+								})));
+	}
+
 	private static void setWarp(ServerPlayer player, String warpName) throws Exception {
 		warpName = LocationResolver.normalizeName(warpName);
 		String worldString = WorldResolver.getDimensionId(player.level().dimension());
@@ -258,6 +296,16 @@ public class warp {
 		player.displayClientMessage(WarpFormatter.buildWarpList(source, player, warps), false);
 	}
 
+	private static void printAdminWarpMap(ServerPlayer player) {
+		List<NamedLocation> warps = STORAGE.getWarps();
+		if (warps.isEmpty()) {
+			WarpMessages.sendHomeless(player);
+			return;
+		}
+
+		player.displayClientMessage(WarpAdminFormatter.buildWarpMapList(player, warps), false);
+	}
+
 	private static void setWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible) throws Exception {
 		Optional<NamedLocation> optionalWarp = resolveWarpForCommand(warpName, player);
 		if (optionalWarp.isEmpty()) {
@@ -278,6 +326,23 @@ public class warp {
 			playerData.hideWarp(warp.getUuid());
 		}
 		WarpMessages.sendPlayerMapVisibilityChanged(player, visible);
+	}
+
+	private static void setGlobalWarpXaeroVisibility(ServerPlayer player, String warpName, boolean visible)
+			throws Exception {
+		Optional<NamedLocation> optionalWarp = resolveWarpForCommand(warpName, player);
+		if (optionalWarp.isEmpty()) {
+			return;
+		}
+
+		NamedLocation warp = optionalWarp.get();
+		if (warp.isXaeroVisible() == visible) {
+			WarpMessages.sendMapVisibilityAlready(player, visible);
+			return;
+		}
+
+		warp.setXaeroVisible(visible);
+		WarpMessages.sendMapVisibilityChanged(player, visible);
 	}
 
 	private static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player) {
