@@ -212,5 +212,4 @@ public class warp {
 				"Error while updating warp Xaero visibility!",
 				() -> WarpVisibilityActions.setPlayerVisibilitySilently(player, warpName, visible));
 	}
-
 }

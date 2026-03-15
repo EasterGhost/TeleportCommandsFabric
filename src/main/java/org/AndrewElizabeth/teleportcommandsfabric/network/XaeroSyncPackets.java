@@ -48,7 +48,6 @@ public final class XaeroSyncPackets {
 	private static void writeEntries(FriendlyByteBuf buf, List<XaeroSyncEntry> entries) {
 		buf.writeVarInt(entries.size());
 		for (XaeroSyncEntry entry : entries) {
-			buf.writeUUID(entry.uuid());
 			buf.writeUtf(entry.name());
 			buf.writeUtf(entry.worldId());
 			buf.writeInt(entry.x());
@@ -62,7 +61,6 @@ public final class XaeroSyncPackets {
 		List<XaeroSyncEntry> entries = new ArrayList<>(size);
 		for (int i = 0; i < size; i++) {
 			entries.add(new XaeroSyncEntry(
-					buf.readUUID(),
 					buf.readUtf(),
 					buf.readUtf(),
 					buf.readInt(),

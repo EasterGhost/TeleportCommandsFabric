@@ -7,29 +7,30 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.DeathLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.PreviousTeleportLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.services.TeleportSafety;
-import org.AndrewElizabeth.teleportcommandsfabric.services.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.DeathLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.PreviousTeleportLocationStorage;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.Optional;
 import java.util.UUID;
+
 public class back {
+	private static final String COMMAND_BACK = "back";
+	private static final String MODE_DEATH = "death";
+	private static final String MODE_TP = "tp";
+	private static final String COMMAND_BACK_DEATH_FORCE = COMMAND_BACK + " " + MODE_DEATH + " true";
+	private static final String COMMAND_BACK_TP_FORCE = COMMAND_BACK + " " + MODE_TP + " true";
 
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 		commandDispatcher.register(buildBackNode());
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildBackNode() {
-		return Commands.literal("back")
+		return Commands.literal(COMMAND_BACK)
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> handleBackDeath(context.getSource().getPlayerOrException(), false))
 				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
@@ -37,8 +38,8 @@ public class back {
 						.executes(context -> handleBackDeath(
 								context.getSource().getPlayerOrException(),
 								BoolArgumentType.getBool(context, "Disable Safety"))))
-				.then(buildBackModeNode("death", back::handleBackDeath))
-				.then(buildBackModeNode("tp", back::handleBackTp));
+				.then(buildBackModeNode(MODE_DEATH, back::handleBackDeath))
+				.then(buildBackModeNode(MODE_TP, back::handleBackTp));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildBackModeNode(
@@ -93,47 +94,22 @@ public class back {
 			return 0;
 		}
 
-		BlockPos teleportBlockPos = resolveTeleportBlockPos(player, deathLocation, deathLocationWorld, safetyDisabled);
-		if (teleportBlockPos == null) {
-			return 0;
-		}
-
-		if (player.blockPosition().equals(teleportBlockPos) && player.level() == deathLocationWorld) {
-			BackMessages.sendSame(player);
-			return 0;
-		}
-
-		Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
-				teleportBlockPos.getZ() + 0.5);
-
 		Runnable onTeleportSuccess = null;
 		if (ConfigManager.CONFIG.getBack().isDeleteAfterTeleport()) {
 			String playerUuid = player.getStringUUID();
 			onTeleportSuccess = () -> DeathLocationStorage.removeDeathLocation(playerUuid);
 		}
 
-		if (!TeleportService.teleportWithDelayAndCooldown(player, deathLocationWorld, teleportPos, false,
-				onTeleportSuccess)) {
-			return 0;
-		}
-
-		BackMessages.sendGo(player);
-		return 0;
-	}
-
-	private static BlockPos resolveTeleportBlockPos(ServerPlayer player, DeathLocation deathLocation,
-			ServerLevel deathLocationWorld, boolean safetyDisabled) {
-		if (safetyDisabled) {
-			return deathLocation.getBlockPos();
-		}
-
-		Optional<BlockPos> safeBlockPos = TeleportSafety.getSafeBlockPos(deathLocation.getBlockPos(), deathLocationWorld);
-		if (safeBlockPos.isEmpty()) {
-			BackMessages.sendUnsafeTeleportPrompt(player, "back death true");
-			return null;
-		}
-
-		return safeBlockPos.get();
+		return BackCommandSupport.teleportResolvedLocation(
+				player,
+				deathLocation.getBlockPos(),
+				deathLocationWorld,
+				safetyDisabled,
+				COMMAND_BACK_DEATH_FORCE,
+				BackMessages::sendSame,
+				BackMessages::sendGo,
+				onTeleportSuccess,
+				true);
 	}
 
 	private static int toPreviousTeleportLocation(ServerPlayer player, boolean safetyDisabled) throws Exception {
@@ -157,45 +133,16 @@ public class back {
 			return 0;
 		}
 
-		BlockPos teleportBlockPos = resolveTeleportBlockPos(player, previousTeleportLocation, previousTeleportWorld,
-				safetyDisabled);
-		if (teleportBlockPos == null) {
-			return 0;
-		}
-
-		if (player.blockPosition().equals(teleportBlockPos) && player.level() == previousTeleportWorld) {
-			BackMessages.sendPreviousTeleportSame(player);
-			return 0;
-		}
-
-		Vec3 teleportPos = new Vec3(teleportBlockPos.getX() + 0.5, teleportBlockPos.getY(),
-				teleportBlockPos.getZ() + 0.5);
-
-		if (!TeleportService.teleportWithDelayAndCooldown(player, previousTeleportWorld, teleportPos, false, null,
-				false)) {
-			return 0;
-		}
-
-		BackMessages.sendPreviousTeleportGo(player);
-		return 0;
-	}
-
-	private static BlockPos resolveTeleportBlockPos(ServerPlayer player,
-			PreviousTeleportLocation previousTeleportLocation,
-			ServerLevel previousTeleportWorld,
-			boolean safetyDisabled) {
-		if (safetyDisabled) {
-			return previousTeleportLocation.getBlockPos();
-		}
-
-		Optional<BlockPos> safeBlockPos = TeleportSafety.getSafeBlockPos(previousTeleportLocation.getBlockPos(),
-				previousTeleportWorld);
-		if (safeBlockPos.isEmpty()) {
-			BackMessages.sendUnsafeTeleportPrompt(player, "back tp true");
-			return null;
-		}
-
-		return safeBlockPos.get();
+		return BackCommandSupport.teleportResolvedLocation(
+				player,
+				previousTeleportLocation.getBlockPos(),
+				previousTeleportWorld,
+				safetyDisabled,
+				COMMAND_BACK_TP_FORCE,
+				BackMessages::sendPreviousTeleportSame,
+				BackMessages::sendPreviousTeleportGo,
+				null,
+				false);
 	}
 
 	@FunctionalInterface

@@ -53,17 +53,21 @@ final class AdminModuleRegistry {
 		return MODULES.get(moduleName);
 	}
 
+	static List<String> allNames() {
+		return List.copyOf(MODULES.keySet());
+	}
+
+	static List<Map.Entry<String, ModuleToggle>> entries() {
+		return List.copyOf(MODULES.entrySet());
+	}
+
 	static List<String> enabledNames() {
-		return MODULES.entrySet().stream()
-				.filter(entry -> entry.getValue().enabled().getAsBoolean())
-				.map(Map.Entry::getKey)
-				.toList();
+		return MODULES.entrySet().stream().filter(entry -> entry.getValue().enabled().getAsBoolean())
+				.map(Map.Entry::getKey).toList();
 	}
 
 	static List<String> disabledNames() {
-		return MODULES.entrySet().stream()
-				.filter(entry -> !entry.getValue().enabled().getAsBoolean())
-				.map(Map.Entry::getKey)
-				.toList();
+		return MODULES.entrySet().stream().filter(entry -> !entry.getValue().enabled().getAsBoolean())
+				.map(Map.Entry::getKey).toList();
 	}
 }

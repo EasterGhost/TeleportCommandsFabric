@@ -38,12 +38,12 @@ public final class XaeroWaypointCommandHelper {
 		}
 
 		if (name.startsWith(WARP_TAG_PREFIX)) {
-			return "teleportcommandsfabric:mapwarp "
-					+ quoteCommandArgument(name.substring(WARP_TAG_PREFIX.length()).trim()) + " false";
+			return buildHideCommandLiteral("teleportcommandsfabric:mapwarp",
+					name.substring(WARP_TAG_PREFIX.length()).trim());
 		}
 		if (name.startsWith(HOME_TAG_PREFIX)) {
-			return "teleportcommandsfabric:maphome "
-					+ quoteCommandArgument(name.substring(HOME_TAG_PREFIX.length()).trim()) + " false";
+			return buildHideCommandLiteral("teleportcommandsfabric:maphome",
+					name.substring(HOME_TAG_PREFIX.length()).trim());
 		}
 
 		String normalizedSetName = normalizeSetName(setName);
@@ -57,14 +57,18 @@ public final class XaeroWaypointCommandHelper {
 
 		if (!normalizedSetName.isEmpty() && normalizedSetName.equals(normalizedWarpSetName)
 				&& "W".equals(normalizedSymbol)) {
-			return "teleportcommandsfabric:mapwarp " + quoteCommandArgument(trimmedName) + " false";
+			return buildHideCommandLiteral("teleportcommandsfabric:mapwarp", trimmedName);
 		}
 		if (!normalizedSetName.isEmpty() && normalizedSetName.equals(normalizedHomeSetName)
 				&& "H".equals(normalizedSymbol)) {
-			return "teleportcommandsfabric:maphome " + quoteCommandArgument(trimmedName) + " false";
+			return buildHideCommandLiteral("teleportcommandsfabric:maphome", trimmedName);
 		}
 
 		return null;
+	}
+
+	private static String buildHideCommandLiteral(String command, String name) {
+		return command + " " + quoteCommandArgument(name) + " false";
 	}
 
 	private static String normalizeSetName(String setName) {

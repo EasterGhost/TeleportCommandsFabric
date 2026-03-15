@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public final class BackMessages {
+	private static final String COMMAND_BACK_TP = "back tp";
+	private static final String DISPLAY_COMMAND_BACK_TP = "/back tp";
 
 	private BackMessages() {
 	}
@@ -46,11 +48,11 @@ public final class BackMessages {
 						.append(getTranslatedText("commands.teleport_commands.back.tryTp", player)
 								.withStyle(ChatFormatting.YELLOW))
 						.append(" ")
-						.append(Component.literal("[/back tp] ?")
+						.append(Component.literal("[" + DISPLAY_COMMAND_BACK_TP + "] ?")
 								.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
-								.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand("back tp"))
+								.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(COMMAND_BACK_TP))
 										.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
-												Component.literal("/back tp"))))),
+												Component.literal(DISPLAY_COMMAND_BACK_TP))))),
 				false);
 	}
 

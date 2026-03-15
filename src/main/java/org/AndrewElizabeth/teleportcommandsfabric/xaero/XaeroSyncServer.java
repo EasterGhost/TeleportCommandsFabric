@@ -115,22 +115,22 @@ public final class XaeroSyncServer {
 	private static XaeroSyncPayload buildPayload(ServerPlayer player) {
 		List<XaeroSyncEntry> warps = new ArrayList<>();
 		List<XaeroSyncEntry> homes = new ArrayList<>();
+		Set<UUID> hiddenWarpUuids = StorageManager.STORAGE.getPlayer(player.getStringUUID())
+				.map(playerData -> playerData.getHiddenWarpUuids())
+				.orElse(Set.of());
 
 		for (NamedLocation warp : StorageManager.STORAGE.getWarps()) {
-			if (!warp.isXaeroVisible()) {
+			if (!warp.isXaeroVisible() || hiddenWarpUuids.contains(warp.getUuid())) {
 				continue;
 			}
 			String worldId = warp.getWorldString();
 			if (worldId == null || worldId.isBlank()) {
 				continue;
 			}
-			warps.add(new XaeroSyncEntry(warp.getUuid(), warp.getName(), worldId, warp.getX(), warp.getY(), warp.getZ()));
+			warps.add(new XaeroSyncEntry(warp.getName(), worldId, warp.getX(), warp.getY(), warp.getZ()));
 		}
 
 		StorageManager.STORAGE.getPlayer(player.getStringUUID()).ifPresent(playerData -> {
-			Set<UUID> hiddenWarpUuids = playerData.getHiddenWarpUuids();
-			warps.removeIf(warp -> hiddenWarpUuids.contains(warp.uuid()));
-
 			for (NamedLocation home : playerData.getHomes()) {
 				if (!home.isXaeroVisible()) {
 					continue;
@@ -139,7 +139,7 @@ public final class XaeroSyncServer {
 				if (worldId == null || worldId.isBlank()) {
 					continue;
 				}
-				homes.add(new XaeroSyncEntry(home.getUuid(), home.getName(), worldId, home.getX(), home.getY(), home.getZ()));
+				homes.add(new XaeroSyncEntry(home.getName(), worldId, home.getX(), home.getY(), home.getZ()));
 			}
 		});
 

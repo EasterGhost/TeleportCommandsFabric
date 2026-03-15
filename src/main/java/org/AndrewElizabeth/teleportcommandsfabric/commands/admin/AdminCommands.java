@@ -20,10 +20,10 @@ public final class AdminCommands {
 	private static final String PRIMARY_COMMAND = "tpc";
 	private static final String LEGACY_COMMAND = "teleportcommands";
 
-	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER =
-			(context, builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
-	private static final SuggestionProvider<CommandSourceStack> DISABLED_SUGGESTER =
-			(context, builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.disabledNames(), builder);
+	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER = (context,
+			builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
+	private static final SuggestionProvider<CommandSourceStack> DISABLED_SUGGESTER = (context,
+			builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.disabledNames(), builder);
 
 	private AdminCommands() {
 	}
@@ -185,9 +185,7 @@ public final class AdminCommands {
 		return Commands.literal("status")
 				.requires(AdminCommands::isOpOrConsole)
 				.executes(context -> {
-					context.getSource().sendSuccess(
-							() -> AdminStatusFormatter.build(context.getSource()),
-							false);
+					context.getSource().sendSuccess(() -> AdminStatusFormatter.build(context.getSource()), false);
 					return 0;
 				});
 	}
@@ -211,9 +209,7 @@ public final class AdminCommands {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildHelpNode() {
 		return Commands.literal("help")
 				.executes(context -> {
-					context.getSource().sendSuccess(
-							() -> AdminHelpFormatter.build(context.getSource()),
-							false);
+					context.getSource().sendSuccess(() -> AdminHelpFormatter.build(context.getSource()), false);
 					return 0;
 				});
 	}
@@ -239,21 +235,14 @@ public final class AdminCommands {
 				AdminMessages.t(context.getSource(),
 						"commands.teleport_commands.admin.module.status",
 						AdminMessages.t(context.getSource(), toggle.labelKey()),
-						AdminMessages.t(context.getSource(),
-								enabled
-										? "commands.teleport_commands.admin.stat.enabled"
-										: "commands.teleport_commands.admin.stat.disabled")));
+						AdminMessages.t(context.getSource(), enabled
+								? "commands.teleport_commands.admin.stat.enabled"
+								: "commands.teleport_commands.admin.stat.disabled")));
 
 		if (result == 0) {
-			context.getSource().sendSuccess(
-					() -> Component.literal("\n===========================")
-							.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					false);
-			context.getSource().sendSuccess(
-					() -> AdminStatusFormatter.build(context.getSource()),
-					false);
+			context.getSource().sendSuccess(AdminStatusFormatter::refreshDivider, false);
+			context.getSource().sendSuccess(() -> AdminStatusFormatter.build(context.getSource()), false);
 		}
-
 		return result;
 	}
 
