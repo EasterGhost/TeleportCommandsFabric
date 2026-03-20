@@ -34,6 +34,12 @@ public class TeleportCommands implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK
+				.register(server -> org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.tick());
+
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.forceSaveOnShutdown();
+		});
 		MOD_LOADER = "Fabric";
 	}
 
@@ -53,7 +59,7 @@ public class TeleportCommands implements ModInitializer {
 			UUID playerUuid = handler.player.getUUID();
 			LogoutCacheManager.scheduleCleanup(playerUuid);
 		});
-				
+
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
 			UUID playerUuid = handler.player.getUUID();
 			LogoutCacheManager.cancelCleanup(playerUuid);

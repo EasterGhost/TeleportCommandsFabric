@@ -61,7 +61,7 @@ public class Player {
 
 	public void setDefaultHome(String defaultHome) throws Exception {
 		setDefaultHomeByNameNoSave(defaultHome);
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public void setDefaultHomeByNameNoSave(String defaultHome) {
@@ -80,7 +80,7 @@ public class Player {
 
 	public void setDefaultHomeByUuid(UUID defaultHomeUuid) throws Exception {
 		setDefaultHomeByUuidNoSave(defaultHomeUuid);
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public void setDefaultHomeByUuidNoSave(UUID defaultHomeUuid) {
@@ -93,14 +93,14 @@ public class Player {
 
 		} else {
 			Homes.add(home);
-			StorageManager.StorageSaver();
+			StorageManager.markDirty();
 			return false;
 		}
 	}
 
 	public void deleteHome(NamedLocation home) throws Exception {
 		deleteHomeNoSave(home);
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public void deleteHomeNoSave(NamedLocation home) {
@@ -112,7 +112,7 @@ public class Player {
 
 	public void hideWarp(UUID warpUuid) throws Exception {
 		hideWarpNoSave(warpUuid);
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public void hideWarpNoSave(UUID warpUuid) {
@@ -123,7 +123,7 @@ public class Player {
 
 	public void showWarp(UUID warpUuid) throws Exception {
 		showWarpNoSave(warpUuid);
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public void showWarpNoSave(UUID warpUuid) {

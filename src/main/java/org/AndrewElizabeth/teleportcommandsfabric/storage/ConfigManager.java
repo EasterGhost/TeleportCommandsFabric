@@ -11,14 +11,17 @@ import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ConfigManager {
 	public static Path CONFIG_FILE;
 	public static ConfigClass CONFIG;
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final int defaultVersion = new ConfigClass().getVersion();
+	private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
 
 	public static void ConfigInit() {
 		CONFIG_FILE = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json");
@@ -75,14 +78,33 @@ public class ConfigManager {
 			return;
 		}
 		try {
-			Files.writeString(CONFIG_FILE, GSON.toJson(CONFIG), StandardCharsets.UTF_8, StandardOpenOption.CREATE,
-					StandardOpenOption.TRUNCATE_EXISTING);
+			byte[] json = GSON.toJson(CONFIG).getBytes(StandardCharsets.UTF_8);
+			Path tempFile = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json.tmp");
+			Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+					StandardOpenOption.CREATE);
+			Files.move(tempFile, CONFIG_FILE, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error while saving the config file! => ", e);
 		}
 	}
 
 	public static void ConfigSaver() {
-		CompletableFuture.runAsync(ConfigManager::saveConfigSync);
+		try {
+			if (CONFIG_FILE == null || CONFIG == null)
+				return;
+			final byte[] json = GSON.toJson(CONFIG).getBytes(StandardCharsets.UTF_8);
+			IO_EXECUTOR.submit(() -> {
+				try {
+					Path tempFile = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json.tmp");
+					Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+							StandardOpenOption.CREATE);
+					Files.move(tempFile, CONFIG_FILE, StandardCopyOption.REPLACE_EXISTING);
+				} catch (Exception e) {
+					Constants.LOGGER.error("Error while saving the config file asynchronously! => ", e);
+				}
+			});
+		} catch (Exception e) {
+			Constants.LOGGER.error("Failed to serialize config file!", e);
+		}
 	}
 }

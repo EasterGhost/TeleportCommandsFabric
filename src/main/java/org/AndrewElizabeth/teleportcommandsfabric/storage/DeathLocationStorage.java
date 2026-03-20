@@ -4,26 +4,29 @@ import org.AndrewElizabeth.teleportcommandsfabric.common.DeathLocation;
 
 import net.minecraft.core.BlockPos;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DeathLocationStorage {
-	private static final HashMap<String, DeathLocation> deathLocations = new HashMap<>();
+	private static final Map<String, DeathLocation> deathLocations = new ConcurrentHashMap<>();
+
+	private DeathLocationStorage() {
+	}
 
 	public static Optional<DeathLocation> getDeathLocation(String uuid) {
 		return Optional.ofNullable(deathLocations.get(uuid));
 	}
 
 	public static void setDeathLocation(String uuid, BlockPos pos, String world) {
-
-		if (deathLocations.containsKey(uuid)) {
-			DeathLocation deathLocation = deathLocations.get(uuid);
-			deathLocation.setBlockPos(pos);
-			deathLocation.setWorld(world);
-		} else {
-			DeathLocation deathLocation = new DeathLocation(pos, world);
-			deathLocations.put(uuid, deathLocation);
-		}
+		deathLocations.compute(uuid, (ignored, existing) -> {
+			if (existing == null) {
+				return new DeathLocation(pos, world);
+			}
+			existing.setBlockPos(pos);
+			existing.setWorld(world);
+			return existing;
+		});
 	}
 
 	public static void removeDeathLocation(String uuid) {

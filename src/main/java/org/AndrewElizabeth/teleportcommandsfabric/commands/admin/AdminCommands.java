@@ -54,7 +54,19 @@ public final class AdminCommands {
 				.then(buildWarpConfigNode())
 				.then(buildWorldSpawnConfigNode())
 				.then(buildRtpConfigNode())
-				.then(buildXaeroConfigNode());
+				.then(buildXaeroConfigNode())
+				.then(buildStorageConfigNode());
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildStorageConfigNode() {
+		return Commands.literal("storage")
+				.then(AdminConfigNodeFactory.intNode(
+						"autoSaveIntervalSeconds",
+						"seconds",
+						ConfigClass.Storage.MIN_AUTO_SAVE_INTERVAL,
+						() -> ConfigManager.CONFIG.storage.getAutoSaveIntervalSeconds(),
+						value -> ConfigManager.CONFIG.storage.setAutoSaveIntervalSeconds(value),
+						"commands.teleport_commands.admin.config.storage.autoSaveIntervalSeconds"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildTeleportingConfigNode() {

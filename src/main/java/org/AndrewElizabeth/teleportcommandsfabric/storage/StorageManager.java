@@ -70,7 +70,7 @@ public class StorageManager {
 		try {
 			if (STORAGE_FILE == null || STORAGE == null)
 				return;
-			byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
+			byte[] json = GSON.toJson(STORAGE).getBytes(StandardCharsets.UTF_8);
 			Path tempFile = STORAGE_FOLDER.resolve("storage.json.tmp");
 			Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
@@ -80,7 +80,50 @@ public class StorageManager {
 		}
 	}
 
+	private static volatile boolean isDirty = false;
+	private static int ticksSinceLastSave = 0;
+
+	public static void markDirty() {
+		isDirty = true;
+	}
+
+	public static void tick() {
+		if (!isDirty)
+			return;
+		ticksSinceLastSave++;
+
+		int autoSaveTicks = 20 * ConfigManager.CONFIG.storage.getAutoSaveIntervalSeconds();
+		if (ticksSinceLastSave >= autoSaveTicks) {
+			StorageSaver();
+			isDirty = false;
+			ticksSinceLastSave = 0;
+		}
+	}
+
+	public static void forceSaveOnShutdown() {
+		Constants.LOGGER.info("Forcing synchronous save on server shutdown...");
+		saveStorageSync();
+		isDirty = false;
+		ticksSinceLastSave = 0;
+	}
+
 	public static void StorageSaver() {
-		IO_EXECUTOR.submit(StorageManager::saveStorageSync);
+		try {
+			if (STORAGE_FILE == null || STORAGE == null)
+				return;
+			final byte[] json = GSON.toJson(STORAGE).getBytes(StandardCharsets.UTF_8);
+			IO_EXECUTOR.submit(() -> {
+				try {
+					Path tempFile = STORAGE_FOLDER.resolve("storage.json.tmp");
+					Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+							StandardOpenOption.CREATE);
+					Files.move(tempFile, STORAGE_FILE, StandardCopyOption.REPLACE_EXISTING);
+				} catch (Exception e) {
+					Constants.LOGGER.error("Failed to save storage file asynchronously!", e);
+				}
+			});
+		} catch (Exception e) {
+			Constants.LOGGER.error("Failed to serialize storage file!", e);
+		}
 	}
 }

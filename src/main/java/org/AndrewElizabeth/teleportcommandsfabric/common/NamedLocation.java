@@ -74,12 +74,12 @@ public class NamedLocation {
 
 	public void setName(String name) throws Exception {
 		this.name = name;
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public void setXaeroVisible(boolean xaeroVisible) throws Exception {
 		this.xaeroVisible = xaeroVisible;
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 
 	public boolean ensureUuid() {

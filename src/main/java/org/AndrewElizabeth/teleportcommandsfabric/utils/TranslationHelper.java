@@ -64,8 +64,10 @@ public final class TranslationHelper {
 		String filePath = String.format("/assets/%s/lang/%s.json", ASSETS_ID, language);
 		try (InputStream stream = TeleportCommands.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
-				Constants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.", language);
-				return "en_us".equals(language) ? new ConcurrentHashMap<>() : TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
+				Constants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.",
+						language);
+				return "en_us".equals(language) ? new ConcurrentHashMap<>()
+						: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
 			}
 			Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 			JsonElement json = JsonParser.parseReader(reader);
@@ -75,12 +77,14 @@ public final class TranslationHelper {
 			return translations;
 		} catch (Exception e) {
 			Constants.LOGGER.warn("Failed to load language file: {}, falling back to en_us.", language, e);
-			return "en_us".equals(language) ? new ConcurrentHashMap<>() : TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
+			return "en_us".equals(language) ? new ConcurrentHashMap<>()
+					: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
 		}
 	}
 
 	private static @NotNull MutableComponent buildTranslatedComponent(String translation, MutableComponent... args) {
-		Matcher matcher = PLACEHOLDER_PATTERN.matcher(Objects.requireNonNull(translation, "translation cannot be null"));
+		Matcher matcher = PLACEHOLDER_PATTERN
+				.matcher(Objects.requireNonNull(translation, "translation cannot be null"));
 		MutableComponent component = Component.literal("");
 		int lastIndex = 0;
 
@@ -88,7 +92,12 @@ public final class TranslationHelper {
 			component.append(Component.literal(translation.substring(lastIndex, matcher.start())));
 
 			int index = Integer.parseInt(matcher.group(1));
-			component.append(args[index]);
+			if (index >= 0 && index < args.length) {
+				component.append(args[index]);
+			} else {
+				component.append(
+						Component.literal("{MISSING_ARG:" + index + "}").withStyle(net.minecraft.ChatFormatting.RED));
+			}
 
 			lastIndex = matcher.end();
 		}

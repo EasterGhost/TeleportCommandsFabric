@@ -57,7 +57,7 @@ final class HomeTeleportActions {
 
 			if (org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG.getHome().isDeleteInvalid()) {
 				playerStorage.deleteHomeNoSave(home);
-				StorageManager.StorageSaver();
+				StorageManager.markDirty();
 				Constants.LOGGER.info("Deleted invalid home '{}' for player {}", home.getName(),
 						player.getName().getString());
 				HomeMessages.sendDeletedInvalid(player);

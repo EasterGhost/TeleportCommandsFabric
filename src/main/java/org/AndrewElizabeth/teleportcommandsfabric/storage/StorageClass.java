@@ -85,7 +85,7 @@ public class StorageClass {
 		}
 
 		if (changed) {
-			StorageManager.StorageSaver();
+			StorageManager.markDirty();
 		}
 	}
 
@@ -119,7 +119,7 @@ public class StorageClass {
 
 		} else {
 			Warps.add(warp);
-			StorageManager.StorageSaver();
+			StorageManager.markDirty();
 			return false;
 		}
 	}
@@ -134,6 +134,6 @@ public class StorageClass {
 
 	public void removeWarp(NamedLocation warp) throws Exception {
 		Warps.remove(warp);
-		StorageManager.StorageSaver();
+		StorageManager.markDirty();
 	}
 }
