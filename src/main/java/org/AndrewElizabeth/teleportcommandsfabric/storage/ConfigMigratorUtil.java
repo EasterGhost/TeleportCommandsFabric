@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 
 import java.io.BufferedReader;

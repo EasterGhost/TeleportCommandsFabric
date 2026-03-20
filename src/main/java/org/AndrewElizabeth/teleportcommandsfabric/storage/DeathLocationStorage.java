@@ -1,7 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
 import org.AndrewElizabeth.teleportcommandsfabric.common.DeathLocation;
+
 import net.minecraft.core.BlockPos;
+
 import java.util.HashMap;
 import java.util.Optional;
 
