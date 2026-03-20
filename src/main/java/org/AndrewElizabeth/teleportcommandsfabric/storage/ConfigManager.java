@@ -38,8 +38,9 @@ public class ConfigManager {
 
 			Constants.LOGGER.warn("Config file was not found or was empty! Initializing config");
 			CONFIG = new ConfigClass();
-			ConfigSaver();
+			saveConfigSync();
 			Constants.LOGGER.info("Config created successfully!");
+			return;
 		}
 
 		ConfigMigrator();
@@ -50,10 +51,11 @@ public class ConfigManager {
 		if (CONFIG == null) {
 			Constants.LOGGER.warn("Config file was empty! Loading defaults...");
 			CONFIG = new ConfigClass();
-			ConfigSaver();
+			saveConfigSync();
+			return;
 		}
 
-		ConfigSaver();
+		saveConfigSync();
 		Constants.LOGGER.info("Config loaded successfully!");
 	}
 
@@ -67,18 +69,20 @@ public class ConfigManager {
 		}
 	}
 
+	public static void saveConfigSync() {
+		if (CONFIG_FILE == null || CONFIG == null) {
+			Constants.LOGGER.error("Cannot save config: CONFIG_FILE or CONFIG is null.");
+			return;
+		}
+		try {
+			Files.writeString(CONFIG_FILE, GSON.toJson(CONFIG), StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING);
+		} catch (Exception e) {
+			Constants.LOGGER.error("Error while saving the config file! => ", e);
+		}
+	}
+
 	public static void ConfigSaver() {
-		CompletableFuture.runAsync(() -> {
-			if (CONFIG_FILE == null || CONFIG == null) {
-				Constants.LOGGER.error("Cannot save config: CONFIG_FILE or CONFIG is null.");
-				return;
-			}
-			try {
-				Files.writeString(CONFIG_FILE, GSON.toJson(CONFIG), StandardCharsets.UTF_8, StandardOpenOption.CREATE,
-						StandardOpenOption.TRUNCATE_EXISTING);
-			} catch (Exception e) {
-				Constants.LOGGER.error("Error while saving the config file! => ", e);
-			}
-		});
+		CompletableFuture.runAsync(ConfigManager::saveConfigSync);
 	}
 }

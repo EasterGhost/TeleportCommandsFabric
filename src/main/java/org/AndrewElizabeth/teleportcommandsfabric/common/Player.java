@@ -97,7 +97,7 @@ public class Player {
 			return false;
 		}
 	}
-	
+
 	public void deleteHome(NamedLocation home) throws Exception {
 		deleteHomeNoSave(home);
 		StorageManager.StorageSaver();

@@ -53,7 +53,7 @@ public class TeleportCommands implements ModInitializer {
 			UUID playerUuid = handler.player.getUUID();
 			LogoutCacheManager.scheduleCleanup(playerUuid);
 		});
-		
+				
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
 			UUID playerUuid = handler.player.getUUID();
 			LogoutCacheManager.cancelCleanup(playerUuid);

@@ -41,8 +41,10 @@ public class StorageManager {
 
 			Files.createDirectories(STORAGE_FOLDER);
 			STORAGE = new StorageClass();
-			StorageSaver();
+			STORAGE.cleanup();
+			saveStorageSync();
 			Constants.LOGGER.info("Storage created successfully!");
+			return;
 		}
 
 		StorageMigratorUtil.StorageMigrator(STORAGE_FILE, GSON, defaultVersion);
@@ -53,30 +55,32 @@ public class StorageManager {
 		if (STORAGE == null) {
 			Constants.LOGGER.warn("Storage file was empty! Initializing storage");
 			STORAGE = new StorageClass();
-			StorageSaver();
+			STORAGE.cleanup();
+			saveStorageSync();
+			return;
 		}
 
 		STORAGE.cleanup();
 
-		StorageSaver();
+		saveStorageSync();
 		Constants.LOGGER.info("Storage loaded successfully!");
 	}
 
-	public static void StorageSaver() {
+	public static void saveStorageSync() {
 		try {
+			if (STORAGE_FILE == null || STORAGE == null)
+				return;
 			byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
-			IO_EXECUTOR.submit(() -> {
-				try {
-					Path tempFile = STORAGE_FOLDER.resolve("storage.json.tmp");
-					Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-							StandardOpenOption.CREATE);
-					Files.move(tempFile, STORAGE_FILE, StandardCopyOption.REPLACE_EXISTING);
-				} catch (Exception e) {
-					Constants.LOGGER.error("Failed to save storage file asynchronously!", e);
-				}
-			});
+			Path tempFile = STORAGE_FOLDER.resolve("storage.json.tmp");
+			Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+					StandardOpenOption.CREATE);
+			Files.move(tempFile, STORAGE_FILE, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
-			Constants.LOGGER.error("Failed to serialize storage file!", e);
+			Constants.LOGGER.error("Failed to save storage file synchronously!", e);
 		}
+	}
+
+	public static void StorageSaver() {
+		IO_EXECUTOR.submit(StorageManager::saveStorageSync);
 	}
 }

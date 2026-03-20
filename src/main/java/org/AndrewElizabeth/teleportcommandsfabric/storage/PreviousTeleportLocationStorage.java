@@ -20,13 +20,15 @@ public final class PreviousTeleportLocationStorage {
 	}
 
 	public static void setPreviousTeleportLocation(UUID uuid, BlockPos pos, String world) {
-		if (previousTeleportLocations.containsKey(uuid)) {
-			PreviousTeleportLocation previousTeleportLocation = previousTeleportLocations.get(uuid);
-			previousTeleportLocation.setBlockPos(pos);
-			previousTeleportLocation.setWorld(world);
-		} else {
-			previousTeleportLocations.put(uuid, new PreviousTeleportLocation(pos, world));
-		}
+		previousTeleportLocations.compute(uuid, (ignored, existing) -> {
+			if (existing == null) {
+				return new PreviousTeleportLocation(pos, world);
+			}
+
+			existing.setBlockPos(pos);
+			existing.setWorld(world);
+			return existing;
+		});
 	}
 
 	public static void removePreviousTeleportLocation(UUID uuid) {
