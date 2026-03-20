@@ -25,6 +25,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.nio.file.StandardCopyOption;
+
 import static java.util.Collections.unmodifiableList;
 
 public class StorageManager {
@@ -33,6 +37,7 @@ public class StorageManager {
 	public static StorageClass STORAGE;
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final int defaultVersion = new StorageClass().getVersion();
+	private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
 
 	/// Initializes the StorageManager class and loads the storage from
 	/// the filesystem.
@@ -155,10 +160,12 @@ public class StorageManager {
 	public static void StorageSaver() {
 		try {
 			byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
-			java.util.concurrent.CompletableFuture.runAsync(() -> {
+			IO_EXECUTOR.submit(() -> {
 				try {
-					Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+					Path tempFile = STORAGE_FOLDER.resolve("storage.json.tmp");
+					Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 							StandardOpenOption.CREATE);
+					Files.move(tempFile, STORAGE_FILE, StandardCopyOption.REPLACE_EXISTING);
 				} catch (Exception e) {
 					Constants.LOGGER.error("Failed to save storage file asynchronously!", e);
 				}
@@ -317,10 +324,13 @@ public class StorageManager {
 		private final int version = Constants.STORAGE_VERSION;
 		private final ArrayList<NamedLocation> Warps = new ArrayList<>();
 		private final ArrayList<Player> Players = new ArrayList<>();
+		private transient final java.util.Map<String, Player> playerCache = new java.util.concurrent.ConcurrentHashMap<>();
 
 		/// Cleans up any values in the storage class
 		public void cleanup() throws Exception {
 			boolean changed = false;
+			playerCache.clear();
+			
 			for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
 				Player player = iterator.next();
 
@@ -363,6 +373,8 @@ public class StorageManager {
 				if (player.isEmpty()) {
 					iterator.remove();
 					changed = true;
+				} else {
+					playerCache.put(uuid, player);
 				}
 			}
 
@@ -412,9 +424,7 @@ public class StorageManager {
 
 		// filters the playerList and finds the one with the uuid (if there is one)
 		public Optional<Player> getPlayer(String uuid) {
-			return Players.stream()
-					.filter(player -> Objects.equals(player.getUUID(), uuid))
-					.findFirst();
+			return Optional.ofNullable(playerCache.get(uuid));
 		}
 
 		// -----
@@ -437,18 +447,11 @@ public class StorageManager {
 		// existing one. The player won't be saved unless they actually do something lol
 		// The name of this function is wack but whatever kewk
 		public Player addPlayer(String uuid) {
-			final Optional<Player> OptionalPlayer = getPlayer(uuid);
-
-			if (OptionalPlayer.isEmpty()) {
-				// create and return new player
-				Player player = new Player(uuid);
+			return playerCache.computeIfAbsent(uuid, k -> {
+				Player player = new Player(k);
 				Players.add(player);
-
 				return player;
-			} else {
-				// return existing player
-				return OptionalPlayer.get();
-			}
+			});
 		}
 
 		// -----
