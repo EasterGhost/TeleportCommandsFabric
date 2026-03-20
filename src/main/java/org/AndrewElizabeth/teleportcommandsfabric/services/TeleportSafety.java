@@ -2,15 +2,18 @@ package org.AndrewElizabeth.teleportcommandsfabric.services;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Optional;
 import java.util.Set;
 
 public final class TeleportSafety {
-	private static final Set<String> UNSAFE_COLLISION_FREE_BLOCKS = Set.of("block.minecraft.lava",
-			"block.minecraft.flowing_lava", "block.minecraft.end_portal", "block.minecraft.end_gateway",
-			"block.minecraft.fire", "block.minecraft.soul_fire", "block.minecraft.powder_snow",
-			"block.minecraft.nether_portal");
+	private static final Set<Block> UNSAFE_COLLISION_FREE_BLOCKS = Set.of(
+			Blocks.LAVA, Blocks.END_PORTAL, Blocks.END_GATEWAY,
+			Blocks.FIRE, Blocks.SOUL_FIRE, Blocks.POWDER_SNOW,
+			Blocks.NETHER_PORTAL);
 
 	private TeleportSafety() {
 	}
@@ -50,19 +53,19 @@ public final class TeleportSafety {
 
 	private static boolean isBlockPosSafe(BlockPos bottomPlayer, ServerLevel world) {
 		BlockPos belowPlayer = new BlockPos(bottomPlayer.getX(), bottomPlayer.getY() - 1, bottomPlayer.getZ());
-		String belowPlayerId = world.getBlockState(belowPlayer).getBlock().getDescriptionId();
+		BlockState belowState = world.getBlockState(belowPlayer);
 
-		String bottomPlayerId = world.getBlockState(bottomPlayer).getBlock().getDescriptionId();
+		BlockState bottomState = world.getBlockState(bottomPlayer);
 
 		BlockPos topPlayer = new BlockPos(bottomPlayer.getX(), bottomPlayer.getY() + 1, bottomPlayer.getZ());
-		String topPlayerId = world.getBlockState(topPlayer).getBlock().getDescriptionId();
+		BlockState topState = world.getBlockState(topPlayer);
 
-		if ((belowPlayerId.equals("block.minecraft.water")
-				|| !world.getBlockState(belowPlayer).getCollisionShape(world, belowPlayer).isEmpty())
-				&& (world.getBlockState(bottomPlayer).getCollisionShape(world, bottomPlayer).isEmpty()
-						&& !UNSAFE_COLLISION_FREE_BLOCKS.contains(bottomPlayerId))
-				&& (world.getBlockState(topPlayer).getCollisionShape(world, topPlayer).isEmpty()
-						&& !UNSAFE_COLLISION_FREE_BLOCKS.contains(topPlayerId))) {
+		if ((belowState.is(Blocks.WATER)
+				|| !belowState.getCollisionShape(world, belowPlayer).isEmpty())
+				&& (bottomState.getCollisionShape(world, bottomPlayer).isEmpty()
+						&& !UNSAFE_COLLISION_FREE_BLOCKS.contains(bottomState.getBlock()))
+				&& (topState.getCollisionShape(world, topPlayer).isEmpty()
+						&& !UNSAFE_COLLISION_FREE_BLOCKS.contains(topState.getBlock()))) {
 			return true;
 		}
 		return false;
