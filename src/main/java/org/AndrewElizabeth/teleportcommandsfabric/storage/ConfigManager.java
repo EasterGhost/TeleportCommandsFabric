@@ -139,16 +139,26 @@ public class ConfigManager {
 		return "teleportcommands homes".equals(setName);
 	}
 
-	public static void ConfigSaver() throws Exception {
-		byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes(StandardCharsets.UTF_8);
+	public static void ConfigSaver() {
+		try {
+			byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes(StandardCharsets.UTF_8);
 
-		Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-				StandardOpenOption.CREATE);
+			java.util.concurrent.CompletableFuture.runAsync(() -> {
+				try {
+					Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+							StandardOpenOption.CREATE);
+				} catch (Exception e) {
+					Constants.LOGGER.error("Failed to save config file asynchronously!", e);
+				}
+			});
+		} catch (Exception e) {
+			Constants.LOGGER.error("Failed to serialize config file!", e);
+		}
 	}
 
 	/// Saves the config after modifications. This method should be called whenever
 	/// config values are changed.
-	public static void saveConfigChanges() throws Exception {
+	public static void saveConfigChanges() {
 		ConfigSaver();
 		Constants.LOGGER.info("Config changes saved!");
 	}
