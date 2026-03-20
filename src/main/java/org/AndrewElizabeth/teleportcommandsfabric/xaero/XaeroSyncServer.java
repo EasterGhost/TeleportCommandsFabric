@@ -115,8 +115,14 @@ public final class XaeroSyncServer {
 	private static XaeroSyncPayload buildPayload(ServerPlayer player) {
 		List<XaeroSyncEntry> warps = new ArrayList<>();
 		List<XaeroSyncEntry> homes = new ArrayList<>();
+		Set<UUID> hiddenWarpUuids = StorageManager.STORAGE.getPlayer(player.getStringUUID())
+				.map(playerData -> playerData.getHiddenWarpUuids())
+				.orElse(Set.of());
 
 		for (NamedLocation warp : StorageManager.STORAGE.getWarps()) {
+			if (!warp.isXaeroVisible() || hiddenWarpUuids.contains(warp.getUuid())) {
+				continue;
+			}
 			String worldId = warp.getWorldString();
 			if (worldId == null || worldId.isBlank()) {
 				continue;
@@ -126,6 +132,9 @@ public final class XaeroSyncServer {
 
 		StorageManager.STORAGE.getPlayer(player.getStringUUID()).ifPresent(playerData -> {
 			for (NamedLocation home : playerData.getHomes()) {
+				if (!home.isXaeroVisible()) {
+					continue;
+				}
 				String worldId = home.getWorldString();
 				if (worldId == null || worldId.isBlank()) {
 					continue;

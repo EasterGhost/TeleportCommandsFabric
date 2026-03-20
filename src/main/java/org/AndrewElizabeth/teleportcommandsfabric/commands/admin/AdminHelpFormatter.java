@@ -9,6 +9,7 @@ import net.minecraft.network.chat.MutableComponent;
 
 final class AdminHelpFormatter {
 	private static final String ROOT_COMMAND = "/tpc";
+	private static final String MODULE_LIST = String.join("|", AdminModuleRegistry.allNames());
 
 	private AdminHelpFormatter() {
 	}
@@ -24,9 +25,9 @@ final class AdminHelpFormatter {
 		append(message, Component.literal(ROOT_COMMAND + " help"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " status"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " reload"), ChatFormatting.YELLOW, false);
-		append(message, Component.literal(ROOT_COMMAND + " enable <back|home|tpa|warp|worldspawn|rtp|xaero>"),
+		append(message, Component.literal(ROOT_COMMAND + " enable <" + MODULE_LIST + ">"),
 				ChatFormatting.YELLOW, false);
-		append(message, Component.literal(ROOT_COMMAND + " disable <back|home|tpa|warp|worldspawn|rtp|xaero>"),
+		append(message, Component.literal(ROOT_COMMAND + " disable <" + MODULE_LIST + ">"),
 				ChatFormatting.YELLOW, false);
 
 		append(message, Component.literal(""), ChatFormatting.WHITE, false);

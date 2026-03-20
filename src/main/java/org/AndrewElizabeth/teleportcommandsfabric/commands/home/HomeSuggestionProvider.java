@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.suggestions;
+package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -30,7 +30,6 @@ public class HomeSuggestionProvider implements SuggestionProvider<CommandSourceS
 					builder.suggest(currentHome.getName());
 				}
 			}
-			// Build and return the suggestions
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting home suggestions! ", e);

@@ -1,16 +1,7 @@
-package org.AndrewElizabeth.teleportcommandsfabric.commands;
-
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.TeleportService;
+package org.AndrewElizabeth.teleportcommandsfabric.services;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -30,65 +21,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
-public class rtp {
+public final class RtpService {
 
 	private static final int MAX_ATTEMPTS = 4096;
 	private static final int ATTEMPTS_PER_TICK = 256;
 	private static final Map<UUID, RtpSearchJob> SEARCH_JOBS = new ConcurrentHashMap<>();
 	private static boolean tickHookRegistered = false;
 
-	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
-		initTickHook();
-		commandDispatcher.register(tpc$buildRtpCommand("rtp"));
-		commandDispatcher.register(tpc$buildRtpCommand("wild"));
+	private RtpService() {
 	}
 
-	private static void initTickHook() {
+	public static void initialize() {
 		if (tickHookRegistered) {
 			return;
 		}
 		tickHookRegistered = true;
-		ServerTickEvents.END_SERVER_TICK.register(rtp::onServerTick);
+		ServerTickEvents.END_SERVER_TICK.register(RtpService::onServerTick);
 	}
 
-	private static LiteralArgumentBuilder<CommandSourceStack> tpc$buildRtpCommand(String commandName) {
-		return Commands.literal(commandName)
-				.requires(source -> source.getPlayer() != null)
-				.executes(context -> {
-					final ServerPlayer player = context.getSource().getPlayerOrException();
-
-					if (!ConfigManager.CONFIG.getRtp().isEnabled()) {
-						player.displayClientMessage(
-								getTranslatedText("commands.teleport_commands.rtp.disabled", player)
-										.withStyle(ChatFormatting.RED),
-								true);
-						return 1;
-					}
-
-					int radius = ConfigManager.CONFIG.getRtp().getRadius();
-					if (radius < ConfigManager.ConfigClass.Rtp.MIN_RADIUS
-							|| radius > ConfigManager.ConfigClass.Rtp.MAX_RADIUS) {
-						player.displayClientMessage(
-								getTranslatedText("commands.teleport_commands.rtp.invalidRadius", player)
-										.withStyle(ChatFormatting.RED),
-								true);
-						return 1;
-					}
-
-					try {
-						return enqueueRandomTeleport(player, radius);
-					} catch (Exception e) {
-						Constants.LOGGER.error("Error while executing /rtp!", e);
-						player.displayClientMessage(
-								getTranslatedText("commands.teleport_commands.common.error", player)
-										.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
-								true);
-						return 1;
-					}
-				});
-	}
-
-	private static int enqueueRandomTeleport(ServerPlayer player, int radius) {
+	public static int enqueueRandomTeleport(ServerPlayer player, int radius) {
 		SEARCH_JOBS.put(player.getUUID(), new RtpSearchJob(
 				player,
 				player.blockPosition().immutable(),

@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.suggestions;
+package org.AndrewElizabeth.teleportcommandsfabric.commands.tpa;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -6,7 +6,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.tpa;
+import org.AndrewElizabeth.teleportcommandsfabric.services.TpaService;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,20 +18,20 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public class tpaSuggestionProvider implements SuggestionProvider<CommandSourceStack> {
+public class TpaSuggestionProvider implements SuggestionProvider<CommandSourceStack> {
 	@Override
 	public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context,
 			SuggestionsBuilder builder) {
 		try {
 			ServerPlayer player = context.getSource().getPlayerOrException();
 
-			List<tpa.tpaArrayClass> playerTpaList = tpa.getRequests().stream()
-					.filter(tpa -> Objects.equals(player.getStringUUID(), tpa.RecPlayer))
+			List<TpaService.Request> playerTpaList = TpaService.getRequests().stream()
+					.filter(tpa -> Objects.equals(player.getStringUUID(), tpa.recPlayer))
 					.toList();
 			PlayerList playerList = context.getSource().getServer().getPlayerList();
 
-			for (tpa.tpaArrayClass tpaEntry : playerTpaList) {
-				ServerPlayer requestingPlayer = playerList.getPlayer(UUID.fromString(tpaEntry.InitPlayer));
+			for (TpaService.Request tpaEntry : playerTpaList) {
+				ServerPlayer requestingPlayer = playerList.getPlayer(UUID.fromString(tpaEntry.initPlayer));
 				if (requestingPlayer == null) {
 					continue;
 				}
@@ -43,7 +43,6 @@ public class tpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 				}
 			}
 
-			// Build and return the suggestions
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting tpa suggestions! ", e);

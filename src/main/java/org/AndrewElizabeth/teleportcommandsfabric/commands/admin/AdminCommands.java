@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigClass;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import net.minecraft.ChatFormatting;
@@ -20,10 +21,10 @@ public final class AdminCommands {
 	private static final String PRIMARY_COMMAND = "tpc";
 	private static final String LEGACY_COMMAND = "teleportcommands";
 
-	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER =
-			(context, builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
-	private static final SuggestionProvider<CommandSourceStack> DISABLED_SUGGESTER =
-			(context, builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.disabledNames(), builder);
+	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER = (context,
+			builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
+	private static final SuggestionProvider<CommandSourceStack> DISABLED_SUGGESTER = (context,
+			builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.disabledNames(), builder);
 
 	private AdminCommands() {
 	}
@@ -53,7 +54,19 @@ public final class AdminCommands {
 				.then(buildWarpConfigNode())
 				.then(buildWorldSpawnConfigNode())
 				.then(buildRtpConfigNode())
-				.then(buildXaeroConfigNode());
+				.then(buildXaeroConfigNode())
+				.then(buildStorageConfigNode());
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildStorageConfigNode() {
+		return Commands.literal("storage")
+				.then(AdminConfigNodeFactory.intNode(
+						"autoSaveIntervalSeconds",
+						"seconds",
+						ConfigClass.Storage.MIN_AUTO_SAVE_INTERVAL,
+						() -> ConfigManager.CONFIG.storage.getAutoSaveIntervalSeconds(),
+						value -> ConfigManager.CONFIG.storage.setAutoSaveIntervalSeconds(value),
+						"commands.teleport_commands.admin.config.storage.autoSaveIntervalSeconds"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildTeleportingConfigNode() {
@@ -141,8 +154,8 @@ public final class AdminCommands {
 				.then(AdminConfigNodeFactory.intNode(
 						"radius",
 						"blocks",
-						ConfigManager.ConfigClass.Rtp.MIN_RADIUS,
-						ConfigManager.ConfigClass.Rtp.MAX_RADIUS,
+						ConfigClass.Rtp.MIN_RADIUS,
+						ConfigClass.Rtp.MAX_RADIUS,
 						() -> ConfigManager.CONFIG.getRtp().getRadius(),
 						value -> ConfigManager.CONFIG.getRtp().setRadius(value),
 						"commands.teleport_commands.admin.config.rtp.radius"));
@@ -185,9 +198,7 @@ public final class AdminCommands {
 		return Commands.literal("status")
 				.requires(AdminCommands::isOpOrConsole)
 				.executes(context -> {
-					context.getSource().sendSuccess(
-							() -> AdminStatusFormatter.build(context.getSource()),
-							false);
+					context.getSource().sendSuccess(() -> AdminStatusFormatter.build(context.getSource()), false);
 					return 0;
 				});
 	}
@@ -211,9 +222,7 @@ public final class AdminCommands {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildHelpNode() {
 		return Commands.literal("help")
 				.executes(context -> {
-					context.getSource().sendSuccess(
-							() -> AdminHelpFormatter.build(context.getSource()),
-							false);
+					context.getSource().sendSuccess(() -> AdminHelpFormatter.build(context.getSource()), false);
 					return 0;
 				});
 	}
@@ -233,16 +242,21 @@ public final class AdminCommands {
 					.create();
 		}
 
-		return AdminMessages.setAndSave(
+		int result = AdminMessages.setAndSave(
 				context,
 				() -> toggle.setter().accept(enabled),
 				AdminMessages.t(context.getSource(),
 						"commands.teleport_commands.admin.module.status",
 						AdminMessages.t(context.getSource(), toggle.labelKey()),
-						AdminMessages.t(context.getSource(),
-								enabled
-										? "commands.teleport_commands.admin.stat.enabled"
-										: "commands.teleport_commands.admin.stat.disabled")));
+						AdminMessages.t(context.getSource(), enabled
+								? "commands.teleport_commands.admin.stat.enabled"
+								: "commands.teleport_commands.admin.stat.disabled")));
+
+		if (result == 0) {
+			context.getSource().sendSuccess(AdminStatusFormatter::refreshDivider, false);
+			context.getSource().sendSuccess(() -> AdminStatusFormatter.build(context.getSource()), false);
+		}
+		return result;
 	}
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {

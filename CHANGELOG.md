@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
+## [1.5] - Unreleased
+
+### Added
+
+- Added Xaero map visibility controls for both `warp` and `home`, including direct toggle commands from synced waypoint flows.
+- Added `/gwarpmap` for administrators to manage global warp visibility on the map separately from each player's personal hide/show state.
+- Added `/back tp` to return to the location recorded before the last teleport command execution.
+- Added direct integration from Xaero death waypoint teleport into `/back death`.
+
+### Changed
+
+- Changed Xaero waypoint sync behavior to work cleanly with default waypoint-set usage while keeping TeleportCommands-managed waypoints identifiable.
+- Changed Xaero teleport interception in the default `Default` waypoint-set flow to recognize only TeleportCommands-tagged waypoints instead of matching generic `W` / `H` symbols.
+- Updated Xaero waypoint deletion handling so deleting synced waypoints can silently map back to `mapwarp` and `maphome` visibility changes instead of only removing the local marker.
+- Improved Xaero-related command interception and trusted command flow for smoother client-side interaction.
+- Refined global and per-player map visibility management so warp administration and personal visibility control are handled separately.
+
+### Fixed
+
+- Fixed several Xaero interaction edge cases around waypoint teleport, deletion, and command routing.
+- Fixed command-side name matching for TeleportCommands-managed Xaero waypoints so normal default-set waypoints are less likely to be mistaken for `warp` or `home` entries.
+- Fixed clickable `rename`, `delete`, `maphome`, `mapwarp`, and related chat actions so names containing escaped characters such as `\\` and `\"` are passed correctly.
+
 ## [1.4] - 2026-03-16
 
 ### Added
@@ -93,3 +116,7 @@ Version history below is based on the repository tag history, local commit histo
 ### Fixed
 
 - Fix a vital crash when teleport to same location due to a wrong datastructure used.
+
+## [1.0] - 2025
+
+It is old teleportcommands mod just edit the version compatibility of minecraft.
