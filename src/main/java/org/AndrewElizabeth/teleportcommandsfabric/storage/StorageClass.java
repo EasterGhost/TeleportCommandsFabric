@@ -24,7 +24,7 @@ public class StorageClass {
 	public void cleanup() throws Exception {
 		boolean changed = false;
 		playerCache.clear();
-		
+
 		for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
 			Player player = iterator.next();
 
