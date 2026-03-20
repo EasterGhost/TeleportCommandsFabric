@@ -43,7 +43,6 @@ public class TpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 				}
 			}
 
-			// Build and return the suggestions
 			return builder.buildFuture();
 		} catch (Exception e) {
 			Constants.LOGGER.error("Error getting tpa suggestions! ", e);

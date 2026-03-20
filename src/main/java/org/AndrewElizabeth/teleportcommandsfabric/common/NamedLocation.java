@@ -32,8 +32,6 @@ public class NamedLocation {
 		return new NamedLocation(UUID.randomUUID(), name, x, y, z, world, true);
 	}
 
-	// -----
-
 	public String getName() {
 		return this.name;
 	}
@@ -62,7 +60,6 @@ public class NamedLocation {
 		return this.z;
 	}
 
-	// Return the world id as a string
 	public String getWorldString() {
 		return this.world;
 	}
@@ -74,8 +71,6 @@ public class NamedLocation {
 	public boolean isXaeroVisible() {
 		return xaeroVisible;
 	}
-
-	// -----
 
 	public void setName(String name) throws Exception {
 		this.name = name;

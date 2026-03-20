@@ -38,7 +38,6 @@ public class GuiMapMixin {
 
 			String command = tpc$buildTeleportCommand(waypoint);
 			if (command == null) {
-				// Non W/H waypoints keep Xaero's original /tp behavior.
 				continue;
 			}
 

@@ -21,8 +21,6 @@ public class Player {
 		this.UUID = uuid;
 	}
 
-	// -----
-
 	public String getUUID() {
 		return UUID;
 	}
@@ -37,7 +35,6 @@ public class Player {
 				.orElse("");
 	}
 
-	// returns all homes
 	public List<NamedLocation> getHomes() {
 		return Collections.unmodifiableList(Homes);
 	}
@@ -46,7 +43,6 @@ public class Player {
 		return Set.copyOf(getOrCreateHiddenWarpUuids());
 	}
 
-	// returns a specific home based on the name (if there is one)
 	public Optional<NamedLocation> getHome(String name) {
 		return Homes.stream()
 				.filter(home -> Objects.equals(home.getName(), name))
@@ -62,8 +58,6 @@ public class Player {
 	public boolean isWarpHidden(UUID warpUuid) {
 		return getOrCreateHiddenWarpUuids().contains(warpUuid);
 	}
-
-	// -----
 
 	public void setDefaultHome(String defaultHome) throws Exception {
 		setDefaultHomeByNameNoSave(defaultHome);
@@ -93,10 +87,8 @@ public class Player {
 		this.DefaultHomeUuid = defaultHomeUuid;
 	}
 
-	// Adds a NamedLocation to the home list, returns true if it already exists
 	public boolean addHome(NamedLocation home) throws Exception {
 		if (getHome(home.getName()).isPresent()) {
-			// Home with same name found!
 			return true;
 
 		} else {
@@ -105,9 +97,7 @@ public class Player {
 			return false;
 		}
 	}
-
-	// -----
-
+	
 	public void deleteHome(NamedLocation home) throws Exception {
 		deleteHomeNoSave(home);
 		StorageManager.StorageSaver();

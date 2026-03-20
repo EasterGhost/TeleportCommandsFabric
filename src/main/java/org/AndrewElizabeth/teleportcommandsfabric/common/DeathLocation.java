@@ -16,8 +16,6 @@ public class DeathLocation {
 		this.world = world;
 	}
 
-	// -----
-
 	public BlockPos getBlockPos() {
 		return pos;
 	}
@@ -29,9 +27,6 @@ public class DeathLocation {
 	public Optional<ServerLevel> getWorld() {
 		return WorldResolver.getDimensionById(world);
 	}
-
-	// ----- note to self: these don't need to be saved since this class isn't a
-	// part of the storage :3
 
 	public void setBlockPos(BlockPos pos) {
 		this.pos = pos;
