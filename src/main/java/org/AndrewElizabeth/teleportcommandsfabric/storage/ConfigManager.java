@@ -26,7 +26,6 @@ public class ConfigManager {
 			ConfigLoader();
 
 		} catch (Exception e) {
-			// crashing is probably better here, otherwise the whole mod will be broken
 			Constants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
 			throw new RuntimeException("Error while initializing the config file! Exiting! => ", e);
 		}
@@ -53,12 +52,10 @@ public class ConfigManager {
 			ConfigSaver();
 		}
 
-		ConfigSaver(); // Save it so any missing values get added to the file.
+		ConfigSaver();
 		Constants.LOGGER.info("Config loaded successfully!");
 	}
 
-	/// This function checks what version the config file is and migrates it to the
-	/// current version of the mod.
 	public static void ConfigMigrator() throws Exception {
 		JsonObject jsonObject;
 		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
@@ -73,7 +70,6 @@ public class ConfigManager {
 		if (version < defaultVersion) {
 			Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
 
-			// Rename legacy "wild" section to "rtp" if needed.
 			if (jsonObject.has("wild") && !jsonObject.has("rtp")) {
 				jsonObject.add("rtp", jsonObject.get("wild"));
 				jsonObject.remove("wild");
@@ -81,10 +77,8 @@ public class ConfigManager {
 
 			normalizeXaeroSetNames(jsonObject);
 
-			// Always bump to the latest supported schema version after migrations.
 			jsonObject.addProperty("version", defaultVersion);
 
-			// Save the config
 			byte[] json = GSON.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
 			Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
@@ -156,8 +150,6 @@ public class ConfigManager {
 		}
 	}
 
-	/// Saves the config after modifications. This method should be called whenever
-	/// config values are changed.
 	public static void saveConfigChanges() {
 		ConfigSaver();
 		Constants.LOGGER.info("Config changes saved!");
@@ -177,8 +169,6 @@ public class ConfigManager {
 		public int getVersion() {
 			return version;
 		}
-
-		// ===== Convenience Methods =====
 
 		public Teleporting getTeleporting() {
 			return teleporting;
@@ -211,8 +201,6 @@ public class ConfigManager {
 		public Xaero getXaero() {
 			return xaero;
 		}
-
-		// ===== Configuration Sections =====
 
 		public static final class Teleporting {
 			private int delay = 0;
@@ -306,7 +294,7 @@ public class ConfigManager {
 
 		public final class Tpa {
 			private boolean enabled = true;
-			private int requestExpireTime = 120; // seconds
+			private int requestExpireTime = 120;
 
 			public boolean isEnabled() {
 				return enabled;
@@ -447,18 +435,4 @@ public class ConfigManager {
 			}
 		}
 	}
-
-	// --- Configuration Management ---
-	// The ConfigManager provides a centralized way to manage mod settings:
-	//
-	// 1. Teleporting: Controls delay, movement/combat restrictions, and cooldowns
-	// 2. Back: Manages the /back command behavior
-	// 3. Home: Controls home limits, enablement, and invalid location cleanup
-	// 4. Tpa: Manages TPA requestability and request expiration time
-	// 5. Warp: Controls warp limits, enablement, and invalid location cleanup
-	// 6. WorldSpawn: Sets the world and spawn point for /worldspawn
-	//
-	// To modify configuration values at runtime:
-	// ConfigManager.CONFIG.home.setPlayerMaximum(50);
-	// ConfigManager.saveConfigChanges();
 }

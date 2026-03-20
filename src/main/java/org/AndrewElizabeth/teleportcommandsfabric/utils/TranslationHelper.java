@@ -65,7 +65,6 @@ public final class TranslationHelper {
 		try (InputStream stream = TeleportCommands.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
 				Constants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.", language);
-				// We return the en_us map to cache it so we do not attempt to load it again to prevent an exception storm
 				return "en_us".equals(language) ? new ConcurrentHashMap<>() : TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
 			}
 			Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);

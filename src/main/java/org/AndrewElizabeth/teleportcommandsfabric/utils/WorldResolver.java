@@ -15,7 +15,6 @@ public final class WorldResolver {
 	}
 
 	public static String getDimensionId(ResourceKey<Level> dimensionKey) {
-		// Native Minecraft identifier API provides consistent namespace:path format
 		return dimensionKey.identifier().toString();
 	}
 

@@ -20,12 +20,7 @@ public class LogoutCacheManager {
 	private static final Map<UUID, ScheduledFuture<?>> scheduledCleanups = new ConcurrentHashMap<>();
 	private static final long CLEANUP_DELAY_MINUTES = 30;
 
-	/**
-	 * Schedules a cleanup task for a player who has disconnected.
-	 * If they do not reconnect within the delay, their temporary storage will be cleared.
-	 */
 	public static void scheduleCleanup(UUID playerUuid) {
-		// Cancel any existing cleanup just in case
 		cancelCleanup(playerUuid);
 
 		Runnable cleanupTask = () -> {
@@ -34,7 +29,6 @@ public class LogoutCacheManager {
 					PreviousTeleportLocationStorage.removePreviousTeleportLocation(playerUuid);
 					TeleportCooldownManager.removePlayer(playerUuid);
 					scheduledCleanups.remove(playerUuid);
-					// DeathLocationStorage is intentionally NOT cleaned up.
 				});
 			} else {
 				PreviousTeleportLocationStorage.removePreviousTeleportLocation(playerUuid);
@@ -47,9 +41,6 @@ public class LogoutCacheManager {
 		scheduledCleanups.put(playerUuid, future);
 	}
 
-	/**
-	 * Cancels a scheduled cleanup task for a player (e.g. when they log back in).
-	 */
 	public static void cancelCleanup(UUID playerUuid) {
 		ScheduledFuture<?> future = scheduledCleanups.remove(playerUuid);
 		if (future != null) {
