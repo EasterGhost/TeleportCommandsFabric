@@ -62,7 +62,6 @@ public class StorageMigratorUtil {
 
 			jsonObject.addProperty("version", defaultVersion);
 
-			// Save the storage :3
 			byte[] json = gson.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
 			Files.write(storageFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE);
