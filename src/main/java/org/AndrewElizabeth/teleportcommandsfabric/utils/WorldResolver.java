@@ -15,13 +15,8 @@ public final class WorldResolver {
 	}
 
 	public static String getDimensionId(ResourceKey<Level> dimensionKey) {
-		// ResourceKey#location() is unavailable in this mapping; normalize from toString.
-		String raw = dimensionKey.toString();
-		int splitIndex = raw.indexOf("/ ");
-		if (splitIndex >= 0 && raw.endsWith("]")) {
-			return raw.substring(splitIndex + 2, raw.length() - 1);
-		}
-		return raw;
+		// Native Minecraft identifier API provides consistent namespace:path format
+		return dimensionKey.identifier().toString();
 	}
 
 	public static Optional<ServerLevel> getDimensionById(String worldId) {
