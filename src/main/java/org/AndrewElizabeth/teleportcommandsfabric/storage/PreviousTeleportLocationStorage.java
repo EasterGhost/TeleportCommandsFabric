@@ -4,12 +4,13 @@ import org.AndrewElizabeth.teleportcommandsfabric.common.PreviousTeleportLocatio
 
 import net.minecraft.core.BlockPos;
 
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class PreviousTeleportLocationStorage {
-	private static final HashMap<UUID, PreviousTeleportLocation> previousTeleportLocations = new HashMap<>();
+	private static final Map<UUID, PreviousTeleportLocation> previousTeleportLocations = new ConcurrentHashMap<>();
 
 	private PreviousTeleportLocationStorage() {
 	}
