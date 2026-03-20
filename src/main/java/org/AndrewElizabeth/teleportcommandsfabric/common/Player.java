@@ -3,14 +3,13 @@ package org.AndrewElizabeth.teleportcommandsfabric.common;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import static java.util.Collections.unmodifiableList;
 
 public class Player {
 	private final String UUID;
@@ -40,7 +39,7 @@ public class Player {
 
 	// returns all homes
 	public List<NamedLocation> getHomes() {
-		return unmodifiableList(Homes);
+		return Collections.unmodifiableList(Homes);
 	}
 
 	public Set<UUID> getHiddenWarpUuids() {
