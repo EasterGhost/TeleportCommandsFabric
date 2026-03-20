@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigClass;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import net.minecraft.ChatFormatting;
@@ -141,8 +142,8 @@ public final class AdminCommands {
 				.then(AdminConfigNodeFactory.intNode(
 						"radius",
 						"blocks",
-						ConfigManager.ConfigClass.Rtp.MIN_RADIUS,
-						ConfigManager.ConfigClass.Rtp.MAX_RADIUS,
+						ConfigClass.Rtp.MIN_RADIUS,
+						ConfigClass.Rtp.MAX_RADIUS,
 						() -> ConfigManager.CONFIG.getRtp().getRadius(),
 						value -> ConfigManager.CONFIG.getRtp().setRadius(value),
 						"commands.teleport_commands.admin.config.rtp.radius"));

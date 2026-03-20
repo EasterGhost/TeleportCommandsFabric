@@ -35,7 +35,7 @@ final class AdminMessages {
 			MutableComponent message) throws CommandSyntaxException {
 		try {
 			setter.run();
-			ConfigManager.saveConfigChanges();
+			ConfigManager.ConfigSaver();
 			context.getSource().sendSuccess(() -> message.copy().withStyle(ChatFormatting.GREEN), true);
 			return 0;
 		} catch (Exception e) {

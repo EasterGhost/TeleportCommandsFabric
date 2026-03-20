@@ -12,427 +12,72 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.CompletableFuture;
 
 public class ConfigManager {
-	public static Path CONFIG_FILE;
-	public static ConfigClass CONFIG;
-	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final int defaultVersion = new ConfigClass().getVersion();
-
-	public static void ConfigInit() {
-		CONFIG_FILE = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json");
-
-		try {
-			ConfigLoader();
-
-		} catch (Exception e) {
-			Constants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
-			throw new RuntimeException("Error while initializing the config file! Exiting! => ", e);
-		}
-	}
-
-	public static void ConfigLoader() throws Exception {
-		if (!CONFIG_FILE.toFile().exists() || CONFIG_FILE.toFile().length() == 0) {
-			Files.createDirectories(TeleportCommands.CONFIG_DIR);
-
-			Constants.LOGGER.warn("Config file was not found or was empty! Initializing config");
-			CONFIG = new ConfigClass();
-			ConfigSaver();
-			Constants.LOGGER.info("Config created successfully!");
-		}
-
-		ConfigMigrator();
-
-		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
-			CONFIG = GSON.fromJson(reader, ConfigClass.class);
-		}
-		if (CONFIG == null) {
-			Constants.LOGGER.warn("Config file was empty! Loading defaults...");
-			CONFIG = new ConfigClass();
-			ConfigSaver();
-		}
-
-		ConfigSaver();
-		Constants.LOGGER.info("Config loaded successfully!");
-	}
-
-	public static void ConfigMigrator() throws Exception {
-		JsonObject jsonObject;
-		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
-			jsonObject = GSON.fromJson(reader, JsonObject.class);
-		}
-		if (jsonObject == null) {
-			jsonObject = new JsonObject();
-		}
-
-		int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
-
-		if (version < defaultVersion) {
-			Constants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
-
-			if (jsonObject.has("wild") && !jsonObject.has("rtp")) {
-				jsonObject.add("rtp", jsonObject.get("wild"));
-				jsonObject.remove("wild");
-			}
-
-			normalizeXaeroSetNames(jsonObject);
-
-			jsonObject.addProperty("version", defaultVersion);
-
-			byte[] json = GSON.toJson(jsonObject).getBytes(StandardCharsets.UTF_8);
-			Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-					StandardOpenOption.CREATE);
-
-			Constants.LOGGER.info("Config file migrated to v{} successfully!", defaultVersion);
-		} else if (version > defaultVersion) {
-			String message = String.format(
-					"Teleport Commands: The config file's version is newer than the supported version, found v%s, expected <= v%s.\n"
-							+
-							"If you intentionally backported then you can attempt to downgrade the config file located at this location: \"%s\".\n",
-					version, defaultVersion, CONFIG_FILE.toAbsolutePath());
-
-			throw new IllegalStateException(message);
-		}
-	}
-
-	private static void normalizeXaeroSetNames(JsonObject root) {
-		if (!root.has("xaero") || !root.get("xaero").isJsonObject()) {
-			return;
-		}
-
-		JsonObject xaero = root.getAsJsonObject("xaero");
-		normalizeXaeroSetName(xaero, "warpSetName", true);
-		normalizeXaeroSetName(xaero, "homeSetName", false);
-	}
-
-	private static void normalizeXaeroSetName(JsonObject xaero, String key, boolean warp) {
-		if (!xaero.has(key) || xaero.get(key).isJsonNull()) {
-			return;
-		}
-
-		String original = xaero.get(key).getAsString();
-		String normalized = original == null ? "" : original.trim().toLowerCase();
-		if (shouldFallbackToDefaultSet(normalized, warp)) {
-			xaero.addProperty(key, "Default");
-		}
-	}
-
-	private static boolean shouldFallbackToDefaultSet(String setName, boolean warp) {
-		if (setName == null || setName.isBlank()) {
-			return true;
-		}
-
-		if ("default".equals(setName) || "current".equals(setName)) {
-			return true;
-		}
-
-		if (warp) {
-			return "teleportcommands warps".equals(setName);
-		}
-
-		return "teleportcommands homes".equals(setName);
-	}
-
-	public static void ConfigSaver() {
-		try {
-			byte[] json = GSON.toJson(ConfigManager.CONFIG).getBytes(StandardCharsets.UTF_8);
-
-			java.util.concurrent.CompletableFuture.runAsync(() -> {
-				try {
-					Files.write(CONFIG_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-							StandardOpenOption.CREATE);
-				} catch (Exception e) {
-					Constants.LOGGER.error("Failed to save config file asynchronously!", e);
-				}
-			});
-		} catch (Exception e) {
-			Constants.LOGGER.error("Failed to serialize config file!", e);
-		}
-	}
-
-	public static void saveConfigChanges() {
-		ConfigSaver();
-		Constants.LOGGER.info("Config changes saved!");
-	}
-
-	public static class ConfigClass {
-		private final int version = Constants.CONFIG_VERSION;
-		public Teleporting teleporting = new Teleporting();
-		public Back back = new Back();
-		public Home home = new Home();
-		public Tpa tpa = new Tpa();
-		public Warp warp = new Warp();
-		public WorldSpawn worldSpawn = new WorldSpawn();
-		public Rtp rtp = new Rtp();
-		public Xaero xaero = new Xaero();
-
-		public int getVersion() {
-			return version;
-		}
-
-		public Teleporting getTeleporting() {
-			return teleporting;
-		}
-
-		public Back getBack() {
-			return back;
-		}
-
-		public Home getHome() {
-			return home;
-		}
-
-		public Tpa getTpa() {
-			return tpa;
-		}
-
-		public Warp getWarp() {
-			return warp;
-		}
-
-		public WorldSpawn getWorldSpawn() {
-			return worldSpawn;
-		}
-
-		public Rtp getRtp() {
-			return rtp;
-		}
-
-		public Xaero getXaero() {
-			return xaero;
-		}
-
-		public static final class Teleporting {
-			private int delay = 0;
-			private int cooldown = 3;
-			private boolean preloadEnabled = false;
-			private int preloadRadiusChunks = 1;
-
-			public int getDelay() {
-				return delay;
-			}
-
-			public void setDelay(int delay) {
-				this.delay = delay;
-			}
-
-			public int getCooldown() {
-				return cooldown;
-			}
-
-			public void setCooldown(int cooldown) {
-				this.cooldown = cooldown;
-			}
-
-			public boolean isPreloadEnabled() {
-				return preloadEnabled;
-			}
-
-			public void setPreloadEnabled(boolean preloadEnabled) {
-				this.preloadEnabled = preloadEnabled;
-			}
-
-			public int getPreloadRadiusChunks() {
-				return preloadRadiusChunks;
-			}
-
-			public void setPreloadRadiusChunks(int preloadRadiusChunks) {
-				this.preloadRadiusChunks = preloadRadiusChunks;
-			}
-		}
-
-		public final class Back {
-			private boolean enabled = true;
-			private boolean deleteAfterTeleport = true;
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public boolean isDeleteAfterTeleport() {
-				return deleteAfterTeleport;
-			}
-
-			public void setDeleteAfterTeleport(boolean deleteAfterTeleport) {
-				this.deleteAfterTeleport = deleteAfterTeleport;
-			}
-		}
-
-		public final class Home {
-			private boolean enabled = true;
-			private int playerMaximum = 10;
-			private boolean deleteInvalid = false;
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public int getPlayerMaximum() {
-				return playerMaximum;
-			}
-
-			public void setPlayerMaximum(int playerMaximum) {
-				this.playerMaximum = playerMaximum;
-			}
-
-			public boolean isDeleteInvalid() {
-				return deleteInvalid;
-			}
-
-			public void setDeleteInvalid(boolean deleteInvalid) {
-				this.deleteInvalid = deleteInvalid;
-			}
-		}
-
-		public final class Tpa {
-			private boolean enabled = true;
-			private int requestExpireTime = 120;
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public int getRequestExpireTime() {
-				return requestExpireTime;
-			}
-
-			public void setRequestExpireTime(int requestExpireTime) {
-				this.requestExpireTime = requestExpireTime;
-			}
-		}
-
-		public final class Warp {
-			private boolean enabled = true;
-			private int maximum = 0;
-			private boolean deleteInvalid = false;
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public int getMaximum() {
-				return maximum;
-			}
-
-			public void setMaximum(int maximum) {
-				this.maximum = maximum;
-			}
-
-			public boolean isDeleteInvalid() {
-				return deleteInvalid;
-			}
-
-			public void setDeleteInvalid(boolean deleteInvalid) {
-				this.deleteInvalid = deleteInvalid;
-			}
-		}
-
-		public final class Rtp {
-			public static final int MIN_RADIUS = 1;
-			public static final int MAX_RADIUS = 128;
-			private boolean enabled = true;
-			private int radius = 32;
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public int getRadius() {
-				return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
-			}
-
-			public void setRadius(int radius) {
-				this.radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
-			}
-		}
-
-		public final class WorldSpawn {
-			private boolean enabled = true;
-			private String world_id = "minecraft:overworld";
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public String getWorld_id() {
-				return world_id;
-			}
-
-			public void setWorld_id(String world_id) {
-				this.world_id = world_id;
-			}
-		}
-
-		public final class Xaero {
-			private boolean enabled = true;
-			private int syncIntervalSeconds = 10;
-			private boolean persistWaypointSets = true;
-			private String warpSetName = "Default";
-			private String homeSetName = "Default";
-
-			public boolean isEnabled() {
-				return enabled;
-			}
-
-			public void setEnabled(boolean enabled) {
-				this.enabled = enabled;
-			}
-
-			public int getSyncIntervalSeconds() {
-				return syncIntervalSeconds;
-			}
-
-			public void setSyncIntervalSeconds(int syncIntervalSeconds) {
-				this.syncIntervalSeconds = syncIntervalSeconds;
-			}
-
-			public boolean isPersistWaypointSets() {
-				return persistWaypointSets;
-			}
-
-			public void setPersistWaypointSets(boolean persistWaypointSets) {
-				this.persistWaypointSets = persistWaypointSets;
-			}
-
-			public String getWarpSetName() {
-				return warpSetName;
-			}
-
-			public void setWarpSetName(String warpSetName) {
-				this.warpSetName = warpSetName;
-			}
-
-			public String getHomeSetName() {
-				return homeSetName;
-			}
-
-			public void setHomeSetName(String homeSetName) {
-				this.homeSetName = homeSetName;
-			}
-		}
-	}
+    public static Path CONFIG_FILE;
+    public static ConfigClass CONFIG;
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final int defaultVersion = new ConfigClass().getVersion();
+
+    public static void ConfigInit() {
+        CONFIG_FILE = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json");
+
+        try {
+            ConfigLoader();
+
+        } catch (Exception e) {
+            Constants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
+            throw new RuntimeException("Error while initializing the config file! Exiting! => ", e);
+        }
+    }
+
+    public static void ConfigLoader() throws Exception {
+        if (!CONFIG_FILE.toFile().exists() || CONFIG_FILE.toFile().length() == 0) {
+            Files.createDirectories(TeleportCommands.CONFIG_DIR);
+
+            Constants.LOGGER.warn("Config file was not found or was empty! Initializing config");
+            CONFIG = new ConfigClass();
+            ConfigSaver();
+            Constants.LOGGER.info("Config created successfully!");
+        }
+
+        ConfigMigrator();
+
+        try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
+            CONFIG = GSON.fromJson(reader, ConfigClass.class);
+        }
+        if (CONFIG == null) {
+            Constants.LOGGER.warn("Config file was empty! Loading defaults...");
+            CONFIG = new ConfigClass();
+            ConfigSaver();
+        }
+
+        ConfigSaver();
+        Constants.LOGGER.info("Config loaded successfully!");
+    }
+
+    private static void ConfigMigrator() throws Exception {
+        try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
+            JsonObject jsonObject = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
+            int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
+            if (version < defaultVersion) {
+                ConfigMigratorUtil.ConfigMigrator(CONFIG_FILE, GSON, defaultVersion);
+            }
+        }
+    }
+
+    public static void ConfigSaver() {
+        CompletableFuture.runAsync(() -> {
+            if (CONFIG_FILE == null || CONFIG == null) {
+                Constants.LOGGER.error("Cannot save config: CONFIG_FILE or CONFIG is null.");
+                return;
+            }
+            try {
+                Files.writeString(CONFIG_FILE, GSON.toJson(CONFIG), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            } catch (Exception e) {
+                Constants.LOGGER.error("Error while saving the config file! => ", e);
+            }
+        });
+    }
 }

@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.services;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigClass;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.PreviousTeleportLocationStorage;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.TeleportCooldownManager;
@@ -130,7 +131,7 @@ public final class TeleportService {
 
 	private static void teleportWithManagedPreload(ServerPlayer player, ServerLevel world, Vec3 coords,
 			Runnable onSuccess) {
-		ConfigManager.ConfigClass.Teleporting teleportConfig = ConfigManager.CONFIG.getTeleporting();
+		ConfigClass.Teleporting teleportConfig = ConfigManager.CONFIG.getTeleporting();
 		boolean preloadEnabled = teleportConfig.isPreloadEnabled();
 		int radiusChunks = Math.max(0, teleportConfig.getPreloadRadiusChunks());
 		if (!preloadEnabled) {
