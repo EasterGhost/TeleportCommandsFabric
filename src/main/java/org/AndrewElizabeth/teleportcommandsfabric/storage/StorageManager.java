@@ -151,12 +151,21 @@ public class StorageManager {
 		}
 	}
 
-	/// Saves the storage to the filesystem
-	public static void StorageSaver() throws Exception {
-		byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
-
-		Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-				StandardOpenOption.CREATE);
+	/// Saves the storage to the filesystem asynchronously
+	public static void StorageSaver() {
+		try {
+			byte[] json = GSON.toJson(StorageManager.STORAGE).getBytes(StandardCharsets.UTF_8);
+			java.util.concurrent.CompletableFuture.runAsync(() -> {
+				try {
+					Files.write(STORAGE_FILE, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
+							StandardOpenOption.CREATE);
+				} catch (Exception e) {
+					Constants.LOGGER.error("Failed to save storage file asynchronously!", e);
+				}
+			});
+		} catch (Exception e) {
+			Constants.LOGGER.error("Failed to serialize storage file!", e);
+		}
 	}
 
 	private static void normalizeNamedLocationYAsDouble(JsonObject root) {

@@ -21,8 +21,10 @@ import net.minecraft.core.BlockPos;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 
 public class TeleportCommands implements ModInitializer {
 	public static String MOD_LOADER;
@@ -48,6 +50,19 @@ public class TeleportCommands implements ModInitializer {
 		PreviousTeleportLocationStorage.clearPreviousTeleportLocations(); // Clear in-memory return locations.
 		TeleportCooldownManager.clearAll(); // Clear teleport cooldowns and scheduled teleports
 		XaeroSyncServer.initialize(); // Register Xaero sync handlers
+
+		// Register server play connection events
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
+			UUID playerUuid = handler.player.getUUID();
+			// Schedule cleanup instead of immediate removal to prevent relogging exploits
+			LogoutCacheManager.scheduleCleanup(playerUuid);
+		});
+		
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
+			UUID playerUuid = handler.player.getUUID();
+			// Cancel scheduled cleanup if player logged back in early
+			LogoutCacheManager.cancelCleanup(playerUuid);
+		});
 	}
 
 	// initialize commands, also allows me to easily disable any when there is a

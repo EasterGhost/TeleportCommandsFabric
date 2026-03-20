@@ -71,6 +71,16 @@ public class TeleportCooldownManager {
 	}
 
 	/**
+	 * Remove a player from cooldown manager (e.g. on disconnect)
+	 * 
+	 * @param playerUuid Player UUID
+	 */
+	public static void removePlayer(UUID playerUuid) {
+		scheduledTeleports.remove(playerUuid);
+		lastTeleportTime.remove(playerUuid);
+	}
+
+	/**
 	 * Clear all cooldowns and scheduled teleports
 	 */
 	public static void clearAll() {
