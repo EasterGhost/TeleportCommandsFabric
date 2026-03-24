@@ -35,7 +35,7 @@ public final class BackMessages {
 	}
 
 	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		player.displayClientMessage(getTranslatedText(key, player).withStyle(formatting), true);
+		player.sendSystemMessage(getTranslatedText(key, player).withStyle(formatting), true);
 	}
 
 	public static void sendNoLocation(ServerPlayer player) {
@@ -43,7 +43,7 @@ public final class BackMessages {
 	}
 
 	public static void sendTryBackTpPrompt(ServerPlayer player) {
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				Component.empty()
 						.append(getTranslatedText("commands.teleport_commands.back.tryTp", player)
 								.withStyle(ChatFormatting.YELLOW))
@@ -73,15 +73,15 @@ public final class BackMessages {
 	}
 
 	public static void sendGo(ServerPlayer player) {
-		player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
+		player.sendSystemMessage(getTranslatedText("commands.teleport_commands.back.go", player), true);
 	}
 
 	public static void sendPreviousTeleportGo(ServerPlayer player) {
-		player.displayClientMessage(getTranslatedText("commands.teleport_commands.back.tp.go", player), true);
+		player.sendSystemMessage(getTranslatedText("commands.teleport_commands.back.tp.go", player), true);
 	}
 
 	public static void sendUnsafeTeleportPrompt(ServerPlayer player, String command) {
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				Component.empty()
 						.append(getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
 								.withStyle(ChatFormatting.RED, ChatFormatting.BOLD))

@@ -13,7 +13,7 @@ public final class RtpMessages {
 	}
 
 	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		player.displayClientMessage(getTranslatedText(key, player).withStyle(formatting), true);
+		player.sendSystemMessage(getTranslatedText(key, player).withStyle(formatting), true);
 	}
 
 	public static int execute(ServerPlayer player, String logMessage, RtpAction action) {

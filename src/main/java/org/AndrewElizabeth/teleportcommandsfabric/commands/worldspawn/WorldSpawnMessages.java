@@ -33,7 +33,7 @@ public final class WorldSpawnMessages {
 	}
 
 	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		player.displayClientMessage(getTranslatedText(key, player).withStyle(formatting), true);
+		player.sendSystemMessage(getTranslatedText(key, player).withStyle(formatting), true);
 	}
 
 	public static void sendSame(ServerPlayer player) {
@@ -41,11 +41,11 @@ public final class WorldSpawnMessages {
 	}
 
 	public static void sendGo(ServerPlayer player) {
-		player.displayClientMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player), true);
+		player.sendSystemMessage(getTranslatedText("commands.teleport_commands.worldspawn.go", player), true);
 	}
 
 	public static void sendUnsafeTeleportPrompt(ServerPlayer player) {
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				Component.empty()
 						.append(getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
 								.withStyle(ChatFormatting.RED, ChatFormatting.BOLD))

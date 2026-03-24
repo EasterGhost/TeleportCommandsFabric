@@ -18,11 +18,11 @@ public final class CommandExecutionSupport {
 	}
 
 	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		player.displayClientMessage(getTranslatedText(key, player).withStyle(formatting), true);
+		player.sendSystemMessage(getTranslatedText(key, player).withStyle(formatting), true);
 	}
 
 	public static void sendInvalidPage(ServerPlayer player, int requestedPage, int totalPages) {
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				getTranslatedText("commands.teleport_commands.common.invalidPage", player,
 						Component.literal(String.valueOf(requestedPage)),
 						Component.literal(String.valueOf(totalPages)))
@@ -37,7 +37,7 @@ public final class CommandExecutionSupport {
 			return 0;
 		} catch (Exception e) {
 			Constants.LOGGER.error(errorLogMessage, e);
-			player.displayClientMessage(
+			player.sendSystemMessage(
 					getTranslatedText(errorTranslationKey, player)
 							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
 					true);

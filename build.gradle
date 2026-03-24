@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.15.4'
+    id 'net.fabricmc.fabric-loom' version '1.15.4'
     id 'maven-publish'
 }
 
@@ -38,14 +38,13 @@ repositories {
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modCompileOnly "xaero.minimap:xaerominimap-fabric-${project.minecraft_version}:${project.xaero_minimap_version}"
-    modCompileOnly "xaero.map:xaeroworldmap-fabric-${project.minecraft_version}:${project.xaero_worldmap_version}"
-    modCompileOnly "xaero.lib:xaerolib-fabric-${project.minecraft_version}:${project.xaero_lib_version}"
+    compileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
+    compileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
+    compileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
 }
 
 processResources {
@@ -61,7 +60,7 @@ processResources {
     }
 }
 
-def targetJavaVersion = 21
+def targetJavaVersion = 25
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly

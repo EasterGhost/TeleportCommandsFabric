@@ -66,6 +66,6 @@ final class WarpCommandSupport {
 			return;
 		}
 
-		player.displayClientMessage(WarpAdminFormatter.buildWarpMapList(player, warps), false);
+		player.sendSystemMessage(WarpAdminFormatter.buildWarpMapList(player, warps), false);
 	}
 }

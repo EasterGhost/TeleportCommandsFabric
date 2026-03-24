@@ -39,7 +39,7 @@ final class HomeMessages {
 	}
 
 	static void sendMaxReached(ServerPlayer player, int maxHomes) {
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				getTranslatedText("commands.teleport_commands.home.max", player,
 						Component.literal(String.valueOf(maxHomes)))
 						.withStyle(ChatFormatting.RED),

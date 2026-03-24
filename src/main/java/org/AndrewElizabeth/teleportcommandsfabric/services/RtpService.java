@@ -68,13 +68,13 @@ public final class RtpService {
 
 			ServerLevel world = player.level();
 			int budget = Math.min(ATTEMPTS_PER_TICK, job.remainingAttempts());
-			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.random,
+			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.getRandom(),
 					budget);
 			if (safePos.isPresent()) {
 				BlockPos blockPos = safePos.get();
 				Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
 				if (TeleportService.teleportWithDelayAndCooldown(player, world, teleportPos, false)) {
-					player.displayClientMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
+					player.sendSystemMessage(getTranslatedText("commands.teleport_commands.rtp.go", player), true);
 				}
 				SEARCH_JOBS.remove(uuid);
 				continue;
@@ -82,7 +82,7 @@ public final class RtpService {
 
 			int remaining = job.remainingAttempts() - budget;
 			if (remaining <= 0) {
-				player.displayClientMessage(
+				player.sendSystemMessage(
 						getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
 								.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
 						true);

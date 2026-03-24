@@ -42,7 +42,7 @@ public final class PagedListCommandSupport {
 			return;
 		}
 
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				renderer.render(PaginationCommandSupport.getPageEntries(entries, page), page, totalPages),
 				false);
 	}
@@ -61,6 +61,6 @@ public final class PagedListCommandSupport {
 			return;
 		}
 
-		player.displayClientMessage(renderer.render(currentPage, totalPages), false);
+		player.sendSystemMessage(renderer.render(currentPage, totalPages), false);
 	}
 }

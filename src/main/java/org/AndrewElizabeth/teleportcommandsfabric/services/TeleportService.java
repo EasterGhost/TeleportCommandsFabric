@@ -65,7 +65,7 @@ public final class TeleportService {
 
 		int remainingCooldown = TeleportCooldownManager.getRemainingCooldown(playerUuid, cooldown);
 		if (remainingCooldown > 0) {
-			player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.cooldown", player,
+			player.sendSystemMessage(getTranslatedText("commands.teleport_commands.common.cooldown", player,
 					Component.literal(String.valueOf(remainingCooldown)))
 					.withStyle(ChatFormatting.RED), true);
 			return false;
@@ -81,7 +81,7 @@ public final class TeleportService {
 		}
 
 		long teleportId = TeleportCooldownManager.scheduleTeleport(playerUuid);
-		player.displayClientMessage(getTranslatedText("commands.teleport_commands.common.delayStart", player,
+		player.sendSystemMessage(getTranslatedText("commands.teleport_commands.common.delayStart", player,
 				Component.literal(String.valueOf(delay)))
 				.withStyle(ChatFormatting.YELLOW), true);
 

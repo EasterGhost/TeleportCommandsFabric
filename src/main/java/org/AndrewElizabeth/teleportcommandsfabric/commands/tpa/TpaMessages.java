@@ -21,7 +21,7 @@ final class TpaMessages {
 		if (ConfigManager.CONFIG.getTpa().isEnabled()) {
 			return true;
 		}
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				getTranslatedText("commands.teleport_commands.tpa.disabled", player)
 						.withStyle(ChatFormatting.RED),
 				true);

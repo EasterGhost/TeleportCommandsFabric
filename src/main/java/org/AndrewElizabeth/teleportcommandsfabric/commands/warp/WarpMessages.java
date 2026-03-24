@@ -43,7 +43,7 @@ final class WarpMessages {
 	}
 
 	static void sendMaxReached(ServerPlayer player, int maxWarps) {
-		player.displayClientMessage(
+		player.sendSystemMessage(
 				getTranslatedText("commands.teleport_commands.warp.max", player,
 						Component.literal(String.valueOf(maxWarps)))
 						.withStyle(ChatFormatting.RED),
