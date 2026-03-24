@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 public class home {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 		commandDispatcher.register(buildSetNode());
+		commandDispatcher.register(buildUpdateNode());
 		commandDispatcher.register(buildTeleportNode());
 		commandDispatcher.register(buildDeleteNode());
 		commandDispatcher.register(buildRenameNode());
@@ -174,6 +175,27 @@ public class home {
 									"commands.teleport_commands.homes.error",
 									() -> HomeCommandSupport.withPlayerStorage(player,
 											playerStorage -> HomeCommandSupport.printHomes(player, playerStorage, page)));
+						}));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildUpdateNode() {
+		return Commands.literal("updatehome")
+				.requires(source -> source.getPlayer() != null)
+				.then(Commands.argument("name", StringArgumentType.string())
+						.suggests(new HomeSuggestionProvider())
+						.executes(context -> {
+							final String name = StringArgumentType.getString(context, "name");
+							final ServerPlayer player = context.getSource().getPlayerOrException();
+
+							if (!HomeMessages.ensureEnabled(player)) {
+								return 1;
+							}
+
+							return HomeMessages.execute(
+									player,
+									"Error while updating a home location! => ",
+									"commands.teleport_commands.home.updateError",
+									() -> HomeMutationActions.updateHome(player, name));
 						}));
 	}
 

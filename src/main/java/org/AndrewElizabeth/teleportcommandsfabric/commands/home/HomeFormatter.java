@@ -84,6 +84,12 @@ final class HomeFormatter {
 						"commands.teleport_commands.common.rename",
 						ChatFormatting.BLUE,
 						new ClickEvent.SuggestCommand("/renamehome " + quotedName + " ")))
+				.append(" ")
+				.append(CommandUiSupport.translatedButton(
+						player,
+						"commands.teleport_commands.common.update",
+						ChatFormatting.YELLOW,
+						new ClickEvent.RunCommand("updatehome " + quotedName)))
 				.append(" ");
 
 		if (!currentHome.getUuid().equals(playerStorage.getDefaultHomeUuid())) {

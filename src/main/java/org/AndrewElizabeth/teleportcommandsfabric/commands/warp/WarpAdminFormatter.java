@@ -46,8 +46,13 @@ final class WarpAdminFormatter {
 						: "commands.teleport_commands.gwarpmap.showOnMap",
 				visible ? ChatFormatting.GRAY : ChatFormatting.GOLD,
 				new ClickEvent.RunCommand("gwarpmap " + quotedName + " " + (visible ? "false" : "true")));
+		MutableComponent resetButton = CommandUiSupport.translatedButton(
+				player,
+				"commands.teleport_commands.common.update",
+				ChatFormatting.YELLOW,
+				new ClickEvent.RunCommand("updatewarp " + quotedName));
 
-		CommandUiSupport.appendNameLine(message, currentWarp.getName(), visibilityState, toggleButton);
+		CommandUiSupport.appendNameLine(message, currentWarp.getName(), visibilityState, toggleButton, resetButton);
 		CommandUiSupport.appendLocationLine(message, player, currentWarp);
 
 		message.append("\n");
