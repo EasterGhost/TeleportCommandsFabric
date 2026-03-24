@@ -41,6 +41,7 @@
 
   "commands.teleport_commands.homes.error": "An error occurred while getting your homes!",
   "commands.teleport_commands.homes.homes": "Homes:",
+  "commands.teleport_commands.homes.title": "Homes",
 
   "commands.teleport_commands.warp.set": "Warp has been set",
   "commands.teleport_commands.warp.disabled": "Warp is currently disabled.",
@@ -68,6 +69,7 @@
 
   "commands.teleport_commands.warps.error": "An error occurred while getting the warps!",
   "commands.teleport_commands.warps.warps": "Warps:",
+  "commands.teleport_commands.warps.title": "Warps",
   "commands.teleport_commands.gwarpmap.error": "An error occurred while getting the warp map list!",
   "commands.teleport_commands.gwarpmap.warps": "Warp map visibility:",
   "commands.teleport_commands.gwarpmap.globalVisible": "[Global Map: On]",
@@ -143,5 +145,13 @@
   "commands.teleport_commands.common.noLocation": "No location has been found!",
   "commands.teleport_commands.common.hoverCopy": "Click to copy!",
   "commands.teleport_commands.common.worldNotFound": "World was not found!",
-  "commands.teleport_commands.common.nameExists": "That name already exists!"
+  "commands.teleport_commands.common.nameExists": "That name already exists!",
+  "commands.teleport_commands.common.page": "Page %0%/%1%",
+  "commands.teleport_commands.common.first": "[<< First]",
+  "commands.teleport_commands.common.prev": "[< Prev]",
+  "commands.teleport_commands.common.jump": "[Jump]",
+  "commands.teleport_commands.common.next": "[Next >]",
+  "commands.teleport_commands.common.last": "[Last >>]",
+  "commands.teleport_commands.common.pagePickerTitle": "%0% pages (%1%/%2%)",
+  "commands.teleport_commands.common.invalidPage": "Invalid page %0%. Valid pages: 1-%1%."
 }

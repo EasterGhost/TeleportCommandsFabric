@@ -5,8 +5,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"ServerStartMixin",
-		"PlayerDeathMixin",
-		"CommandsMixin"
+		"PlayerDeathMixin"
 	],
 	"client": [
 		"client.ClientPlayNetworkHandlerMixin",

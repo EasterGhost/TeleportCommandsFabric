@@ -44,9 +44,13 @@ public abstract class ClientPlayNetworkHandlerMixin {
 
 		return normalized.startsWith("tpaaccept ")
 				|| normalized.startsWith("tpadeny ")
+				|| normalized.equals("homes")
+				|| normalized.startsWith("homes ")
 				|| normalized.startsWith("home ")
 				|| normalized.startsWith("maphome ")
 				|| normalized.startsWith("defaulthome ")
+				|| normalized.equals("warps")
+				|| normalized.startsWith("warps ")
 				|| normalized.startsWith("warp ")
 				|| normalized.startsWith("mapwarp ")
 				|| normalized.startsWith("gwarpmap ")

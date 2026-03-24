@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.CommandExecutionSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager;
 
 import net.minecraft.ChatFormatting;
@@ -19,7 +19,7 @@ final class HomeMessages {
 	}
 
 	static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		player.displayClientMessage(getTranslatedText(key, player).withStyle(formatting), true);
+		CommandExecutionSupport.send(player, key, formatting);
 	}
 
 	static boolean ensureEnabled(ServerPlayer player) {
@@ -54,6 +54,10 @@ final class HomeMessages {
 		send(player, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
 	}
 
+	static void sendInvalidPage(ServerPlayer player, int requestedPage, int totalPages) {
+		CommandExecutionSupport.sendInvalidPage(player, requestedPage, totalPages);
+	}
+
 	static void sendNotFound(ServerPlayer player, ChatFormatting color) {
 		send(player, "commands.teleport_commands.home.notFound", color);
 	}
@@ -75,26 +79,10 @@ final class HomeMessages {
 	}
 
 	static int execute(ServerPlayer player, String errorLogMessage, String errorTranslationKey, HomeAction action) {
-		try {
-			action.run();
-			return 0;
-		} catch (Exception e) {
-			Constants.LOGGER.error(errorLogMessage, e);
-			player.displayClientMessage(
-					getTranslatedText(errorTranslationKey, player)
-							.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
-					true);
-			return 1;
-		}
+		return CommandExecutionSupport.execute(player, errorLogMessage, errorTranslationKey, action::run);
 	}
 
 	static int executeSilently(String errorLogMessage, HomeAction action) {
-		try {
-			action.run();
-			return 0;
-		} catch (Exception e) {
-			Constants.LOGGER.error(errorLogMessage, e);
-			return 1;
-		}
+		return CommandExecutionSupport.executeSilently(errorLogMessage, action::run);
 	}
 }

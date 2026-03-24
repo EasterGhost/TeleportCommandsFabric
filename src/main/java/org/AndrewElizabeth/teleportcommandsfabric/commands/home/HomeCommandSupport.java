@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PagedListCommandSupport;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,13 +40,34 @@ final class HomeCommandSupport {
 	}
 
 	static void printHomes(ServerPlayer player, Player playerStorage) {
-		List<NamedLocation> homes = playerStorage.getHomes();
-		if (homes.isEmpty()) {
-			HomeMessages.sendHomeless(player);
-			return;
-		}
+		printHomes(player, playerStorage, 1);
+	}
 
-		player.displayClientMessage(HomeFormatter.buildHomeList(player, playerStorage, homes), false);
+	static void printHomes(ServerPlayer player, Player playerStorage, int page) {
+		List<NamedLocation> homes = playerStorage.getHomes();
+		PagedListCommandSupport.displayPage(
+				player,
+				homes,
+				page,
+				() -> HomeMessages.sendHomeless(player),
+				(requestedPage, totalPages) -> HomeMessages.sendInvalidPage(player, requestedPage, totalPages),
+				(pageEntries, currentPage, totalPages) -> HomeFormatter.buildHomeList(
+						player,
+						playerStorage,
+						pageEntries,
+						currentPage,
+						totalPages));
+	}
+
+	static void printHomePagePicker(ServerPlayer player, Player playerStorage, int currentPage) {
+		List<NamedLocation> homes = playerStorage.getHomes();
+		PagedListCommandSupport.displayPagePicker(
+				player,
+				homes,
+				currentPage,
+				() -> HomeMessages.sendHomeless(player),
+				(requestedPage, totalPages) -> HomeMessages.sendInvalidPage(player, requestedPage, totalPages),
+				(page, totalPages) -> HomeFormatter.buildHomePagePicker(player, page, totalPages));
 	}
 
 	static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,

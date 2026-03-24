@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 
 public class TeleportCommands implements ModInitializer {
 	public static String MOD_LOADER;
@@ -39,6 +40,10 @@ public class TeleportCommands implements ModInitializer {
 
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.forceSaveOnShutdown();
+			TeleportCommands.SERVER = null;
+		});
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+			registerCommands(dispatcher);
 		});
 		MOD_LOADER = "Fabric";
 	}
