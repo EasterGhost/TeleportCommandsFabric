@@ -23,8 +23,8 @@ public final class XaeroSyncPackets {
 		if (payloadTypesRegistered) {
 			return;
 		}
-		PayloadTypeRegistry.playC2S().register(XaeroSyncRequestPayload.TYPE, XaeroSyncRequestPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(XaeroSyncDataPayload.TYPE, XaeroSyncDataPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(XaeroSyncRequestPayload.TYPE, XaeroSyncRequestPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(XaeroSyncDataPayload.TYPE, XaeroSyncDataPayload.CODEC);
 		payloadTypesRegistered = true;
 	}
 
