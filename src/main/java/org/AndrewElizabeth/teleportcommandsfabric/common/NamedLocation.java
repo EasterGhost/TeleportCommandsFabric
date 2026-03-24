@@ -12,10 +12,10 @@ import java.util.UUID;
 public class NamedLocation {
 	private UUID uuid;
 	private String name;
-	private final int x;
-	private final double y;
-	private final int z;
-	private final String world;
+	private int x;
+	private double y;
+	private int z;
+	private String world;
 	private boolean xaeroVisible;
 
 	public NamedLocation(UUID uuid, String name, int x, double y, int z, String world, boolean xaeroVisible) {
@@ -77,22 +77,28 @@ public class NamedLocation {
 		StorageManager.markDirty();
 	}
 
+	public void setCoordinates(int x, double y, int z, String world) throws Exception {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.world = world;
+		StorageManager.markDirty();
+	}
+
 	public void setXaeroVisible(boolean xaeroVisible) throws Exception {
 		this.xaeroVisible = xaeroVisible;
 		StorageManager.markDirty();
 	}
 
 	public boolean ensureUuid() {
-		UUID normalized = normalizeUuid(uuid);
-		if (normalized.equals(uuid)) {
+		if (uuid != null) {
 			return false;
 		}
-		uuid = normalized;
+		uuid = UUID.randomUUID();
 		return true;
 	}
 
 	private static UUID normalizeUuid(UUID uuid) {
 		return uuid == null ? UUID.randomUUID() : uuid;
 	}
-
 }

@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.STORAGE;
@@ -62,5 +63,29 @@ final class WarpMutationActions {
 			warpToRename.get().setName(newWarpName);
 			WarpMessages.send(player, "commands.teleport_commands.warp.rename");
 		}
+	}
+
+	static void updateWarp(ServerPlayer player, String warpName) throws Exception {
+		String worldString = WorldResolver.getDimensionId(player.level().dimension());
+
+		Optional<NamedLocation> warpToReset = WarpCommandSupport.resolveWarpForCommand(warpName, player, false);
+		if (warpToReset.isPresent()) {
+			if (isSameLocation(player, warpToReset.get(), worldString)) {
+				WarpMessages.send(player, "commands.teleport_commands.warp.updateSame", ChatFormatting.AQUA);
+				return;
+			}
+
+			warpToReset.get().setCoordinates(
+					player.getBlockX(),
+					player.getY(),
+					player.getBlockZ(),
+					worldString);
+			WarpMessages.send(player, "commands.teleport_commands.warp.update");
+		}
+	}
+
+	private static boolean isSameLocation(ServerPlayer player, NamedLocation location, String worldString) {
+		return player.blockPosition().equals(location.getBlockPos())
+				&& Objects.equals(worldString, location.getWorldString());
 	}
 }

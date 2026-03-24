@@ -8,6 +8,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -113,6 +114,38 @@ final class HomeMutationActions {
 			playerStorage.setDefaultHomeByUuid(optionalHome.get().getUuid());
 			HomeMessages.send(player, "commands.teleport_commands.home.default");
 		});
+	}
+
+	static void updateHome(ServerPlayer player, String homeName) throws Exception {
+		String worldString = WorldResolver.getDimensionId(player.level().dimension());
+
+		HomeCommandSupport.withPlayerStorage(player, playerStorage -> {
+			Optional<NamedLocation> optionalHome = HomeCommandSupport.resolveHomeForCommand(
+					playerStorage,
+					homeName,
+					player,
+					ChatFormatting.RED);
+			if (optionalHome.isEmpty()) {
+				return;
+			}
+
+			if (isSameLocation(player, optionalHome.get(), worldString)) {
+				HomeMessages.send(player, "commands.teleport_commands.home.updateSame", ChatFormatting.AQUA);
+				return;
+			}
+
+			optionalHome.get().setCoordinates(
+					player.getBlockX(),
+					player.getY(),
+					player.getBlockZ(),
+					worldString);
+			HomeMessages.send(player, "commands.teleport_commands.home.update");
+		});
+	}
+
+	private static boolean isSameLocation(ServerPlayer player, NamedLocation location, String worldString) {
+		return player.blockPosition().equals(location.getBlockPos())
+				&& Objects.equals(worldString, location.getWorldString());
 	}
 
 }

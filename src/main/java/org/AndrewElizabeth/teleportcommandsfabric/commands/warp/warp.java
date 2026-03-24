@@ -14,6 +14,7 @@ import net.minecraft.server.permissions.Permissions;
 public class warp {
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 		commandDispatcher.register(buildSetNode());
+		commandDispatcher.register(buildUpdateNode());
 		commandDispatcher.register(buildTeleportNode());
 		commandDispatcher.register(buildDeleteNode());
 		commandDispatcher.register(buildRenameNode());
@@ -139,6 +140,27 @@ public class warp {
 									"Error while printing warps!",
 									"commands.teleport_commands.warps.error",
 									() -> WarpCommandSupport.printWarps(context.getSource(), player, page));
+						}));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildUpdateNode() {
+		return Commands.literal("updatewarp")
+				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+				.then(Commands.argument("name", StringArgumentType.string())
+						.suggests(new WarpSuggestionProvider())
+						.executes(context -> {
+							final String name = StringArgumentType.getString(context, "name");
+							final ServerPlayer player = context.getSource().getPlayerOrException();
+
+							if (!WarpMessages.ensureEnabled(player)) {
+								return 1;
+							}
+
+							return WarpMessages.execute(
+									player,
+									"Error while updating the warp location!",
+									"commands.teleport_commands.warp.updateError",
+									() -> WarpMutationActions.updateWarp(player, name));
 						}));
 	}
 

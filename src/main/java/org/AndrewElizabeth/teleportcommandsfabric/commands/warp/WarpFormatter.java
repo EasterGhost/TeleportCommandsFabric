@@ -91,6 +91,12 @@ final class WarpFormatter {
 					.append(" ")
 					.append(CommandUiSupport.translatedButton(
 							player,
+							"commands.teleport_commands.common.update",
+							ChatFormatting.YELLOW,
+							new ClickEvent.RunCommand("updatewarp " + quotedName)))
+					.append(" ")
+					.append(CommandUiSupport.translatedButton(
+							player,
 							"commands.teleport_commands.common.delete",
 							ChatFormatting.RED,
 							new ClickEvent.SuggestCommand("/delwarp " + quotedName)));
