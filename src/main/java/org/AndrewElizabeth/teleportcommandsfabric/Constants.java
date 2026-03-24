@@ -7,7 +7,7 @@ public class Constants {
 	public static final String MOD_ID = "teleport_commands_fabric";
 	public static final String ASSETS_ID = "teleport_commands_fabric";
 	public static final String MOD_NAME = "Teleport Commands Fabric";
-	public static final String VERSION = "1.5";
+	public static final String VERSION = "1.5.1";
 	public static final int CONFIG_VERSION = 2;
 	public static final int STORAGE_VERSION = 3;
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
