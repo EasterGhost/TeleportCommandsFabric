@@ -77,7 +77,8 @@ public final class PaginationCommandSupport {
 		return navigation;
 	}
 
-	public static MutableComponent buildPagePicker(ServerPlayer player, String titleKey, int currentPage, int totalPages,
+	public static MutableComponent buildPagePicker(ServerPlayer player, String titleKey, int currentPage,
+			int totalPages,
 			String listCommand) {
 		MutableComponent picker = Component.empty();
 		picker.append(getTranslatedText(

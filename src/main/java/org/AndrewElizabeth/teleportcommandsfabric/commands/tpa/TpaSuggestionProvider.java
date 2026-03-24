@@ -5,13 +5,14 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.SuggestionCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.services.TpaService;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,13 +23,14 @@ public class TpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 	@Override
 	public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context,
 			SuggestionsBuilder builder) {
-		try {
+		return SuggestionCommandSupport.suggest(builder, "Error getting tpa suggestions! ", () -> {
 			ServerPlayer player = context.getSource().getPlayerOrException();
 
 			List<TpaService.Request> playerTpaList = TpaService.getRequests().stream()
 					.filter(tpa -> Objects.equals(player.getStringUUID(), tpa.recPlayer))
 					.toList();
 			PlayerList playerList = context.getSource().getServer().getPlayerList();
+			List<String> names = new ArrayList<>();
 
 			for (TpaService.Request tpaEntry : playerTpaList) {
 				ServerPlayer requestingPlayer = playerList.getPlayer(UUID.fromString(tpaEntry.initPlayer));
@@ -39,14 +41,10 @@ public class TpaSuggestionProvider implements SuggestionProvider<CommandSourceSt
 				Optional<String> recPlayerName = Optional.ofNullable(requestingPlayer.getName().getString());
 
 				if (recPlayerName.isPresent()) {
-					builder.suggest(recPlayerName.get());
+					names.add(recPlayerName.get());
 				}
 			}
-
-			return builder.buildFuture();
-		} catch (Exception e) {
-			Constants.LOGGER.error("Error getting tpa suggestions! ", e);
-			return builder.buildFuture();
-		}
+			return names;
+		});
 	}
 }

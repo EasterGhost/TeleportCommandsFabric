@@ -2,7 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PagedListCommandSupport;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,41 +45,29 @@ final class HomeCommandSupport {
 
 	static void printHomes(ServerPlayer player, Player playerStorage, int page) {
 		List<NamedLocation> homes = playerStorage.getHomes();
-		if (homes.isEmpty()) {
-			HomeMessages.sendHomeless(player);
-			return;
-		}
-
-		int totalPages = PaginationCommandSupport.getTotalPages(homes.size());
-		if (!PaginationCommandSupport.isValidPage(page, totalPages)) {
-			HomeMessages.sendInvalidPage(player, page, totalPages);
-			return;
-		}
-
-		player.displayClientMessage(
-				HomeFormatter.buildHomeList(
+		PagedListCommandSupport.displayPage(
+				player,
+				homes,
+				page,
+				() -> HomeMessages.sendHomeless(player),
+				(requestedPage, totalPages) -> HomeMessages.sendInvalidPage(player, requestedPage, totalPages),
+				(pageEntries, currentPage, totalPages) -> HomeFormatter.buildHomeList(
 						player,
 						playerStorage,
-						PaginationCommandSupport.getPageEntries(homes, page),
-						page,
-						totalPages),
-				false);
+						pageEntries,
+						currentPage,
+						totalPages));
 	}
 
 	static void printHomePagePicker(ServerPlayer player, Player playerStorage, int currentPage) {
 		List<NamedLocation> homes = playerStorage.getHomes();
-		if (homes.isEmpty()) {
-			HomeMessages.sendHomeless(player);
-			return;
-		}
-
-		int totalPages = PaginationCommandSupport.getTotalPages(homes.size());
-		if (!PaginationCommandSupport.isValidPage(currentPage, totalPages)) {
-			HomeMessages.sendInvalidPage(player, currentPage, totalPages);
-			return;
-		}
-
-		player.displayClientMessage(HomeFormatter.buildHomePagePicker(player, currentPage, totalPages), false);
+		PagedListCommandSupport.displayPagePicker(
+				player,
+				homes,
+				currentPage,
+				() -> HomeMessages.sendHomeless(player),
+				(requestedPage, totalPages) -> HomeMessages.sendInvalidPage(player, requestedPage, totalPages),
+				(page, totalPages) -> HomeFormatter.buildHomePagePicker(player, page, totalPages));
 	}
 
 	static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,

@@ -1,13 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.CommandUiSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,74 +58,54 @@ final class WarpFormatter {
 
 	private static void appendWarpEntry(MutableComponent message, CommandSourceStack source, ServerPlayer player,
 			NamedLocation currentWarp, int currentPage) {
-		String name = String.format("  - %s", currentWarp.getName());
 		String quotedName = quoteCommandArgument(currentWarp.getName());
-		String coords = String.format("[X%d Y%d Z%d]", currentWarp.getX(), currentWarp.getY(), currentWarp.getZ());
-		String dimension = String.format(" [%s]", currentWarp.getWorldString());
 		boolean canModify = source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
 		boolean playerVisible = isVisibleForPlayer(player, currentWarp.getUuid());
 
-		message.append("\n");
-		message.append(Component.literal(name).withStyle(ChatFormatting.AQUA));
-		message.append(" ")
-				.append(getTranslatedText(
+		CommandUiSupport.appendNameLine(
+				message,
+				currentWarp.getName(),
+				getTranslatedText(
 						playerVisible
 								? "commands.teleport_commands.common.mapVisible"
 								: "commands.teleport_commands.common.mapHidden",
 						player)
 						.withStyle(playerVisible ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY));
-
-		message.append("\n");
-		message.append(Component.literal("     | ")
-				.withStyle(ChatFormatting.AQUA))
-				.append(Component.literal(coords)
-						.withStyle(ChatFormatting.LIGHT_PURPLE)
-						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.CopyToClipboard(
-										String.format("X%d Y%d Z%d", currentWarp.getX(), currentWarp.getY(),
-												currentWarp.getZ()))))
-						.withStyle(style -> style.withHoverEvent(
-								new HoverEvent.ShowText(
-										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))))
-				.append(Component.literal(dimension)
-						.withStyle(ChatFormatting.DARK_PURPLE)
-						.withStyle(style -> style
-								.withClickEvent(new ClickEvent.CopyToClipboard(currentWarp.getWorldString())))
-						.withStyle(style -> style.withHoverEvent(
-								new HoverEvent.ShowText(
-										getTranslatedText("commands.teleport_commands.common.hoverCopy", player)))));
+		CommandUiSupport.appendLocationLine(message, player, currentWarp);
 
 		message.append("\n");
 		message.append(Component.literal("     | ").withStyle(ChatFormatting.AQUA))
-				.append(getTranslatedText("commands.teleport_commands.common.tp", player)
-						.withStyle(ChatFormatting.GREEN)
-						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.RunCommand("warp " + quotedName))))
+				.append(CommandUiSupport.translatedButton(
+						player,
+						"commands.teleport_commands.common.tp",
+						ChatFormatting.GREEN,
+						new ClickEvent.RunCommand("warp " + quotedName)))
 				.append(" ");
 
 		if (canModify) {
-			message.append(getTranslatedText("commands.teleport_commands.common.rename", player)
-					.withStyle(ChatFormatting.BLUE)
-					.withStyle(style -> style.withClickEvent(
-							new ClickEvent.SuggestCommand("/renamewarp " + quotedName + " "))))
+			message.append(CommandUiSupport.translatedButton(
+					player,
+					"commands.teleport_commands.common.rename",
+					ChatFormatting.BLUE,
+					new ClickEvent.SuggestCommand("/renamewarp " + quotedName + " ")))
 					.append(" ")
-					.append(getTranslatedText("commands.teleport_commands.common.delete", player)
-							.withStyle(ChatFormatting.RED)
-							.withStyle(style -> style.withClickEvent(
-									new ClickEvent.SuggestCommand("/delwarp " + quotedName))));
+					.append(CommandUiSupport.translatedButton(
+							player,
+							"commands.teleport_commands.common.delete",
+							ChatFormatting.RED,
+							new ClickEvent.SuggestCommand("/delwarp " + quotedName)));
 		}
 
 		message.append(" ")
-				.append(getTranslatedText(
+				.append(CommandUiSupport.translatedButton(
+						player,
 						playerVisible
 								? "commands.teleport_commands.common.hideFromMap"
 								: "commands.teleport_commands.common.showOnMap",
-						player)
-						.withStyle(playerVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
-						.withStyle(style -> style.withClickEvent(
-								new ClickEvent.RunCommand(
-										"teleportcommandsfabric:mapwarp " + quotedName + " "
-												+ (playerVisible ? "false" : "true") + " " + currentPage))));
+						playerVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD,
+						new ClickEvent.RunCommand(
+								"teleportcommandsfabric:mapwarp " + quotedName + " "
+										+ (playerVisible ? "false" : "true") + " " + currentPage)));
 
 		message.append("\n");
 	}

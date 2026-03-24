@@ -1,7 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PagedListCommandSupport;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,25 +21,18 @@ final class WarpCommandSupport {
 
 	static void printWarps(CommandSourceStack source, ServerPlayer player, int page) {
 		List<NamedLocation> warps = STORAGE.getWarps();
-		if (warps.isEmpty()) {
-			WarpMessages.sendHomeless(player);
-			return;
-		}
-
-		int totalPages = PaginationCommandSupport.getTotalPages(warps.size());
-		if (!PaginationCommandSupport.isValidPage(page, totalPages)) {
-			WarpMessages.sendInvalidPage(player, page, totalPages);
-			return;
-		}
-
-		player.displayClientMessage(
-				WarpFormatter.buildWarpList(
+		PagedListCommandSupport.displayPage(
+				player,
+				warps,
+				page,
+				() -> WarpMessages.sendHomeless(player),
+				(requestedPage, totalPages) -> WarpMessages.sendInvalidPage(player, requestedPage, totalPages),
+				(pageEntries, currentPage, totalPages) -> WarpFormatter.buildWarpList(
 						source,
 						player,
-						PaginationCommandSupport.getPageEntries(warps, page),
-						page,
-						totalPages),
-				false);
+						pageEntries,
+						currentPage,
+						totalPages));
 	}
 
 	static void printWarps(ServerPlayer player) {
@@ -52,18 +45,13 @@ final class WarpCommandSupport {
 
 	static void printWarpPagePicker(ServerPlayer player, int currentPage) {
 		List<NamedLocation> warps = STORAGE.getWarps();
-		if (warps.isEmpty()) {
-			WarpMessages.sendHomeless(player);
-			return;
-		}
-
-		int totalPages = PaginationCommandSupport.getTotalPages(warps.size());
-		if (!PaginationCommandSupport.isValidPage(currentPage, totalPages)) {
-			WarpMessages.sendInvalidPage(player, currentPage, totalPages);
-			return;
-		}
-
-		player.displayClientMessage(WarpFormatter.buildWarpPagePicker(player, currentPage, totalPages), false);
+		PagedListCommandSupport.displayPagePicker(
+				player,
+				warps,
+				currentPage,
+				() -> WarpMessages.sendHomeless(player),
+				(requestedPage, totalPages) -> WarpMessages.sendInvalidPage(player, requestedPage, totalPages),
+				(page, totalPages) -> WarpFormatter.buildWarpPagePicker(player, page, totalPages));
 	}
 
 	static Optional<NamedLocation> resolveWarpForCommand(String warpName, ServerPlayer player, boolean silent) {

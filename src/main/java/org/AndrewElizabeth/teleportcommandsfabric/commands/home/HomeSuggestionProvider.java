@@ -5,9 +5,9 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.SuggestionCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -20,20 +20,17 @@ public class HomeSuggestionProvider implements SuggestionProvider<CommandSourceS
 	@Override
 	public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context,
 			SuggestionsBuilder builder) {
-		try {
+		return SuggestionCommandSupport.suggest(builder, "Error getting home suggestions! ", () -> {
 			ServerPlayer player = context.getSource().getPlayerOrException();
 			Optional<Player> optionalPlayerStorage = StorageManager.STORAGE.getPlayer(player.getStringUUID());
-
-			if (optionalPlayerStorage.isPresent()) {
-				Player playerStorage = optionalPlayerStorage.get();
-				for (NamedLocation currentHome : playerStorage.getHomes()) {
-					builder.suggest(currentHome.getName());
-				}
+			if (optionalPlayerStorage.isEmpty()) {
+				return java.util.List.of();
 			}
-			return builder.buildFuture();
-		} catch (Exception e) {
-			Constants.LOGGER.error("Error getting home suggestions! ", e);
-			return builder.buildFuture();
-		}
+
+			Player playerStorage = optionalPlayerStorage.get();
+			return playerStorage.getHomes().stream()
+					.map(NamedLocation::getName)
+					.toList();
+		});
 	}
 }
