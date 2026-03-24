@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationComm
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.CommandUiSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
@@ -13,7 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper.quoteCommandArgument;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 final class HomeFormatter {
@@ -56,7 +56,7 @@ final class HomeFormatter {
 
 	private static void appendHomeEntry(MutableComponent message, ServerPlayer player, Player playerStorage,
 			NamedLocation currentHome, int currentPage) {
-		String quotedName = quoteCommandArgument(currentHome.getName());
+		String quotedName = CommandHelper.quoteCommandArgument(currentHome.getName());
 		MutableComponent defaultMarker = currentHome.getUuid().equals(playerStorage.getDefaultHomeUuid())
 				? getTranslatedText("commands.teleport_commands.common.default", player)
 						.withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)

@@ -156,7 +156,8 @@ public class home {
 							player,
 							"Error while printing the homes! => ",
 							"commands.teleport_commands.homes.error",
-							() -> printHomes(player));
+							() -> HomeCommandSupport.withPlayerStorage(player,
+									playerStorage -> HomeCommandSupport.printHomes(player, playerStorage)));
 				})
 				.then(Commands.argument("page", IntegerArgumentType.integer())
 						.executes(context -> {
@@ -171,7 +172,8 @@ public class home {
 									player,
 									"Error while printing the homes! => ",
 									"commands.teleport_commands.homes.error",
-									() -> printHomes(player, page));
+									() -> HomeCommandSupport.withPlayerStorage(player,
+											playerStorage -> HomeCommandSupport.printHomes(player, playerStorage, page)));
 						}));
 	}
 
@@ -191,18 +193,10 @@ public class home {
 									player,
 									"Error while printing the home page picker! => ",
 									"commands.teleport_commands.homes.error",
-									() -> printHomePagePicker(player, page));
+									() -> HomeCommandSupport.withPlayerStorage(player,
+											playerStorage -> HomeCommandSupport.printHomePagePicker(player, playerStorage,
+													page)));
 						}));
-	}
-
-	private static void printHomePagePicker(ServerPlayer player, int page) throws Exception {
-		HomeCommandSupport.withPlayerStorage(player,
-				playerStorage -> HomeCommandSupport.printHomePagePicker(player, playerStorage, page));
-	}
-
-	private static void printHomes(ServerPlayer player, int page) throws Exception {
-		HomeCommandSupport.withPlayerStorage(player,
-				playerStorage -> HomeCommandSupport.printHomes(player, playerStorage, page));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode() {
@@ -241,11 +235,6 @@ public class home {
 
 											return handleSilentMapVisibility(player, homeName, visible, page);
 										}))));
-	}
-
-	private static void printHomes(ServerPlayer player) throws Exception {
-		HomeCommandSupport.withPlayerStorage(player,
-				playerStorage -> HomeCommandSupport.printHomes(player, playerStorage));
 	}
 
 	private static int handleMapVisibility(ServerPlayer player, String homeName, boolean visible) {

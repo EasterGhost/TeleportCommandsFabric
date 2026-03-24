@@ -21,7 +21,7 @@ final class WarpVisibilityActions {
 				() -> WarpMessages.sendPlayerMapVisibilityAlready(player, visible),
 				() -> {
 					WarpMessages.sendPlayerMapVisibilityChanged(player, visible);
-					WarpCommandSupport.printWarps(player);
+					WarpCommandSupport.printWarps(player, 1);
 				}));
 	}
 

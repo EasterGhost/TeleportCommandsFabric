@@ -35,10 +35,6 @@ final class WarpCommandSupport {
 						totalPages));
 	}
 
-	static void printWarps(ServerPlayer player) {
-		printWarps(player.createCommandSourceStack(), player, 1);
-	}
-
 	static void printWarps(ServerPlayer player, int page) {
 		printWarps(player.createCommandSourceStack(), player, page);
 	}

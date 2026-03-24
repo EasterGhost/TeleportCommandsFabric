@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.CommandUiSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,7 +16,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.List;
 import java.util.UUID;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper.quoteCommandArgument;
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 final class WarpFormatter {
@@ -58,7 +58,7 @@ final class WarpFormatter {
 
 	private static void appendWarpEntry(MutableComponent message, CommandSourceStack source, ServerPlayer player,
 			NamedLocation currentWarp, int currentPage) {
-		String quotedName = quoteCommandArgument(currentWarp.getName());
+		String quotedName = CommandHelper.quoteCommandArgument(currentWarp.getName());
 		boolean canModify = source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
 		boolean playerVisible = isVisibleForPlayer(player, currentWarp.getUuid());
 
