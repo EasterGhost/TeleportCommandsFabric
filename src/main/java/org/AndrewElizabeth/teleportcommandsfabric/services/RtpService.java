@@ -14,10 +14,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
@@ -25,7 +25,7 @@ public final class RtpService {
 
 	private static final int MAX_ATTEMPTS = 4096;
 	private static final int ATTEMPTS_PER_TICK = 256;
-	private static final Map<UUID, RtpSearchJob> SEARCH_JOBS = new ConcurrentHashMap<>();
+	private static final Map<UUID, RtpSearchJob> SEARCH_JOBS = new HashMap<>();
 	private static boolean tickHookRegistered = false;
 
 	private RtpService() {
