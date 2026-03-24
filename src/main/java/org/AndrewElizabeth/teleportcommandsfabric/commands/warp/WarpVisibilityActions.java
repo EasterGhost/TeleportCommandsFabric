@@ -37,6 +37,17 @@ final class WarpVisibilityActions {
 				}));
 	}
 
+	static void setPlayerVisibilitySilentlyAndShowPage(ServerPlayer player, String warpName, boolean visible, int page)
+			throws Exception {
+		withPlayerData(player, playerData -> VisibilityCommandSupport.update(
+				visible,
+				() -> WarpCommandSupport.resolveWarpForCommand(warpName, player, true),
+				warp -> !playerData.isWarpHidden(warp.getUuid()),
+				(warp, desiredVisible) -> updatePlayerWarpVisibility(playerData, warp, desiredVisible),
+				() -> WarpCommandSupport.printWarps(player, page),
+				() -> WarpCommandSupport.printWarps(player, page)));
+	}
+
 	static void setGlobalVisibility(ServerPlayer player, String warpName, boolean visible) throws Exception {
 		VisibilityCommandSupport.update(
 				visible,

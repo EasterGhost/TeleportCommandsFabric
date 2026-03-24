@@ -39,6 +39,7 @@ public class TeleportCommands implements ModInitializer {
 
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.forceSaveOnShutdown();
+			TeleportCommands.SERVER = null;
 		});
 		MOD_LOADER = "Fabric";
 	}

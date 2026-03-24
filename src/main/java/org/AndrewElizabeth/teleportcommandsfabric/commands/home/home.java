@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
@@ -17,6 +18,7 @@ public class home {
 		commandDispatcher.register(buildRenameNode());
 		commandDispatcher.register(buildDefaultNode());
 		commandDispatcher.register(buildListNode());
+		commandDispatcher.register(buildPagePickerNode());
 		commandDispatcher.register(buildMapVisibilityNode());
 		commandDispatcher.register(buildSilentMapVisibilityNode());
 	}
@@ -155,7 +157,52 @@ public class home {
 							"Error while printing the homes! => ",
 							"commands.teleport_commands.homes.error",
 							() -> printHomes(player));
-				});
+				})
+				.then(Commands.argument("page", IntegerArgumentType.integer())
+						.executes(context -> {
+							final ServerPlayer player = context.getSource().getPlayerOrException();
+							final int page = IntegerArgumentType.getInteger(context, "page");
+
+							if (!HomeMessages.ensureEnabled(player)) {
+								return 1;
+							}
+
+							return HomeMessages.execute(
+									player,
+									"Error while printing the homes! => ",
+									"commands.teleport_commands.homes.error",
+									() -> printHomes(player, page));
+						}));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildPagePickerNode() {
+		return Commands.literal("teleportcommandsfabric:homespages")
+				.requires(source -> source.getPlayer() != null)
+				.then(Commands.argument("page", IntegerArgumentType.integer())
+						.executes(context -> {
+							final ServerPlayer player = context.getSource().getPlayerOrException();
+							final int page = IntegerArgumentType.getInteger(context, "page");
+
+							if (!HomeMessages.ensureEnabled(player)) {
+								return 1;
+							}
+
+							return HomeMessages.execute(
+									player,
+									"Error while printing the home page picker! => ",
+									"commands.teleport_commands.homes.error",
+									() -> printHomePagePicker(player, page));
+						}));
+	}
+
+	private static void printHomePagePicker(ServerPlayer player, int page) throws Exception {
+		HomeCommandSupport.withPlayerStorage(player,
+				playerStorage -> HomeCommandSupport.printHomePagePicker(player, playerStorage, page));
+	}
+
+	private static void printHomes(ServerPlayer player, int page) throws Exception {
+		HomeCommandSupport.withPlayerStorage(player,
+				playerStorage -> HomeCommandSupport.printHomes(player, playerStorage, page));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode() {
@@ -184,7 +231,16 @@ public class home {
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									return handleSilentMapVisibility(player, homeName, visible);
-								})));
+								})
+								.then(Commands.argument("page", IntegerArgumentType.integer())
+										.executes(context -> {
+											final ServerPlayer player = context.getSource().getPlayerOrException();
+											final String homeName = StringArgumentType.getString(context, "name");
+											final boolean visible = BoolArgumentType.getBool(context, "visible");
+											final int page = IntegerArgumentType.getInteger(context, "page");
+
+											return handleSilentMapVisibility(player, homeName, visible, page);
+										}))));
 	}
 
 	private static void printHomes(ServerPlayer player) throws Exception {
@@ -212,6 +268,16 @@ public class home {
 		return HomeMessages.executeSilently(
 				"Error while updating home Xaero visibility! => ",
 				() -> HomeVisibilityActions.setVisibilitySilently(player, homeName, visible));
+	}
+
+	private static int handleSilentMapVisibility(ServerPlayer player, String homeName, boolean visible, int page) {
+		if (!org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG.getHome().isEnabled()) {
+			return 1;
+		}
+
+		return HomeMessages.executeSilently(
+				"Error while updating home Xaero visibility! => ",
+				() -> HomeVisibilityActions.setVisibilitySilentlyAndShowPage(player, homeName, visible, page));
 	}
 
 }

@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,13 +40,46 @@ final class HomeCommandSupport {
 	}
 
 	static void printHomes(ServerPlayer player, Player playerStorage) {
+		printHomes(player, playerStorage, 1);
+	}
+
+	static void printHomes(ServerPlayer player, Player playerStorage, int page) {
 		List<NamedLocation> homes = playerStorage.getHomes();
 		if (homes.isEmpty()) {
 			HomeMessages.sendHomeless(player);
 			return;
 		}
 
-		player.displayClientMessage(HomeFormatter.buildHomeList(player, playerStorage, homes), false);
+		int totalPages = PaginationCommandSupport.getTotalPages(homes.size());
+		if (!PaginationCommandSupport.isValidPage(page, totalPages)) {
+			HomeMessages.sendInvalidPage(player, page, totalPages);
+			return;
+		}
+
+		player.displayClientMessage(
+				HomeFormatter.buildHomeList(
+						player,
+						playerStorage,
+						PaginationCommandSupport.getPageEntries(homes, page),
+						page,
+						totalPages),
+				false);
+	}
+
+	static void printHomePagePicker(ServerPlayer player, Player playerStorage, int currentPage) {
+		List<NamedLocation> homes = playerStorage.getHomes();
+		if (homes.isEmpty()) {
+			HomeMessages.sendHomeless(player);
+			return;
+		}
+
+		int totalPages = PaginationCommandSupport.getTotalPages(homes.size());
+		if (!PaginationCommandSupport.isValidPage(currentPage, totalPages)) {
+			HomeMessages.sendInvalidPage(player, currentPage, totalPages);
+			return;
+		}
+
+		player.displayClientMessage(HomeFormatter.buildHomePagePicker(player, currentPage, totalPages), false);
 	}
 
 	static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,

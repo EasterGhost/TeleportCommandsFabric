@@ -54,6 +54,15 @@ final class HomeMessages {
 		send(player, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
 	}
 
+	static void sendInvalidPage(ServerPlayer player, int requestedPage, int totalPages) {
+		player.displayClientMessage(
+				getTranslatedText("commands.teleport_commands.common.invalidPage", player,
+						Component.literal(String.valueOf(requestedPage)),
+						Component.literal(String.valueOf(totalPages)))
+						.withStyle(ChatFormatting.RED),
+				true);
+	}
+
 	static void sendNotFound(ServerPlayer player, ChatFormatting color) {
 		send(player, "commands.teleport_commands.home.notFound", color);
 	}

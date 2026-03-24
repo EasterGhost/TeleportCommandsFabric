@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
@@ -17,6 +18,7 @@ public class warp {
 		commandDispatcher.register(buildDeleteNode());
 		commandDispatcher.register(buildRenameNode());
 		commandDispatcher.register(buildListNode());
+		commandDispatcher.register(buildPagePickerNode());
 		commandDispatcher.register(buildMapVisibilityNode());
 		commandDispatcher.register(buildSilentMapVisibilityNode());
 		commandDispatcher.register(buildAdminMapListNode());
@@ -122,7 +124,42 @@ public class warp {
 							"Error while printing warps!",
 							"commands.teleport_commands.warps.error",
 							() -> WarpCommandSupport.printWarps(context.getSource(), player));
-				});
+				})
+				.then(Commands.argument("page", IntegerArgumentType.integer())
+						.executes(context -> {
+							final ServerPlayer player = context.getSource().getPlayerOrException();
+							final int page = IntegerArgumentType.getInteger(context, "page");
+
+							if (!WarpMessages.ensureEnabled(player)) {
+								return 1;
+							}
+
+							return WarpMessages.execute(
+									player,
+									"Error while printing warps!",
+									"commands.teleport_commands.warps.error",
+									() -> WarpCommandSupport.printWarps(context.getSource(), player, page));
+						}));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildPagePickerNode() {
+		return Commands.literal("teleportcommandsfabric:warpspages")
+				.requires(source -> source.getPlayer() != null)
+				.then(Commands.argument("page", IntegerArgumentType.integer())
+						.executes(context -> {
+							final ServerPlayer player = context.getSource().getPlayerOrException();
+							final int page = IntegerArgumentType.getInteger(context, "page");
+
+							if (!WarpMessages.ensureEnabled(player)) {
+								return 1;
+							}
+
+							return WarpMessages.execute(
+									player,
+									"Error while printing the warp page picker!",
+									"commands.teleport_commands.warps.error",
+									() -> WarpCommandSupport.printWarpPagePicker(player, page));
+						}));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode() {
@@ -151,7 +188,16 @@ public class warp {
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									return handleSilentMapVisibility(player, warpName, visible);
-								})));
+								})
+								.then(Commands.argument("page", IntegerArgumentType.integer())
+										.executes(context -> {
+											final ServerPlayer player = context.getSource().getPlayerOrException();
+											final String warpName = StringArgumentType.getString(context, "name");
+											final boolean visible = BoolArgumentType.getBool(context, "visible");
+											final int page = IntegerArgumentType.getInteger(context, "page");
+
+											return handleSilentMapVisibility(player, warpName, visible, page);
+										}))));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildAdminMapListNode() {
@@ -211,5 +257,15 @@ public class warp {
 		return WarpMessages.executeSilently(
 				"Error while updating warp Xaero visibility!",
 				() -> WarpVisibilityActions.setPlayerVisibilitySilently(player, warpName, visible));
+	}
+
+	private static int handleSilentMapVisibility(ServerPlayer player, String warpName, boolean visible, int page) {
+		if (!org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG.getWarp().isEnabled()) {
+			return 1;
+		}
+
+		return WarpMessages.executeSilently(
+				"Error while updating warp Xaero visibility!",
+				() -> WarpVisibilityActions.setPlayerVisibilitySilentlyAndShowPage(player, warpName, visible, page));
 	}
 }

@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 
@@ -16,23 +17,45 @@ import static org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper.quo
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 final class HomeFormatter {
+	private static final String HOME_LIST_COMMAND = "homes";
+	private static final String HOME_PAGE_PICKER_COMMAND = "teleportcommandsfabric:homespages";
+
 	private HomeFormatter() {
 	}
 
-	static MutableComponent buildHomeList(ServerPlayer player, Player playerStorage, List<NamedLocation> homes) {
+	static MutableComponent buildHomeList(ServerPlayer player, Player playerStorage, List<NamedLocation> homes,
+			int currentPage, int totalPages) {
 		MutableComponent message = Component.empty();
-		message.append(getTranslatedText("commands.teleport_commands.homes.homes", player)
-				.withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
+		message.append(PaginationCommandSupport.buildHeader(
+				player,
+				"commands.teleport_commands.homes.title",
+				currentPage,
+				totalPages));
 
 		for (NamedLocation currentHome : homes) {
-			appendHomeEntry(message, player, playerStorage, currentHome);
+			appendHomeEntry(message, player, playerStorage, currentHome, currentPage);
 		}
 
+		message.append(PaginationCommandSupport.buildNavigation(
+				player,
+				currentPage,
+				totalPages,
+				HOME_LIST_COMMAND,
+				HOME_PAGE_PICKER_COMMAND));
 		return message;
 	}
 
+	static MutableComponent buildHomePagePicker(ServerPlayer player, int currentPage, int totalPages) {
+		return PaginationCommandSupport.buildPagePicker(
+				player,
+				"commands.teleport_commands.homes.title",
+				currentPage,
+				totalPages,
+				HOME_LIST_COMMAND);
+	}
+
 	private static void appendHomeEntry(MutableComponent message, ServerPlayer player, Player playerStorage,
-			NamedLocation currentHome) {
+			NamedLocation currentHome, int currentPage) {
 		String name = String.format("  - %s", currentHome.getName());
 		String quotedName = quoteCommandArgument(currentHome.getName());
 		String coords = String.format("[X%d Y%d Z%d]", currentHome.getX(), currentHome.getY(), currentHome.getZ());
@@ -110,8 +133,9 @@ final class HomeFormatter {
 						.withStyle(currentHome.isXaeroVisible() ? ChatFormatting.GRAY : ChatFormatting.GOLD)
 						.withStyle(style -> style.withClickEvent(
 								new ClickEvent.RunCommand(
-										"maphome " + quotedName + " "
-												+ (currentHome.isXaeroVisible() ? "false" : "true")))));
+										"teleportcommandsfabric:maphome " + quotedName + " "
+												+ (currentHome.isXaeroVisible() ? "false" : "true") + " "
+												+ currentPage))));
 
 		message.append("\n");
 	}

@@ -58,6 +58,15 @@ final class WarpMessages {
 		send(player, "commands.teleport_commands.warp.deletedInvalid", ChatFormatting.YELLOW);
 	}
 
+	static void sendInvalidPage(ServerPlayer player, int requestedPage, int totalPages) {
+		player.displayClientMessage(
+				getTranslatedText("commands.teleport_commands.common.invalidPage", player,
+						Component.literal(String.valueOf(requestedPage)),
+						Component.literal(String.valueOf(totalPages)))
+						.withStyle(ChatFormatting.RED),
+				true);
+	}
+
 	static void sendMapVisibilityAlready(ServerPlayer player, boolean visible) {
 		send(player,
 				visible

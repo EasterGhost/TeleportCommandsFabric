@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 
 import net.minecraft.ChatFormatting;
@@ -18,23 +19,45 @@ import static org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper.quo
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 final class WarpFormatter {
+	private static final String WARP_LIST_COMMAND = "warps";
+	private static final String WARP_PAGE_PICKER_COMMAND = "teleportcommandsfabric:warpspages";
+
 	private WarpFormatter() {
 	}
 
-	static MutableComponent buildWarpList(CommandSourceStack source, ServerPlayer player, List<NamedLocation> warps) {
+	static MutableComponent buildWarpList(CommandSourceStack source, ServerPlayer player, List<NamedLocation> warps,
+			int currentPage, int totalPages) {
 		MutableComponent message = Component.empty();
-		message.append(getTranslatedText("commands.teleport_commands.warps.warps", player)
-				.withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
+		message.append(PaginationCommandSupport.buildHeader(
+				player,
+				"commands.teleport_commands.warps.title",
+				currentPage,
+				totalPages));
 
 		for (NamedLocation currentWarp : warps) {
-			appendWarpEntry(message, source, player, currentWarp);
+			appendWarpEntry(message, source, player, currentWarp, currentPage);
 		}
 
+		message.append(PaginationCommandSupport.buildNavigation(
+				player,
+				currentPage,
+				totalPages,
+				WARP_LIST_COMMAND,
+				WARP_PAGE_PICKER_COMMAND));
 		return message;
 	}
 
+	static MutableComponent buildWarpPagePicker(ServerPlayer player, int currentPage, int totalPages) {
+		return PaginationCommandSupport.buildPagePicker(
+				player,
+				"commands.teleport_commands.warps.title",
+				currentPage,
+				totalPages,
+				WARP_LIST_COMMAND);
+	}
+
 	private static void appendWarpEntry(MutableComponent message, CommandSourceStack source, ServerPlayer player,
-			NamedLocation currentWarp) {
+			NamedLocation currentWarp, int currentPage) {
 		String name = String.format("  - %s", currentWarp.getName());
 		String quotedName = quoteCommandArgument(currentWarp.getName());
 		String coords = String.format("[X%d Y%d Z%d]", currentWarp.getX(), currentWarp.getY(), currentWarp.getZ());
@@ -101,7 +124,8 @@ final class WarpFormatter {
 						.withStyle(playerVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD)
 						.withStyle(style -> style.withClickEvent(
 								new ClickEvent.RunCommand(
-										"mapwarp " + quotedName + " " + (playerVisible ? "false" : "true")))));
+										"teleportcommandsfabric:mapwarp " + quotedName + " "
+												+ (playerVisible ? "false" : "true") + " " + currentPage))));
 
 		message.append("\n");
 	}
