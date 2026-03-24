@@ -168,11 +168,11 @@ public final class TeleportService {
 	}
 
 	private static List<ChunkPos> collectChunkSquare(BlockPos centerPos, int radiusChunks) {
-		ChunkPos center = new ChunkPos(centerPos);
+		ChunkPos center = ChunkPos.containing(centerPos);
 		List<ChunkPos> result = new ArrayList<>((radiusChunks * 2 + 1) * (radiusChunks * 2 + 1));
 		for (int dx = -radiusChunks; dx <= radiusChunks; dx++) {
 			for (int dz = -radiusChunks; dz <= radiusChunks; dz++) {
-				result.add(new ChunkPos(center.x + dx, center.z + dz));
+				result.add(new ChunkPos(center.x() + dx, center.z() + dz));
 			}
 		}
 		return result;
@@ -181,7 +181,7 @@ public final class TeleportService {
 	private static void issuePreloadTickets(ServerLevel world, List<ChunkPos> chunks) {
 		for (ChunkPos chunk : chunks) {
 			world.getChunkSource().addTicket(new Ticket(PRELOAD_TICKET_TYPE, PRELOAD_TICKET_LEVEL), chunk);
-			world.getChunk(chunk.x, chunk.z);
+			world.getChunk(chunk.x(), chunk.z());
 		}
 	}
 
