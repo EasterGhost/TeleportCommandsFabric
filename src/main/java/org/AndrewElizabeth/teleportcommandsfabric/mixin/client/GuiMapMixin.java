@@ -1,7 +1,5 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -41,21 +39,29 @@ public class GuiMapMixin {
 				continue;
 			}
 
-			RightClickOption replacement = new RightClickOption(
-					TELEPORT_OPTION_KEY,
-					optionAccessor.tpc$getIndex(),
-					optionAccessor.tpc$getTarget()) {
-				@Override
-				public void onAction(Screen parent) {
-					Minecraft mc = Minecraft.getInstance();
-					if (mc.player == null || mc.player.connection == null) {
-						return;
-					}
-					mc.player.connection.sendCommand(command);
-				}
-			};
-			replacement.setActive(option.isActive());
-			options.set(i, replacement);
+			/*
+			 * LEGACY(kept): RightClickOption replacement path.
+			 *
+			 * RightClickOption replacement = new RightClickOption(
+			 * 		TELEPORT_OPTION_KEY,
+			 * 		optionAccessor.tpc$getIndex(),
+			 * 		optionAccessor.tpc$getTarget()) {
+			 * 	@Override
+			 * 	public void onAction(Screen parent) {
+			 * 		Minecraft mc = Minecraft.getInstance();
+			 * 		if (mc.player == null || mc.player.connection == null) {
+			 * 			return;
+			 * 		}
+			 * 		mc.player.connection.sendCommand(command);
+			 * 	}
+			 * };
+			 * replacement.setActive(option.isActive());
+			 * options.set(i, replacement);
+			 */
+
+			// TEMPORARY FALLBACK:
+			// Xaero callback signature currently drifts across mappings (class_437 vs Screen).
+			// Keep GUI replacement disabled and let MapWaypointTeleportFallbackMixin handle teleport command dispatch.
 			return;
 		}
 	}

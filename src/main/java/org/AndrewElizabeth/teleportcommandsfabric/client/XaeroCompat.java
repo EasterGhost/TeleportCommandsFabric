@@ -2,7 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.client;
 
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncEntry;
 import org.AndrewElizabeth.teleportcommandsfabric.network.XaeroSyncPayload;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import xaero.common.minimap.waypoints.Waypoint;
 import xaero.hud.minimap.BuiltInHudModules;
@@ -114,7 +113,9 @@ public final class XaeroCompat {
 			String worldId) {
 		if (currentRoot != null) {
 			for (MinimapWorld world : currentRoot.getAllWorldsIterable()) {
-				String currentId = WorldResolver.getDimensionId(world.getDimId());
+				// LEGACY(kept): direct API call from old implementation.
+				// String currentId = WorldResolver.getDimensionId(world.getDimId());
+				String currentId = resolveXaeroWorldId(world);
 				if (worldId.equals(currentId)) {
 					return world;
 				}
@@ -122,13 +123,40 @@ public final class XaeroCompat {
 		}
 		for (MinimapWorldRootContainer root : worldManager.getRootContainers()) {
 			for (MinimapWorld world : root.getAllWorldsIterable()) {
-				String currentId = WorldResolver.getDimensionId(world.getDimId());
+				// LEGACY(kept): direct API call from old implementation.
+				// String currentId = WorldResolver.getDimensionId(world.getDimId());
+				String currentId = resolveXaeroWorldId(world);
 				if (worldId.equals(currentId)) {
 					return world;
 				}
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * TEMPORARY FALLBACK:
+	 * Xaero 1.21.11 may expose intermediary signatures (class_5321) that cannot
+	 * be linked directly in the 26.1 compile environment. Reflection avoids
+	 * hard-binding and keeps behavior equivalent.
+	 */
+	private static String resolveXaeroWorldId(MinimapWorld world) {
+		try {
+			Object dimId = world.getClass().getMethod("getDimId").invoke(world);
+			if (dimId == null) {
+				return null;
+			}
+			Object idValue;
+			try {
+				idValue = dimId.getClass().getMethod("identifier").invoke(dimId);
+			} catch (NoSuchMethodException ex) {
+				// TEMPORARY FALLBACK for older mappings.
+				idValue = dimId.getClass().getMethod("location").invoke(dimId);
+			}
+			return idValue == null ? null : idValue.toString();
+		} catch (ReflectiveOperationException ex) {
+			return null;
+		}
 	}
 
 	private static List<Waypoint> toWaypoints(List<XaeroSyncEntry> entries, EntryType type) {

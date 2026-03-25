@@ -11,6 +11,7 @@
 		"client.ClientPlayNetworkHandlerMixin",
 		"client.GuiMapMixin",
 		"client.MapWaypointDeleteMixin",
+		"client.MapWaypointTeleportFallbackMixin",
 		"client.RightClickOptionAccessor",
 		"client.WaypointDeleteMixin",
 		"client.WaypointTeleportMixin"
