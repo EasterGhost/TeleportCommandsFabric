@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
+## [1.6] - 2026-03-26
+
+### Added
+
+- Added Minecraft `26.1` compatibility for the master branch release line.
+- Added a fallback Xaero map waypoint teleport interception path so tagged `warp` and `home` waypoints can still dispatch TeleportCommands commands when newer Xaero UI callback signatures do not match the older integration hook.
+
+### Changed
+
+- Updated the project build and dependency setup for `26.1`, including Fabric API coordinates, Loom plugin ID usage, and separate Xaero compile-only version targeting.
+- Updated message-sending and networking integration code to match the newer `26.1` / Fabric API surface.
+- Updated the project toolchain target to Java `25`.
+
+### Fixed
+
+- Fixed Xaero-related compatibility on `26.1` by avoiding hard binding to newer dimension identifier signatures and using a safer fallback when resolving Xaero world IDs.
+- Fixed Xaero sync payload registration to use the newer clientbound and serverbound play registry APIs.
+- Fixed teleport position conversion for `26.1` by updating the affected `ChunkPos` / `BlockPos` handling.
+
 ## [1.5.1] - 2026-03-25
 
 ### Added
