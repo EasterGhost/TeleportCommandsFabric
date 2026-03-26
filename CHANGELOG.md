@@ -4,7 +4,26 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
-## [1.5] - Unreleased
+## [1.5.1] - 2026-03-25
+
+### Added
+
+- Added `updatehome` and `updatewarp` so existing homes and warps can be moved to the current location without recreating them.
+- Added pagination support and page-picker navigation for `homes` and `warps`, with improved interactive list display for large result sets.
+
+### Changed
+
+- Refactored shared command execution, suggestion, pagination, and chat UI helpers to reduce duplication across `home`, `warp`, and related command flows.
+- Refactored config handling by splitting `ConfigManager` responsibilities and updated command registration to the newer direct-registration path.
+- Improved internal storage concurrency with synchronized asynchronous file I/O, asynchronous config writes, and safer shared-state handling.
+
+### Fixed
+
+- Fixed a shutdown cleanup issue that could terminate background threads unexpectedly while the server was closing.
+- Fixed translation lookup fallback so missing keys now fall back to `en_us` immediately.
+- Fixed teleport-related state cleanup and unsafe-block checking to improve reliability during teleport processing and shutdown.
+
+## [1.5] - 2026-03-21
 
 ### Added
 
