@@ -22,7 +22,7 @@ public class ArgumentTypeInfosMixin {
 	@Inject(method = "unpack", at = @At("HEAD"), cancellable = true)
 	private static void handleUnicodeStringType(ArgumentType argumentType, CallbackInfoReturnable cir) {
 		if (argumentType instanceof UnicodeStringArgumentType) {
-			cir.setReturnValue(ArgumentTypeInfos.unpack(StringArgumentType.string()));
+			cir.setReturnValue(ArgumentTypeInfos.unpack(StringArgumentType.greedyString()));
 		}
 	}
 }
