@@ -1,8 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.commands.admin;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
+import org.AndrewElizabeth.teleportcommandsfabric.utils.UnicodeStringArgumentType;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -97,9 +98,9 @@ final class AdminConfigNodeFactory {
 						context.getSource(),
 						literalName,
 						Component.literal(getter.get())))
-				.then(Commands.argument(argName, StringArgumentType.string())
+				.then(Commands.argument(argName, UnicodeStringArgumentType.unicodeString())
 						.executes(context -> {
-							String value = StringArgumentType.getString(context, argName);
+							String value = UnicodeStringArgumentType.getString(context, argName);
 							return AdminMessages.setAndSave(
 									context,
 									() -> setter.accept(value),

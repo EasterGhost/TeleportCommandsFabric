@@ -3,8 +3,9 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
+import org.AndrewElizabeth.teleportcommandsfabric.utils.UnicodeStringArgumentType;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -27,9 +28,9 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildSetNode() {
 		return Commands.literal("sethome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!HomeMessages.ensureEnabled(player)) {
@@ -60,10 +61,10 @@ public class home {
 							"commands.teleport_commands.home.goError",
 							() -> HomeTeleportActions.goHome(player, ""));
 				})
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new HomeSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!HomeMessages.ensureEnabled(player)) {
@@ -81,10 +82,10 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildDeleteNode() {
 		return Commands.literal("delhome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new HomeSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!HomeMessages.ensureEnabled(player)) {
@@ -102,12 +103,12 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildRenameNode() {
 		return Commands.literal("renamehome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new HomeSuggestionProvider())
-						.then(Commands.argument("newName", StringArgumentType.string())
+						.then(Commands.argument("newName", UnicodeStringArgumentType.unicodeString())
 								.executes(context -> {
-									final String name = StringArgumentType.getString(context, "name");
-									final String newName = StringArgumentType.getString(context, "newName");
+									final String name = UnicodeStringArgumentType.getString(context, "name");
+									final String newName = UnicodeStringArgumentType.getString(context, "newName");
 									final ServerPlayer player = context.getSource().getPlayerOrException();
 
 									if (!HomeMessages.ensureEnabled(player)) {
@@ -125,10 +126,10 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildDefaultNode() {
 		return Commands.literal("defaulthome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new HomeSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!HomeMessages.ensureEnabled(player)) {
@@ -181,10 +182,10 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildUpdateNode() {
 		return Commands.literal("updatehome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new HomeSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!HomeMessages.ensureEnabled(player)) {
@@ -224,12 +225,12 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode() {
 		return Commands.literal("maphome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new HomeSuggestionProvider())
 						.then(Commands.argument("visible", BoolArgumentType.bool())
 								.executes(context -> {
 									final ServerPlayer player = context.getSource().getPlayerOrException();
-									final String homeName = StringArgumentType.getString(context, "name");
+									final String homeName = UnicodeStringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									return handleMapVisibility(player, homeName, visible);
@@ -239,11 +240,11 @@ public class home {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildSilentMapVisibilityNode() {
 		return Commands.literal("teleportcommandsfabric:maphome")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.then(Commands.argument("visible", BoolArgumentType.bool())
 								.executes(context -> {
 									final ServerPlayer player = context.getSource().getPlayerOrException();
-									final String homeName = StringArgumentType.getString(context, "name");
+									final String homeName = UnicodeStringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									return handleSilentMapVisibility(player, homeName, visible);
@@ -251,7 +252,7 @@ public class home {
 								.then(Commands.argument("page", IntegerArgumentType.integer())
 										.executes(context -> {
 											final ServerPlayer player = context.getSource().getPlayerOrException();
-											final String homeName = StringArgumentType.getString(context, "name");
+											final String homeName = UnicodeStringArgumentType.getString(context, "name");
 											final boolean visible = BoolArgumentType.getBool(context, "visible");
 											final int page = IntegerArgumentType.getInteger(context, "page");
 
