@@ -3,8 +3,9 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
+import org.AndrewElizabeth.teleportcommandsfabric.utils.UnicodeStringArgumentType;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -28,9 +29,9 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildSetNode() {
 		return Commands.literal("setwarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!WarpMessages.ensureEnabled(player)) {
@@ -48,10 +49,10 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode() {
 		return Commands.literal("warp")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!WarpMessages.ensureEnabled(player)) {
@@ -69,10 +70,10 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildDeleteNode() {
 		return Commands.literal("delwarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!WarpMessages.ensureEnabled(player)) {
@@ -90,12 +91,12 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildRenameNode() {
 		return Commands.literal("renamewarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new WarpSuggestionProvider())
-						.then(Commands.argument("newName", StringArgumentType.string())
+						.then(Commands.argument("newName", UnicodeStringArgumentType.unicodeString())
 								.executes(context -> {
-									final String name = StringArgumentType.getString(context, "name");
-									final String newName = StringArgumentType.getString(context, "newName");
+									final String name = UnicodeStringArgumentType.getString(context, "name");
+									final String newName = UnicodeStringArgumentType.getString(context, "newName");
 									final ServerPlayer player = context.getSource().getPlayerOrException();
 
 									if (!WarpMessages.ensureEnabled(player)) {
@@ -146,10 +147,10 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildUpdateNode() {
 		return Commands.literal("updatewarp")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new WarpSuggestionProvider())
 						.executes(context -> {
-							final String name = StringArgumentType.getString(context, "name");
+							final String name = UnicodeStringArgumentType.getString(context, "name");
 							final ServerPlayer player = context.getSource().getPlayerOrException();
 
 							if (!WarpMessages.ensureEnabled(player)) {
@@ -187,12 +188,12 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode() {
 		return Commands.literal("mapwarp")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new WarpSuggestionProvider())
 						.then(Commands.argument("visible", BoolArgumentType.bool())
 								.executes(context -> {
 									final ServerPlayer player = context.getSource().getPlayerOrException();
-									final String warpName = StringArgumentType.getString(context, "name");
+									final String warpName = UnicodeStringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									return handleMapVisibility(player, warpName, visible);
@@ -202,11 +203,11 @@ public class warp {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildSilentMapVisibilityNode() {
 		return Commands.literal("teleportcommandsfabric:mapwarp")
 				.requires(source -> source.getPlayer() != null)
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.then(Commands.argument("visible", BoolArgumentType.bool())
 								.executes(context -> {
 									final ServerPlayer player = context.getSource().getPlayerOrException();
-									final String warpName = StringArgumentType.getString(context, "name");
+									final String warpName = UnicodeStringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									return handleSilentMapVisibility(player, warpName, visible);
@@ -214,7 +215,7 @@ public class warp {
 								.then(Commands.argument("page", IntegerArgumentType.integer())
 										.executes(context -> {
 											final ServerPlayer player = context.getSource().getPlayerOrException();
-											final String warpName = StringArgumentType.getString(context, "name");
+											final String warpName = UnicodeStringArgumentType.getString(context, "name");
 											final boolean visible = BoolArgumentType.getBool(context, "visible");
 											final int page = IntegerArgumentType.getInteger(context, "page");
 
@@ -239,12 +240,12 @@ public class warp {
 							"commands.teleport_commands.gwarpmap.error",
 							() -> WarpCommandSupport.printAdminWarpMap(player));
 				})
-				.then(Commands.argument("name", StringArgumentType.string())
+				.then(Commands.argument("name", UnicodeStringArgumentType.unicodeString())
 						.suggests(new WarpSuggestionProvider())
 						.then(Commands.argument("visible", BoolArgumentType.bool())
 								.executes(context -> {
 									final ServerPlayer player = context.getSource().getPlayerOrException();
-									final String warpName = StringArgumentType.getString(context, "name");
+									final String warpName = UnicodeStringArgumentType.getString(context, "name");
 									final boolean visible = BoolArgumentType.getBool(context, "visible");
 
 									if (!WarpMessages.ensureEnabled(player)) {
