@@ -185,35 +185,37 @@ public final class TeleportService {
 		}
 	}
 
-	public static boolean teleport(ServerPlayer player, ServerLevel world, Vec3 coords) {
+	public static boolean teleport(ServerPlayer player, ServerLevel destinationWorld, Vec3 coords) {
 		if (player.hasDisconnected()) {
 			return false;
 		}
 
-		boolean crossDimension = player.level() != world;
+		ServerLevel currentWorld = (ServerLevel) player.level();
+		boolean crossDimension = currentWorld != destinationWorld;
 
-		world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 1, player.getZ(), 20, 0.0D, 0.0D,
+		currentWorld.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 1, player.getZ(), 20, 0.0D, 0.0D,
 				0.0D, 0.01);
-		world.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15, 0.0D, 1.0D,
+		currentWorld.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15, 0.0D, 1.0D,
 				0.0D, 0.03);
-		world.playSound(null, player.blockPosition(), SoundEvent.createVariableRangeEvent(ENDERMAN_TELEPORT.location()),
+		currentWorld.playSound(null, player.blockPosition(), SoundEvent.createVariableRangeEvent(ENDERMAN_TELEPORT.location()),
 				SoundSource.PLAYERS, 0.4f, 1.0f);
 
 		boolean flying = player.getAbilities().flying;
-		player.teleportTo(world, coords.x, coords.y, coords.z, Set.of(), player.getYRot(), player.getXRot(), false);
+		player.teleportTo(destinationWorld, coords.x, coords.y, coords.z, Set.of(), player.getYRot(), player.getXRot(), false);
 
 		if (flying) {
 			player.getAbilities().flying = true;
 			player.onUpdateAbilities();
 		}
 
-		world.playSound(null, player.blockPosition(), SoundEvent.createVariableRangeEvent(ENDERMAN_TELEPORT.location()),
+		destinationWorld.playSound(null, player.blockPosition(), SoundEvent.createVariableRangeEvent(ENDERMAN_TELEPORT.location()),
 				SoundSource.PLAYERS, 0.4f, 1.0f);
 
+		// If the teleport did not cross dimensions, spawn arrival particles immediately in the destination world.
 		if (!crossDimension) {
-			world.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
+			destinationWorld.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
 					0.0D, 1.0D, 0.0D, 0.01);
-			world.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
+			destinationWorld.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
 					0.0D, 0.0D, 0.0D, 0.03);
 			return true;
 		}
@@ -223,13 +225,13 @@ public final class TeleportService {
 				return;
 			}
 			TeleportCommands.SERVER.execute(() -> {
-				if (player.hasDisconnected() || !(player.level() instanceof ServerLevel currentWorld)) {
+				if (player.hasDisconnected() || !(player.level() instanceof ServerLevel arrivalWorld)) {
 					return;
 				}
 
-				currentWorld.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
+				arrivalWorld.sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY(), player.getZ(), 20,
 						0.0D, 1.0D, 0.0D, 0.01);
-				currentWorld.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
+				arrivalWorld.sendParticles(ParticleTypes.WHITE_SMOKE, player.getX(), player.getY(), player.getZ(), 15,
 						0.0D, 0.0D, 0.0D, 0.03);
 			});
 		}, 100, TimeUnit.MILLISECONDS);
