@@ -59,6 +59,7 @@ public class StorageClass {
 				changed |= player.ensureDefaultHomeUuid();
 			}
 			changed |= player.ensureHiddenWarpUuids();
+			changed |= player.removeExpiredHomes();
 
 			if (player.isEmpty()) {
 				iterator.remove();
@@ -75,6 +76,8 @@ public class StorageClass {
 			boolean removed = Warps.removeIf(warp -> warp.getWorld().isEmpty());
 			changed |= removed;
 		}
+
+		changed |= Warps.removeIf(NamedLocation::isExpired);
 
 		Set<UUID> existingWarpUuids = new HashSet<>();
 		for (NamedLocation warp : Warps) {

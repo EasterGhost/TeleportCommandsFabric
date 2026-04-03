@@ -17,8 +17,9 @@ public class NamedLocation {
 	private int z;
 	private String world;
 	private boolean xaeroVisible;
+	private long expiredTime;
 
-	public NamedLocation(UUID uuid, String name, int x, double y, int z, String world, boolean xaeroVisible) {
+	public NamedLocation(UUID uuid, String name, int x, double y, int z, String world, boolean xaeroVisible, long expiredTime) {
 		this.uuid = normalizeUuid(uuid);
 		this.name = name;
 		this.x = x;
@@ -26,10 +27,15 @@ public class NamedLocation {
 		this.z = z;
 		this.world = world;
 		this.xaeroVisible = xaeroVisible;
+		this.expiredTime = expiredTime;
+	}
+
+	public NamedLocation(UUID uuid, String name, int x, double y, int z, String world, boolean xaeroVisible) {
+		this(uuid, name, x, y, z, world, xaeroVisible, 0L);
 	}
 
 	public static NamedLocation create(String name, int x, double y, int z, String world) {
-		return new NamedLocation(UUID.randomUUID(), name, x, y, z, world, true);
+		return new NamedLocation(UUID.randomUUID(), name, x, y, z, world, true, 0L);
 	}
 
 	public String getName() {
@@ -88,6 +94,19 @@ public class NamedLocation {
 	public void setXaeroVisible(boolean xaeroVisible) throws Exception {
 		this.xaeroVisible = xaeroVisible;
 		StorageManager.markDirty();
+	}
+
+	public long getExpiredTime() {
+		return expiredTime;
+	}
+
+	public void setExpiredTime(long expiredTime) throws Exception {
+		this.expiredTime = expiredTime;
+		StorageManager.markDirty();
+	}
+
+	public boolean isExpired() {
+		return expiredTime > 0 && System.currentTimeMillis() > expiredTime;
 	}
 
 	public boolean ensureUuid() {

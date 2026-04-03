@@ -155,6 +155,10 @@ public class Player {
 		return true;
 	}
 
+	public boolean removeExpiredHomes() {
+		return Homes.removeIf(NamedLocation::isExpired);
+	}
+
 	public boolean isEmpty() {
 		return Homes.isEmpty()
 				&& DefaultHomeUuid == null
