@@ -53,11 +53,12 @@ public class StorageMigratorUtil {
 				}
 			}
 
-			if (version < Constants.STORAGE_VERSION) {
-				normalizeNamedLocationYAsDouble(jsonObject);
-				ensureNamedLocationXaeroVisible(jsonObject);
-				ensureNamedLocationUuid(jsonObject);
-				migrateDefaultHomeToUuid(jsonObject);
+			if (version < 3) {
+				migrateToVersion3(jsonObject);
+			}
+
+			if (version < 4) {
+				migrateHistoricalVersion3DataToVersion4(jsonObject);
 			}
 
 			jsonObject.addProperty("version", defaultVersion);
@@ -76,6 +77,17 @@ public class StorageMigratorUtil {
 
 			throw new IllegalStateException(message);
 		}
+	}
+
+	private static void migrateToVersion3(JsonObject root) {
+		normalizeNamedLocationYAsDouble(root);
+		ensureNamedLocationXaeroVisible(root);
+	}
+
+	private static void migrateHistoricalVersion3DataToVersion4(JsonObject root) {
+		ensureNamedLocationUuid(root);
+		migrateDefaultHomeToUuid(root);
+		ensurePlayerHiddenWarpUuids(root);
 	}
 
 	private static void normalizeNamedLocationYAsDouble(JsonObject root) {
@@ -183,6 +195,24 @@ public class StorageMigratorUtil {
 
 			player.addProperty("DefaultHomeUuid", resolvedUuid);
 			player.remove("DefaultHome");
+		}
+	}
+
+	private static void ensurePlayerHiddenWarpUuids(JsonObject root) {
+		if (!root.has("Players") || !root.get("Players").isJsonArray()) {
+			return;
+		}
+
+		JsonArray players = root.getAsJsonArray("Players");
+		for (JsonElement element : players) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+
+			JsonObject player = element.getAsJsonObject();
+			if (!player.has("HiddenWarpUuids") || player.get("HiddenWarpUuids").isJsonNull()) {
+				player.add("HiddenWarpUuids", new JsonArray());
+			}
 		}
 	}
 
