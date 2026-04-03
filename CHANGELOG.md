@@ -4,7 +4,48 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
-## [1.5] - Unreleased
+## [1.6] - 2026-03-26
+
+### Added
+
+- Added Minecraft `26.1` compatibility for the master branch release line.
+- Added a fallback Xaero map waypoint teleport interception path so tagged `warp` and `home` waypoints can still dispatch TeleportCommands commands when newer Xaero UI callback signatures do not match the older integration hook.
+
+### Changed
+
+- Updated the project build and dependency setup for `26.1`, including Fabric API coordinates, Loom plugin ID usage, and separate Xaero compile-only version targeting.
+- Updated message-sending and networking integration code to match the newer `26.1` / Fabric API surface.
+- Updated the project toolchain target to Java `25`.
+
+### Fixed
+
+- Fixed Xaero-related compatibility on `26.1` by avoiding hard binding to newer dimension identifier signatures and using a safer fallback when resolving Xaero world IDs.
+- Fixed Xaero sync payload registration to use the newer clientbound and serverbound play registry APIs.
+- Fixed teleport position conversion for `26.1` by updating the affected `ChunkPos` / `BlockPos` handling.
+
+## [1.5.1] - 2026-03-25
+
+### Added
+
+- Added `updatehome` and `updatewarp` so existing homes and warps can be moved to the current location without recreating them.
+- Added pagination support and interactive page-picker navigation for `homes` and `warps`, with improved clickable list display for large result sets.
+
+### Changed
+
+- Refactored shared command execution, suggestion, pagination, visibility, and chat UI helpers to reduce duplication across `back`, `home`, `warp`, and related command flows.
+- Refactored config and storage handling by splitting manager, migrator, and data responsibilities into dedicated classes and helpers.
+- Updated command registration to use Fabric's direct registration callback path instead of the older mixin-based command registration hook.
+- Updated persistence flow to use dirty tracking, synchronized asynchronous file I/O, asynchronous config writes, and a forced storage flush during shutdown.
+
+### Fixed
+
+- Fixed a shutdown issue where background save or cleanup work could terminate unexpectedly while the server was closing.
+- Fixed translation lookup fallback so missing keys now fall back to `en_us` immediately.
+- Fixed disconnect and reconnect edge cases by delaying cleanup of previous-teleport and cooldown state instead of removing it immediately on logout.
+- Fixed asynchronous config and storage read edge cases to improve reliability under concurrent access.
+- Improved unsafe teleport block checking and related world-resolution reliability.
+
+## [1.5] - 2026-03-21
 
 ### Added
 
@@ -12,13 +53,16 @@ Version history below is based on the repository tag history, local commit histo
 - Added `/gwarpmap` for administrators to manage global warp visibility on the map separately from each player's personal hide/show state.
 - Added `/back tp` to return to the location recorded before the last teleport command execution.
 - Added direct integration from Xaero death waypoint teleport into `/back death`.
+- Added stable UUID identity for homes and warps, together with storage migration support for existing saved data.
 
 ### Changed
 
+- Refactored the command implementation into dedicated command, formatter, message, and service helpers for more consistent behavior across `back`, `home`, `warp`, `tpa`, `rtp`, and admin flows.
 - Changed Xaero waypoint sync behavior to work cleanly with default waypoint-set usage while keeping TeleportCommands-managed waypoints identifiable.
+- Changed home and warp persistence to use stable UUID-based identity, including migration of default-home references away from name-only matching.
 - Changed Xaero teleport interception in the default `Default` waypoint-set flow to recognize only TeleportCommands-tagged waypoints instead of matching generic `W` / `H` symbols.
 - Updated Xaero waypoint deletion handling so deleting synced waypoints can silently map back to `mapwarp` and `maphome` visibility changes instead of only removing the local marker.
-- Improved Xaero-related command interception and trusted command flow for smoother client-side interaction.
+- Improved Xaero-related command interception, trusted-command flow, and chat interaction formatting for smoother client-side use.
 - Refined global and per-player map visibility management so warp administration and personal visibility control are handled separately.
 
 ### Fixed
@@ -26,6 +70,7 @@ Version history below is based on the repository tag history, local commit histo
 - Fixed several Xaero interaction edge cases around waypoint teleport, deletion, and command routing.
 - Fixed command-side name matching for TeleportCommands-managed Xaero waypoints so normal default-set waypoints are less likely to be mistaken for `warp` or `home` entries.
 - Fixed clickable `rename`, `delete`, `maphome`, `mapwarp`, and related chat actions so names containing escaped characters such as `\\` and `\"` are passed correctly.
+- Fixed confusing Xaero waypoint-set configuration cases by normalizing blank, `Current`, and legacy TeleportCommands set names back to `Default`.
 
 ## [1.4] - 2026-03-16
 
