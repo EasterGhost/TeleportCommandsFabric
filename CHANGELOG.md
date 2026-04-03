@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
+## [1.6.1] - 2026-04-03
+
+### Changed
+
+- Updated the storage schema version to `4` to match the UUID-based home and warp identity format already used by the `1.5.1` and `1.6` storage layout.
+- Split storage migration handling so the original `v3` path only applies the older `y` normalization and `xaeroVisible` additions, while the later UUID-based schema upgrades are treated as `v4` migrations.
+
+### Fixed
+
+- Fixed storage migration versioning for historical `v3` files so `1.5.1` and `1.6` storage data is upgraded consistently to the corrected `v4` schema.
+- Fixed migration of legacy default-home data so empty or unmatched `DefaultHome` values no longer create invalid empty-string UUID entries in `storage.json`.
+- Added migration repair for missing `HiddenWarpUuids` data when upgrading older storage files to the corrected UUID-based schema.
+
 ## [1.6] - 2026-03-26
 
 ### Added

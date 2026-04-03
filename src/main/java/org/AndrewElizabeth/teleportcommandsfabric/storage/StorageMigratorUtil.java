@@ -193,7 +193,11 @@ public class StorageMigratorUtil {
 				}
 			}
 
-			player.addProperty("DefaultHomeUuid", resolvedUuid);
+			if (resolvedUuid.isBlank()) {
+				player.remove("DefaultHomeUuid");
+			} else {
+				player.addProperty("DefaultHomeUuid", resolvedUuid);
+			}
 			player.remove("DefaultHome");
 		}
 	}
