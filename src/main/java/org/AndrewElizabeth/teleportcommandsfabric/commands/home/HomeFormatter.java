@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.CommandUiSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.DimensionFilterCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper;
@@ -24,7 +25,7 @@ final class HomeFormatter {
 	}
 
 	static MutableComponent buildHomeList(ServerPlayer player, Player playerStorage, List<NamedLocation> homes,
-			int currentPage, int totalPages) {
+			int currentPage, int totalPages, String dimensionFilter) {
 		MutableComponent message = Component.empty();
 		message.append(PaginationCommandSupport.buildHeader(
 				player,
@@ -33,29 +34,30 @@ final class HomeFormatter {
 				totalPages));
 
 		for (NamedLocation currentHome : homes) {
-			appendHomeEntry(message, player, playerStorage, currentHome, currentPage);
+			appendHomeEntry(message, player, playerStorage, currentHome, currentPage, dimensionFilter);
 		}
 
 		message.append(PaginationCommandSupport.buildNavigation(
 				player,
 				currentPage,
 				totalPages,
-				HOME_LIST_COMMAND,
-				HOME_PAGE_PICKER_COMMAND));
+				page -> DimensionFilterCommandSupport.buildPageCommand(HOME_LIST_COMMAND, page, dimensionFilter),
+				page -> DimensionFilterCommandSupport.buildPageCommand(HOME_PAGE_PICKER_COMMAND, page, dimensionFilter)));
 		return message;
 	}
 
-	static MutableComponent buildHomePagePicker(ServerPlayer player, int currentPage, int totalPages) {
+	static MutableComponent buildHomePagePicker(ServerPlayer player, int currentPage, int totalPages,
+			String dimensionFilter) {
 		return PaginationCommandSupport.buildPagePicker(
 				player,
 				"commands.teleport_commands.homes.title",
 				currentPage,
 				totalPages,
-				HOME_LIST_COMMAND);
+				page -> DimensionFilterCommandSupport.buildPageCommand(HOME_LIST_COMMAND, page, dimensionFilter));
 	}
 
 	private static void appendHomeEntry(MutableComponent message, ServerPlayer player, Player playerStorage,
-			NamedLocation currentHome, int currentPage) {
+			NamedLocation currentHome, int currentPage, String dimensionFilter) {
 		String quotedName = CommandHelper.quoteCommandArgument(currentHome.getName());
 		MutableComponent defaultMarker = currentHome.getUuid().equals(playerStorage.getDefaultHomeUuid())
 				? getTranslatedText("commands.teleport_commands.common.default", player)
@@ -116,7 +118,8 @@ final class HomeFormatter {
 						new ClickEvent.RunCommand(
 								"teleportcommandsfabric:maphome " + quotedName + " "
 										+ (currentHome.isXaeroVisible() ? "false" : "true") + " "
-										+ currentPage)));
+										+ currentPage
+										+ DimensionFilterCommandSupport.buildDimensionArgument(dimensionFilter))));
 
 		message.append("\n");
 	}

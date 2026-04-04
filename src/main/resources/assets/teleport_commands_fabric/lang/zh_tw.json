@@ -26,6 +26,7 @@
   "commands.teleport_commands.home.exists": "此住家名稱已存在！",
   "commands.teleport_commands.home.max": "您已達到最大住家數 (%0%)！",
   "commands.teleport_commands.home.homeless": "您尚未設定任何住家！",
+  "commands.teleport_commands.home.noneInDimension": "您在維度 %0% 中尚未設定任何住家！",
 
   "commands.teleport_commands.homes.error": "讀取住家列表時發生錯誤！",
   "commands.teleport_commands.homes.homes": "您的住家：",
@@ -45,6 +46,7 @@
   "commands.teleport_commands.warp.notFound": "找不到此傳送點！",
   "commands.teleport_commands.warp.deletedInvalid": "已刪除無效的傳送點。",
   "commands.teleport_commands.warp.homeless": "尚未設定任何傳送點！",
+  "commands.teleport_commands.warp.noneInDimension": "維度 %0% 中沒有任何傳送點！",
 
   "commands.teleport_commands.warps.error": "讀取傳送點列表時發生錯誤！",
   "commands.teleport_commands.warps.warps": "傳送點列表：",

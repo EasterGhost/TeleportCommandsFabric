@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.home;
 
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.DimensionFilterCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PagedListCommandSupport;
 
 import net.minecraft.ChatFormatting;
@@ -40,34 +41,53 @@ final class HomeCommandSupport {
 	}
 
 	static void printHomes(ServerPlayer player, Player playerStorage) {
-		printHomes(player, playerStorage, 1);
+		printHomes(player, playerStorage, 1, null);
 	}
 
 	static void printHomes(ServerPlayer player, Player playerStorage, int page) {
-		List<NamedLocation> homes = playerStorage.getHomes();
+		printHomes(player, playerStorage, page, null);
+	}
+
+	static void printHomes(ServerPlayer player, Player playerStorage, int page, String dimensionFilter) {
+		String normalizedDimensionFilter = DimensionFilterCommandSupport.normalizeDimensionFilter(dimensionFilter);
+		List<NamedLocation> homes = DimensionFilterCommandSupport.sortAndFilter(
+				playerStorage.getHomes(),
+				normalizedDimensionFilter);
 		PagedListCommandSupport.displayPage(
 				player,
 				homes,
 				page,
-				() -> HomeMessages.sendHomeless(player),
+				() -> sendEmptyMessage(player, normalizedDimensionFilter),
 				(requestedPage, totalPages) -> HomeMessages.sendInvalidPage(player, requestedPage, totalPages),
 				(pageEntries, currentPage, totalPages) -> HomeFormatter.buildHomeList(
 						player,
 						playerStorage,
 						pageEntries,
 						currentPage,
-						totalPages));
+						totalPages,
+						normalizedDimensionFilter));
 	}
 
 	static void printHomePagePicker(ServerPlayer player, Player playerStorage, int currentPage) {
-		List<NamedLocation> homes = playerStorage.getHomes();
+		printHomePagePicker(player, playerStorage, currentPage, null);
+	}
+
+	static void printHomePagePicker(ServerPlayer player, Player playerStorage, int currentPage, String dimensionFilter) {
+		String normalizedDimensionFilter = DimensionFilterCommandSupport.normalizeDimensionFilter(dimensionFilter);
+		List<NamedLocation> homes = DimensionFilterCommandSupport.sortAndFilter(
+				playerStorage.getHomes(),
+				normalizedDimensionFilter);
 		PagedListCommandSupport.displayPagePicker(
 				player,
 				homes,
 				currentPage,
-				() -> HomeMessages.sendHomeless(player),
+				() -> sendEmptyMessage(player, normalizedDimensionFilter),
 				(requestedPage, totalPages) -> HomeMessages.sendInvalidPage(player, requestedPage, totalPages),
-				(page, totalPages) -> HomeFormatter.buildHomePagePicker(player, page, totalPages));
+				(page, totalPages) -> HomeFormatter.buildHomePagePicker(
+						player,
+						page,
+						totalPages,
+						normalizedDimensionFilter));
 	}
 
 	static Optional<NamedLocation> resolveHomeForCommand(Player playerStorage, String homeName, ServerPlayer player,
@@ -83,5 +103,14 @@ final class HomeCommandSupport {
 			HomeMessages.sendNotFound(player, notFoundColor);
 		}
 		return optionalHome;
+	}
+
+	private static void sendEmptyMessage(ServerPlayer player, String dimensionFilter) {
+		if (dimensionFilter == null) {
+			HomeMessages.sendHomeless(player);
+			return;
+		}
+
+		HomeMessages.sendNoHomesInDimension(player, dimensionFilter);
 	}
 }

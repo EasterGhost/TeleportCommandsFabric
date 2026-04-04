@@ -34,6 +34,14 @@ final class HomeMessages {
 		send(player, "commands.teleport_commands.home.homeless", ChatFormatting.AQUA);
 	}
 
+	static void sendNoHomesInDimension(ServerPlayer player, String dimensionFilter) {
+		player.sendSystemMessage(
+				getTranslatedText("commands.teleport_commands.home.noneInDimension", player,
+						Component.literal(dimensionFilter).withStyle(ChatFormatting.AQUA))
+						.withStyle(ChatFormatting.AQUA),
+				true);
+	}
+
 	static void sendNameExists(ServerPlayer player) {
 		send(player, "commands.teleport_commands.common.nameExists", ChatFormatting.RED);
 	}

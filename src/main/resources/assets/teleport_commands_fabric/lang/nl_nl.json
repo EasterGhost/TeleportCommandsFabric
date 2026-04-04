@@ -26,6 +26,7 @@
   "commands.teleport_commands.home.exists": "Dat Huis bestaad al!",
   "commands.teleport_commands.home.max": "Je hebt het maximale aantal huizen bereikt (%0%)!",
   "commands.teleport_commands.home.homeless": "Je hebt geen huizen!",
+  "commands.teleport_commands.home.noneInDimension": "Je hebt geen huizen in dimensie %0%!",
 
   "commands.teleport_commands.homes.error": "Probleem bij het ophalen van jouw huizen!",
   "commands.teleport_commands.homes.homes": "Huizen:",
@@ -45,6 +46,7 @@
   "commands.teleport_commands.warp.notFound": "Warp niet gevonden!",
   "commands.teleport_commands.warp.deletedInvalid": "Ongeldige warp verwijderd.",
   "commands.teleport_commands.warp.homeless": "Er zijn geen warps!",
+  "commands.teleport_commands.warp.noneInDimension": "Er zijn geen warps in dimensie %0%!",
 
   "commands.teleport_commands.warps.error": "Probleem tijdens het ophalen van de warps!",
   "commands.teleport_commands.warps.warps": "Warps:",

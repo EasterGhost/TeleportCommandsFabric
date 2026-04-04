@@ -9,6 +9,7 @@
 - Maybe update i18n
 - Maybe update CLI immediately when interact with CLI
 - Maybe optimize command implements
+- Asynchronous serialization for GSON to improve main thread performance
 
 ## Bug Fix
 

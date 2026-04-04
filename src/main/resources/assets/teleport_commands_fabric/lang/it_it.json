@@ -26,6 +26,7 @@
   "commands.teleport_commands.home.exists": "La casa esiste già!",
   "commands.teleport_commands.home.max": "Hai raggiunto il numero massimo di case (%0%)!",
   "commands.teleport_commands.home.homeless": "Non hai case!",
+  "commands.teleport_commands.home.noneInDimension": "Non hai case nella dimensione %0%!",
 
   "commands.teleport_commands.homes.error": "Errore durante il recupero delle case!",
   "commands.teleport_commands.homes.homes": "Case:",
@@ -45,6 +46,7 @@
   "commands.teleport_commands.warp.notFound": "Punto di teletrasporto non trovato!",
   "commands.teleport_commands.warp.deletedInvalid": "Warp non valido eliminato.",
   "commands.teleport_commands.warp.homeless": "Non hai punti di teletrasporto!",
+  "commands.teleport_commands.warp.noneInDimension": "Non ci sono punti di teletrasporto nella dimensione %0%!",
 
   "commands.teleport_commands.warps.error": "Errore durante il recupero dei punti di teletrasporto",
   "commands.teleport_commands.warps.warps": "Punti di teletrasporto:",

@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.commands.warp;
 
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.PaginationCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.commands.common.CommandUiSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.commands.common.DimensionFilterCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandHelper;
 
@@ -26,7 +27,7 @@ final class WarpFormatter {
 	}
 
 	static MutableComponent buildWarpList(CommandSourceStack source, ServerPlayer player, List<NamedLocation> warps,
-			int currentPage, int totalPages) {
+			int currentPage, int totalPages, String dimensionFilter) {
 		MutableComponent message = Component.empty();
 		message.append(PaginationCommandSupport.buildHeader(
 				player,
@@ -35,29 +36,30 @@ final class WarpFormatter {
 				totalPages));
 
 		for (NamedLocation currentWarp : warps) {
-			appendWarpEntry(message, source, player, currentWarp, currentPage);
+			appendWarpEntry(message, source, player, currentWarp, currentPage, dimensionFilter);
 		}
 
 		message.append(PaginationCommandSupport.buildNavigation(
 				player,
 				currentPage,
 				totalPages,
-				WARP_LIST_COMMAND,
-				WARP_PAGE_PICKER_COMMAND));
+				page -> DimensionFilterCommandSupport.buildPageCommand(WARP_LIST_COMMAND, page, dimensionFilter),
+				page -> DimensionFilterCommandSupport.buildPageCommand(WARP_PAGE_PICKER_COMMAND, page, dimensionFilter)));
 		return message;
 	}
 
-	static MutableComponent buildWarpPagePicker(ServerPlayer player, int currentPage, int totalPages) {
+	static MutableComponent buildWarpPagePicker(ServerPlayer player, int currentPage, int totalPages,
+			String dimensionFilter) {
 		return PaginationCommandSupport.buildPagePicker(
 				player,
 				"commands.teleport_commands.warps.title",
 				currentPage,
 				totalPages,
-				WARP_LIST_COMMAND);
+				page -> DimensionFilterCommandSupport.buildPageCommand(WARP_LIST_COMMAND, page, dimensionFilter));
 	}
 
 	private static void appendWarpEntry(MutableComponent message, CommandSourceStack source, ServerPlayer player,
-			NamedLocation currentWarp, int currentPage) {
+			NamedLocation currentWarp, int currentPage, String dimensionFilter) {
 		String quotedName = CommandHelper.quoteCommandArgument(currentWarp.getName());
 		boolean canModify = source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
 		boolean playerVisible = isVisibleForPlayer(player, currentWarp.getUuid());
@@ -111,7 +113,8 @@ final class WarpFormatter {
 						playerVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD,
 						new ClickEvent.RunCommand(
 								"teleportcommandsfabric:mapwarp " + quotedName + " "
-										+ (playerVisible ? "false" : "true") + " " + currentPage)));
+										+ (playerVisible ? "false" : "true") + " " + currentPage
+										+ DimensionFilterCommandSupport.buildDimensionArgument(dimensionFilter))));
 
 		message.append("\n");
 	}

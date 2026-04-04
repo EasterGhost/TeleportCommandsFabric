@@ -26,6 +26,7 @@
   "commands.teleport_commands.home.exists": "Az otthon már létezik!",
   "commands.teleport_commands.home.max": "Elérted az otthonok maximális számát (%0%)!",
   "commands.teleport_commands.home.homeless": "Nincs otthonod!",
+  "commands.teleport_commands.home.noneInDimension": "Nincs otthonod ebben a dimenzióban: %0%!",
 
   "commands.teleport_commands.homes.error": "Hiba történt az otthonok megtalálásával!",
   "commands.teleport_commands.homes.homes": "Otthonol:",
@@ -45,6 +46,7 @@
   "commands.teleport_commands.warp.notFound": "Warp not found!",
   "commands.teleport_commands.warp.deletedInvalid": "Érvénytelen warp törölve.",
   "commands.teleport_commands.warp.homeless": "There are no warps!",
+  "commands.teleport_commands.warp.noneInDimension": "Nincs warp ebben a dimenzióban: %0%!",
 
   "commands.teleport_commands.warps.error": "Error getting warps!",
   "commands.teleport_commands.warps.warps": "Warps:",

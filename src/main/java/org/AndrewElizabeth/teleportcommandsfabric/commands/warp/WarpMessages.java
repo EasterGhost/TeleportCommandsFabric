@@ -34,6 +34,14 @@ final class WarpMessages {
 		send(player, "commands.teleport_commands.warp.homeless", ChatFormatting.AQUA);
 	}
 
+	static void sendNoWarpsInDimension(ServerPlayer player, String dimensionFilter) {
+		player.sendSystemMessage(
+				getTranslatedText("commands.teleport_commands.warp.noneInDimension", player,
+						Component.literal(dimensionFilter).withStyle(ChatFormatting.AQUA))
+						.withStyle(ChatFormatting.AQUA),
+				true);
+	}
+
 	static void sendNotFound(ServerPlayer player) {
 		send(player, "commands.teleport_commands.warp.notFound", ChatFormatting.RED);
 	}

@@ -44,14 +44,20 @@ final class HomeVisibilityActions {
 
 	static void setVisibilitySilentlyAndShowPage(ServerPlayer player, String homeName, boolean visible, int page)
 			throws Exception {
+		setVisibilitySilentlyAndShowPage(player, homeName, visible, page, null);
+	}
+
+	static void setVisibilitySilentlyAndShowPage(ServerPlayer player, String homeName, boolean visible, int page,
+			String dimensionFilter)
+			throws Exception {
 		HomeCommandSupport.withPlayerStorage(player, playerStorage -> VisibilityCommandSupport.update(
 				visible,
 				() -> HomeCommandSupport.resolveHomeForCommand(playerStorage, homeName, player, ChatFormatting.RED,
 						true),
 				NamedLocation::isXaeroVisible,
 				NamedLocation::setXaeroVisible,
-				() -> HomeCommandSupport.printHomes(player, playerStorage, page),
-				() -> HomeCommandSupport.printHomes(player, playerStorage, page)));
+				() -> HomeCommandSupport.printHomes(player, playerStorage, page, dimensionFilter),
+				() -> HomeCommandSupport.printHomes(player, playerStorage, page, dimensionFilter)));
 	}
 
 }

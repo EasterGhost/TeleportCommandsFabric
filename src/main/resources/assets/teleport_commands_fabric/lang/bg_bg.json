@@ -26,6 +26,7 @@
   "commands.teleport_commands.home.exists": "Домът вече съществува!",
   "commands.teleport_commands.home.max": "Достигна си максималния брой домове (%0%)!",
   "commands.teleport_commands.home.homeless": "Нямаш никакви домове!",
+  "commands.teleport_commands.home.noneInDimension": "Нямаш домове в измерението %0%!",
 
   "commands.teleport_commands.homes.error": "Възникна грешка при търсенето на домовете!",
   "commands.teleport_commands.homes.homes": "Домове:",
@@ -45,6 +46,7 @@
   "commands.teleport_commands.warp.notFound": "Телепорта не бе намерен!",
   "commands.teleport_commands.warp.deletedInvalid": "Невалиден телепорт бе изтрит.",
   "commands.teleport_commands.warp.homeless": "Няма никакви телепорти!",
+  "commands.teleport_commands.warp.noneInDimension": "Няма телепорти в измерението %0%!",
 
   "commands.teleport_commands.warps.error": "Възникна грешка при търсенето на телепортите!",
   "commands.teleport_commands.warps.warps": "Телепорти:",

@@ -7,12 +7,14 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.function.IntFunction;
 
 import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
 
 public final class PaginationCommandSupport {
 	public static final int PAGE_SIZE = 4;
 	private static final int PAGE_PICKER_COLUMNS = 8;
+	private static final int NAVIGATION_PAGE_RADIUS = 2;
 
 	private PaginationCommandSupport() {
 	}
@@ -45,41 +47,46 @@ public final class PaginationCommandSupport {
 	}
 
 	public static MutableComponent buildNavigation(ServerPlayer player, int currentPage, int totalPages,
-			String listCommand, String jumpCommand) {
+			IntFunction<String> listCommandFactory, IntFunction<String> jumpCommandFactory) {
 		MutableComponent navigation = Component.empty();
 		navigation.append("\n");
 		navigation.append(buildNavButton(player, "commands.teleport_commands.common.first",
-				currentPage > 1 ? listCommand + " 1" : null));
+				currentPage > 1 ? listCommandFactory.apply(1) : null));
 		navigation.append(" ");
 		navigation.append(buildNavButton(player, "commands.teleport_commands.common.prev",
-				currentPage > 1 ? listCommand + " " + (currentPage - 1) : null));
+				currentPage > 1 ? listCommandFactory.apply(currentPage - 1) : null));
 		navigation.append(" ");
 
-		int startPage = Math.max(1, currentPage - 1);
-		int endPage = Math.min(totalPages, startPage + 2);
-		startPage = Math.max(1, endPage - 2);
+		int startPage = Math.max(1, currentPage - NAVIGATION_PAGE_RADIUS);
+		int endPage = Math.min(totalPages, currentPage + NAVIGATION_PAGE_RADIUS);
+		if (startPage == 1) {
+			endPage = Math.min(totalPages, startPage + (NAVIGATION_PAGE_RADIUS * 2));
+		}
+		if (endPage == totalPages) {
+			startPage = Math.max(1, endPage - (NAVIGATION_PAGE_RADIUS * 2));
+		}
 		for (int page = startPage; page <= endPage; page++) {
 			if (page > startPage) {
 				navigation.append(" ");
 			}
-			navigation.append(buildPageButton(page, currentPage, listCommand));
+			navigation.append(buildPageButton(page, currentPage, listCommandFactory.apply(page)));
 		}
 
 		navigation.append(" ");
 		navigation.append(buildNavButton(player, "commands.teleport_commands.common.jump",
-				jumpCommand + " " + currentPage));
+				jumpCommandFactory.apply(currentPage)));
 		navigation.append(" ");
 		navigation.append(buildNavButton(player, "commands.teleport_commands.common.next",
-				currentPage < totalPages ? listCommand + " " + (currentPage + 1) : null));
+				currentPage < totalPages ? listCommandFactory.apply(currentPage + 1) : null));
 		navigation.append(" ");
 		navigation.append(buildNavButton(player, "commands.teleport_commands.common.last",
-				currentPage < totalPages ? listCommand + " " + totalPages : null));
+				currentPage < totalPages ? listCommandFactory.apply(totalPages) : null));
 		return navigation;
 	}
 
 	public static MutableComponent buildPagePicker(ServerPlayer player, String titleKey, int currentPage,
 			int totalPages,
-			String listCommand) {
+			IntFunction<String> listCommandFactory) {
 		MutableComponent picker = Component.empty();
 		picker.append(getTranslatedText(
 				"commands.teleport_commands.common.pagePickerTitle",
@@ -95,7 +102,7 @@ public final class PaginationCommandSupport {
 			} else {
 				picker.append(" ");
 			}
-			picker.append(buildPageButton(page, currentPage, listCommand));
+			picker.append(buildPageButton(page, currentPage, listCommandFactory.apply(page)));
 		}
 
 		return picker;
@@ -110,12 +117,12 @@ public final class PaginationCommandSupport {
 				.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command)));
 	}
 
-	private static MutableComponent buildPageButton(int page, int currentPage, String listCommand) {
+	private static MutableComponent buildPageButton(int page, int currentPage, String command) {
 		MutableComponent button = Component.literal("[" + page + "]");
 		if (page == currentPage) {
 			return button.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
 		}
 		return button.withStyle(ChatFormatting.GREEN)
-				.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(listCommand + " " + page)));
+				.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command)));
 	}
 }
