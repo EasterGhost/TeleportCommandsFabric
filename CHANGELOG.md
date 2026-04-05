@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
+## Data Version History
+
+The config and storage schema versions are tracked separately from the mod release version.
+
+| Mod version     | Config version | Storage version | Data compatibility notes                                                                                                                                                            |
+| --------------- | -------------: | --------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.7             |              2 |               5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
+| 1.6.1/1.5.2     |              2 |               4 | Corrected the declared storage schema for UUID-based home/warp identity,`DefaultHomeUuid`, and `HiddenWarpUuids`; repairs historical files from the earlier `v3` declaration. |
+| 1.6             |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                  |
+| 1.5.1           |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                  |
+| 1.5             |              2 |               3 | Storage `v3` is the intended `1.5` baseline for Xaero visibility and named-location metadata before the UUID-based layout correction.                                      |
+| 1.4             |              2 |               2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
+| 1.3             |              2 |               2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
+| 1.2 and earlier |   not embedded |    not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+
 ## [1.6.1] - 2026-04-03
 
 ### Changed

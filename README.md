@@ -12,7 +12,7 @@ TeleportCommandsFabric provides a complete teleport toolkit for Fabric servers. 
 ### Highlights
 
 - Complete command family: `back`, `home`, `tpa`, `warp`, `worldspawn`, `rtp`/`wild`, and `xaero` sync.
-- Unified admin entry: `/tpc` for module switch, reload, and runtime config updates. `/teleportcommands` remains available as a compatibility alias.
+- Unified admin entry: `/tpc` for module switch, reload, and runtime config updates.
 - Runtime-first operations: common settings can be adjusted without manual JSON editing.
 - Consistent behavior: shared delay/cooldown flow across teleport commands.
 - Xaero integration: syncs homes and warps to waypoints for direct map viewing and teleport access.
@@ -28,7 +28,7 @@ For a more detailed comparison between client installation options, see [Feature
 1. Put the mod into server `mods/`.
 2. Start once to generate `config/teleport_commands.json`.
 3. Check command registration: `/tpc help`.
-4. Use `/tpc config` commands for runtime updates, or run `/tpc reload` after manual file edits. `/teleportcommands` also works.
+4. Use `/tpc config` commands for runtime updates, or run `/tpc reload` after manual file edits.
 
 ## Documentation
 
