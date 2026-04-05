@@ -125,5 +125,19 @@ bin/
 # Ignore Wiki pages
 TeleportCommandsFabric.wiki/
 
-# Ignore drafts
-docs/drafts/
+# Ignore docs
+docs/
+
+# editorconfig
+.editorconfig
+
+# Ignore build logs
+build_log.txt
+
+# Backup files
+*.bak
+src_pre_refactor_backup/
+src_post_refactor_checkpoint/
+
+# txt files
+*.txt
