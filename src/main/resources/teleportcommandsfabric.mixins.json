@@ -2,10 +2,10 @@
 	"required": true,
 	"minVersion": "0.8",
 	"package": "org.AndrewElizabeth.teleportcommandsfabric.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ServerStartMixin",
-		"PlayerDeathMixin"
+		"server.ServerStartMixin",
+		"server.PlayerDeathMixin"
 	],
 	"client": [
 		"client.ClientPlayNetworkHandlerMixin",
