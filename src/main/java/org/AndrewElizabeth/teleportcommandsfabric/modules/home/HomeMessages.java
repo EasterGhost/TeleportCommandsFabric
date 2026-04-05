@@ -1,0 +1,92 @@
+package org.AndrewElizabeth.teleportcommandsfabric.modules.home;
+
+import org.AndrewElizabeth.teleportcommandsfabric.core.command.CommandExecutionSupport;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
+import static org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG;
+
+final class HomeMessages {
+	@FunctionalInterface
+	interface HomeAction {
+		void run() throws Exception;
+	}
+
+	private HomeMessages() {
+	}
+
+	static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
+		CommandExecutionSupport.send(player, key, formatting);
+	}
+
+	static boolean ensureEnabled(ServerPlayer player) {
+		if (CONFIG.getHome().isEnabled()) {
+			return true;
+		}
+		send(player, "commands.teleport_commands.home.disabled", ChatFormatting.RED);
+		return false;
+	}
+
+	static void sendHomeless(ServerPlayer player) {
+		send(player, "commands.teleport_commands.home.homeless", ChatFormatting.AQUA);
+	}
+
+	static void sendNoHomesInDimension(ServerPlayer player, String dimensionFilter) {
+		player.sendSystemMessage(
+				getTranslatedText("commands.teleport_commands.home.noneInDimension", player,
+						Component.literal(dimensionFilter).withStyle(ChatFormatting.AQUA))
+								.withStyle(ChatFormatting.AQUA),
+				true);
+	}
+
+	static void sendNameExists(ServerPlayer player) {
+		send(player, "commands.teleport_commands.common.nameExists", ChatFormatting.RED);
+	}
+
+	static void sendMaxReached(ServerPlayer player, int maxHomes) {
+		player.sendSystemMessage(
+				getTranslatedText("commands.teleport_commands.home.max", player, Component.literal(String.valueOf(maxHomes)))
+						.withStyle(ChatFormatting.RED),
+				true);
+	}
+
+	static void sendWorldNotFound(ServerPlayer player) {
+		send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
+	}
+
+	static void sendDeletedInvalid(ServerPlayer player) {
+		send(player, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
+	}
+
+	static void sendInvalidPage(ServerPlayer player, int requestedPage, int totalPages) {
+		CommandExecutionSupport.sendInvalidPage(player, requestedPage, totalPages);
+	}
+
+	static void sendNotFound(ServerPlayer player, ChatFormatting color) {
+		send(player, "commands.teleport_commands.home.notFound", color);
+	}
+
+	static void sendMapVisibilityAlready(ServerPlayer player, boolean visible) {
+		send(player, visible
+				? "commands.teleport_commands.home.mapAlreadyShown"
+				: "commands.teleport_commands.home.mapAlreadyHidden", ChatFormatting.AQUA);
+	}
+
+	static void sendMapVisibilityChanged(ServerPlayer player, boolean visible) {
+		send(player, visible
+				? "commands.teleport_commands.home.mapShown"
+				: "commands.teleport_commands.home.mapHidden", ChatFormatting.GREEN);
+	}
+
+	static int execute(ServerPlayer player, String errorLogMessage, String errorTranslationKey, HomeAction action) {
+		return CommandExecutionSupport.execute(player, errorLogMessage, errorTranslationKey, action::run);
+	}
+
+	static int executeSilently(String errorLogMessage, HomeAction action) {
+		return CommandExecutionSupport.executeSilently(errorLogMessage, action::run);
+	}
+}
+

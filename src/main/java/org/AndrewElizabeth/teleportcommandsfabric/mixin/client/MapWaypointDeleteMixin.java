@@ -1,13 +1,14 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
-import org.AndrewElizabeth.teleportcommandsfabric.client.XaeroWaypointCommandHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import xaero.map.mods.SupportXaeroMinimap;
+
+import org.AndrewElizabeth.teleportcommandsfabric.client.xaero.XaeroWaypointCommandHelper;
 
 import net.minecraft.client.Minecraft;
-import xaero.map.mods.SupportXaeroMinimap;
 
 @Mixin(SupportXaeroMinimap.class)
 public class MapWaypointDeleteMixin {

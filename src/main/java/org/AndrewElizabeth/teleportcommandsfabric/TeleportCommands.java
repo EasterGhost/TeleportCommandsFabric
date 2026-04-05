@@ -2,30 +2,32 @@ package org.AndrewElizabeth.teleportcommandsfabric;
 
 import com.mojang.brigadier.CommandDispatcher;
 
-import org.AndrewElizabeth.teleportcommandsfabric.commands.admin.AdminCommands;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.back.back;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.home.home;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.rtp.rtp;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.tpa.tpa;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.warp.warp;
-import org.AndrewElizabeth.teleportcommandsfabric.commands.worldspawn.worldspawn;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.home.HomeCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.rtp.RtpCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.warp.WarpCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.worldspawn.WorldSpawnCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.*;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
-import org.AndrewElizabeth.teleportcommandsfabric.xaero.XaeroSyncServer;
 
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
-import net.minecraft.core.BlockPos;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
-
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 
 public class TeleportCommands implements ModInitializer {
 	public static String MOD_LOADER;
@@ -35,11 +37,10 @@ public class TeleportCommands implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK
-				.register(server -> org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.tick());
+		ServerTickEvents.END_SERVER_TICK.register(server -> StorageManager.tick());
 
-		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-			org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager.forceSaveOnShutdown();
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			StorageManager.forceSaveOnShutdown();
 			TeleportCommands.SERVER = null;
 		});
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -49,7 +50,7 @@ public class TeleportCommands implements ModInitializer {
 	}
 
 	public static void initializeMod(MinecraftServer server) {
-		Constants.LOGGER.info("Initializing Teleport Commands (V{})! Hello {}!", Constants.VERSION, MOD_LOADER);
+		ModConstants.LOGGER.info("Initializing Teleport Commands (V{})! Hello {}!", ModConstants.VERSION, MOD_LOADER);
 
 		SAVE_DIR = Path.of(String.valueOf(server.getWorldPath(LevelResource.ROOT)));
 		CONFIG_DIR = Paths.get(System.getProperty("user.dir")).resolve("config");
@@ -72,17 +73,17 @@ public class TeleportCommands implements ModInitializer {
 	}
 
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-		AdminCommands.register(dispatcher);
-		back.register(dispatcher);
-		home.register(dispatcher);
-		tpa.register(dispatcher);
-		warp.register(dispatcher);
-		worldspawn.register(dispatcher);
-		rtp.register(dispatcher);
+		AdminCommand.register(dispatcher);
+		BackCommand.register(dispatcher);
+		HomeCommand.register(dispatcher);
+		TpaCommand.register(dispatcher);
+		WarpCommand.register(dispatcher);
+		WorldSpawnCommand.register(dispatcher);
+		RtpCommand.register(dispatcher);
 	}
 
 	public static void onPlayerDeath(ServerPlayer player) {
-		BlockPos pos = new BlockPos(player.getBlockX(), player.getBlockY(), player.getBlockZ());
+		BlockPos pos = player.blockPosition();
 		String world = WorldResolver.getDimensionId(player.level().dimension());
 		String uuid = player.getStringUUID();
 

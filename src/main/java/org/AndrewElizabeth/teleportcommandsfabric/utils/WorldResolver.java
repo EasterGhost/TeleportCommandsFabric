@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.utils;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;

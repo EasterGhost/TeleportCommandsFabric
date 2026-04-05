@@ -3,7 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.storage;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 
 import java.io.BufferedReader;
@@ -15,12 +15,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG;
+
 public class StorageManager {
 	public static Path STORAGE_FOLDER;
 	public static Path STORAGE_FILE;
 	public static StorageClass STORAGE;
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final int defaultVersion = new StorageClass().getVersion();
 	private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
 
 	public static void StorageInit() {
@@ -30,30 +31,30 @@ public class StorageManager {
 		try {
 			StorageLoader();
 		} catch (Exception e) {
-			Constants.LOGGER.error("Error while initializing the storage file! Exiting! => ", e);
+			ModConstants.LOGGER.error("Error while initializing the storage file! Exiting! => ", e);
 			throw new RuntimeException("Error while initializing the storage file! Exiting! => ", e);
 		}
 	}
 
 	public static void StorageLoader() throws Exception {
 		if (!STORAGE_FILE.toFile().exists() || STORAGE_FILE.toFile().length() == 0) {
-			Constants.LOGGER.warn("Storage file was not found or was empty! Initializing storage");
+			ModConstants.LOGGER.warn("Storage file was not found or was empty! Initializing storage");
 
 			Files.createDirectories(STORAGE_FOLDER);
 			STORAGE = new StorageClass();
 			STORAGE.cleanup();
 			saveStorageSync();
-			Constants.LOGGER.info("Storage created successfully!");
+			ModConstants.LOGGER.info("Storage created successfully!");
 			return;
 		}
 
-		StorageMigratorUtil.StorageMigrator(STORAGE_FILE, GSON, defaultVersion);
+		StorageMigrator.migrate(STORAGE_FILE, GSON, ModConstants.STORAGE_VERSION);
 
 		try (BufferedReader reader = Files.newBufferedReader(STORAGE_FILE, StandardCharsets.UTF_8)) {
 			STORAGE = GSON.fromJson(reader, StorageClass.class);
 		}
 		if (STORAGE == null) {
-			Constants.LOGGER.warn("Storage file was empty! Initializing storage");
+			ModConstants.LOGGER.warn("Storage file was empty! Initializing storage");
 			STORAGE = new StorageClass();
 			STORAGE.cleanup();
 			saveStorageSync();
@@ -63,7 +64,7 @@ public class StorageManager {
 		STORAGE.cleanup();
 
 		saveStorageSync();
-		Constants.LOGGER.info("Storage loaded successfully!");
+		ModConstants.LOGGER.info("Storage loaded successfully!");
 	}
 
 	public static void saveStorageSync() {
@@ -76,7 +77,7 @@ public class StorageManager {
 					StandardOpenOption.CREATE);
 			Files.move(tempFile, STORAGE_FILE, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
-			Constants.LOGGER.error("Failed to save storage file synchronously!", e);
+			ModConstants.LOGGER.error("Failed to save storage file synchronously!", e);
 		}
 	}
 
@@ -92,7 +93,7 @@ public class StorageManager {
 			return;
 		ticksSinceLastSave++;
 
-		int autoSaveTicks = 20 * ConfigManager.CONFIG.storage.getAutoSaveIntervalSeconds();
+		int autoSaveTicks = 20 * CONFIG.storage.getAutoSaveIntervalSeconds();
 		if (ticksSinceLastSave >= autoSaveTicks) {
 			StorageSaver();
 			isDirty = false;
@@ -101,7 +102,7 @@ public class StorageManager {
 	}
 
 	public static void forceSaveOnShutdown() {
-		Constants.LOGGER.info("Forcing synchronous save on server shutdown...");
+		ModConstants.LOGGER.info("Forcing synchronous save on server shutdown...");
 		saveStorageSync();
 		isDirty = false;
 		ticksSinceLastSave = 0;
@@ -119,11 +120,12 @@ public class StorageManager {
 							StandardOpenOption.CREATE);
 					Files.move(tempFile, STORAGE_FILE, StandardCopyOption.REPLACE_EXISTING);
 				} catch (Exception e) {
-					Constants.LOGGER.error("Failed to save storage file asynchronously!", e);
+					ModConstants.LOGGER.error("Failed to save storage file asynchronously!", e);
 				}
 			});
 		} catch (Exception e) {
-			Constants.LOGGER.error("Failed to serialize storage file!", e);
+			ModConstants.LOGGER.error("Failed to serialize storage file!", e);
 		}
 	}
 }
+

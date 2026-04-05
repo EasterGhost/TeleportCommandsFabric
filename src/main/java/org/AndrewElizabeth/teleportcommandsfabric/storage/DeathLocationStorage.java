@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import org.AndrewElizabeth.teleportcommandsfabric.common.DeathLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.models.DeathLocation;
 
 import net.minecraft.core.BlockPos;
 

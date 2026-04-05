@@ -1,9 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 
 public class ConfigClass {
-	private final int version = Constants.CONFIG_VERSION;
+	private final int version = ModConstants.CONFIG_VERSION;
 	public Teleporting teleporting = new Teleporting();
 	public Back back = new Back();
 	public Home home = new Home();

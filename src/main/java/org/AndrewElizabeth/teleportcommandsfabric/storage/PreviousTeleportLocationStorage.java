@@ -1,12 +1,12 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import org.AndrewElizabeth.teleportcommandsfabric.common.PreviousTeleportLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.models.PreviousTeleportLocation;
 
 import net.minecraft.core.BlockPos;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PreviousTeleportLocationStorage {

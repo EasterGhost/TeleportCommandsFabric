@@ -1,8 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.common.NamedLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.common.Player;
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.models.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.models.PlayerData;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,19 +14,20 @@ import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.unmodifiableList;
+import static org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG;
 
 public class StorageClass {
-	private final int version = Constants.STORAGE_VERSION;
+	private final int version = ModConstants.STORAGE_VERSION;
 	private final ArrayList<NamedLocation> Warps = new ArrayList<>();
-	private final ArrayList<Player> Players = new ArrayList<>();
-	private transient final java.util.Map<String, Player> playerCache = new java.util.concurrent.ConcurrentHashMap<>();
+	private final ArrayList<PlayerData> Players = new ArrayList<>();
+	private transient final java.util.Map<String, PlayerData> playerCache = new java.util.concurrent.ConcurrentHashMap<>();
 
 	public void cleanup() throws Exception {
 		boolean changed = false;
 		playerCache.clear();
 
-		for (Iterator<Player> iterator = Players.iterator(); iterator.hasNext();) {
-			Player player = iterator.next();
+		for (Iterator<PlayerData> iterator = Players.iterator(); iterator.hasNext();) {
+			PlayerData player = iterator.next();
 
 			if (player == null) {
 				iterator.remove();
@@ -39,7 +40,7 @@ public class StorageClass {
 				continue;
 			}
 
-			if (ConfigManager.CONFIG.home.isDeleteInvalid()) {
+			if (CONFIG.getHome().isDeleteInvalid()) {
 				List<NamedLocation> homesSnapshot = new ArrayList<>(player.getHomes());
 				for (NamedLocation home : homesSnapshot) {
 					changed |= home.ensureUuid();
@@ -52,7 +53,7 @@ public class StorageClass {
 				changed |= player.ensureDefaultHomeUuid();
 			}
 
-			if (!ConfigManager.CONFIG.home.isDeleteInvalid()) {
+			if (!CONFIG.getHome().isDeleteInvalid()) {
 				for (NamedLocation home : player.getHomes()) {
 					changed |= home.ensureUuid();
 				}
@@ -72,7 +73,7 @@ public class StorageClass {
 		for (NamedLocation warp : Warps) {
 			changed |= warp.ensureUuid();
 		}
-		if (ConfigManager.CONFIG.warp.isDeleteInvalid()) {
+		if (CONFIG.getWarp().isDeleteInvalid()) {
 			boolean removed = Warps.removeIf(warp -> warp.getWorld().isEmpty());
 			changed |= removed;
 		}
@@ -83,7 +84,7 @@ public class StorageClass {
 		for (NamedLocation warp : Warps) {
 			existingWarpUuids.add(warp.getUuid());
 		}
-		for (Player player : Players) {
+		for (PlayerData player : Players) {
 			changed |= player.cleanupHiddenWarpUuids(existingWarpUuids);
 		}
 
@@ -112,7 +113,7 @@ public class StorageClass {
 				.findFirst();
 	}
 
-	public Optional<Player> getPlayer(String uuid) {
+	public Optional<PlayerData> getPlayer(String uuid) {
 		return Optional.ofNullable(playerCache.get(uuid));
 	}
 
@@ -127,9 +128,9 @@ public class StorageClass {
 		}
 	}
 
-	public Player addPlayer(String uuid) {
+	public PlayerData addPlayer(String uuid) {
 		return playerCache.computeIfAbsent(uuid, k -> {
-			Player player = new Player(k);
+			PlayerData player = new PlayerData(k);
 			Players.add(player);
 			return player;
 		});

@@ -3,8 +3,9 @@ package org.AndrewElizabeth.teleportcommandsfabric.storage;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 
 import java.io.BufferedReader;
@@ -20,7 +21,6 @@ public class ConfigManager {
 	public static Path CONFIG_FILE;
 	public static ConfigClass CONFIG;
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final int defaultVersion = new ConfigClass().getVersion();
 	private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
 
 	public static void ConfigInit() {
@@ -30,7 +30,7 @@ public class ConfigManager {
 			ConfigLoader();
 
 		} catch (Exception e) {
-			Constants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
+			ModConstants.LOGGER.error("Error while initializing the config file! Exiting! => ", e);
 			throw new RuntimeException("Error while initializing the config file! Exiting! => ", e);
 		}
 	}
@@ -39,10 +39,10 @@ public class ConfigManager {
 		if (!CONFIG_FILE.toFile().exists() || CONFIG_FILE.toFile().length() == 0) {
 			Files.createDirectories(TeleportCommands.CONFIG_DIR);
 
-			Constants.LOGGER.warn("Config file was not found or was empty! Initializing config");
+			ModConstants.LOGGER.warn("Config file was not found or was empty! Initializing config");
 			CONFIG = new ConfigClass();
 			saveConfigSync();
-			Constants.LOGGER.info("Config created successfully!");
+			ModConstants.LOGGER.info("Config created successfully!");
 			return;
 		}
 
@@ -52,29 +52,29 @@ public class ConfigManager {
 			CONFIG = GSON.fromJson(reader, ConfigClass.class);
 		}
 		if (CONFIG == null) {
-			Constants.LOGGER.warn("Config file was empty! Loading defaults...");
+			ModConstants.LOGGER.warn("Config file was empty! Loading defaults...");
 			CONFIG = new ConfigClass();
 			saveConfigSync();
 			return;
 		}
 
 		saveConfigSync();
-		Constants.LOGGER.info("Config loaded successfully!");
+		ModConstants.LOGGER.info("Config loaded successfully!");
 	}
 
 	private static void ConfigMigrator() throws Exception {
 		try (BufferedReader reader = Files.newBufferedReader(CONFIG_FILE, StandardCharsets.UTF_8)) {
-			JsonObject jsonObject = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
+			JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
 			int version = jsonObject.has("version") ? jsonObject.get("version").getAsInt() : 0;
-			if (version < defaultVersion) {
-				ConfigMigratorUtil.ConfigMigrator(CONFIG_FILE, GSON, defaultVersion);
+			if (version < ModConstants.CONFIG_VERSION) {
+				ConfigMigrator.migrate(CONFIG_FILE, GSON, ModConstants.CONFIG_VERSION);
 			}
 		}
 	}
 
 	public static void saveConfigSync() {
 		if (CONFIG_FILE == null || CONFIG == null) {
-			Constants.LOGGER.error("Cannot save config: CONFIG_FILE or CONFIG is null.");
+			ModConstants.LOGGER.error("Cannot save config: CONFIG_FILE or CONFIG is null.");
 			return;
 		}
 		try {
@@ -84,7 +84,7 @@ public class ConfigManager {
 					StandardOpenOption.CREATE);
 			Files.move(tempFile, CONFIG_FILE, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
-			Constants.LOGGER.error("Error while saving the config file! => ", e);
+			ModConstants.LOGGER.error("Error while saving the config file! => ", e);
 		}
 	}
 
@@ -100,11 +100,11 @@ public class ConfigManager {
 							StandardOpenOption.CREATE);
 					Files.move(tempFile, CONFIG_FILE, StandardCopyOption.REPLACE_EXISTING);
 				} catch (Exception e) {
-					Constants.LOGGER.error("Error while saving the config file asynchronously! => ", e);
+					ModConstants.LOGGER.error("Error while saving the config file asynchronously! => ", e);
 				}
 			});
 		} catch (Exception e) {
-			Constants.LOGGER.error("Failed to serialize config file!", e);
+			ModConstants.LOGGER.error("Failed to serialize config file!", e);
 		}
 	}
 }

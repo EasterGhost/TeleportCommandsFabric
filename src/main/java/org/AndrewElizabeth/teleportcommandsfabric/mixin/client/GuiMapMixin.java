@@ -9,6 +9,7 @@ import xaero.map.gui.dropdown.rightclick.RightClickOption;
 import xaero.map.mods.gui.Waypoint;
 
 import java.util.ArrayList;
+
 @Mixin(GuiMap.class)
 public class GuiMapMixin {
 	private static final String TELEPORT_OPTION_KEY = "gui.xaero_right_click_map_teleport";
@@ -42,18 +43,13 @@ public class GuiMapMixin {
 			/*
 			 * LEGACY(kept): RightClickOption replacement path.
 			 *
-			 * RightClickOption replacement = new RightClickOption(
-			 * 		TELEPORT_OPTION_KEY,
-			 * 		optionAccessor.tpc$getIndex(),
-			 * 		optionAccessor.tpc$getTarget()) {
-			 * 	@Override
-			 * 	public void onAction(Screen parent) {
-			 * 		Minecraft mc = Minecraft.getInstance();
-			 * 		if (mc.player == null || mc.player.connection == null) {
-			 * 			return;
-			 * 		}
-			 * 		mc.player.connection.sendCommand(command);
-			 * 	}
+			 * RightClickOption replacement = new RightClickOption( * TELEPORT_OPTION_KEY, * optionAccessor.tpc$getIndex(),
+			 * optionAccessor.tpc$getTarget()) { * @Override
+			 * public void onAction(Screen parent) { * Minecraft mc = Minecraft.getInstance();
+			 * if (mc.player == null || mc.player.connection == null) { * return;
+			 * }
+			 * mc.player.connection.sendCommand(command);
+			 * }
 			 * };
 			 * replacement.setActive(option.isActive());
 			 * options.set(i, replacement);

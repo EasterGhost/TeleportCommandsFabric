@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportCooldownManager;
 
 import java.util.Map;
 import java.util.UUID;

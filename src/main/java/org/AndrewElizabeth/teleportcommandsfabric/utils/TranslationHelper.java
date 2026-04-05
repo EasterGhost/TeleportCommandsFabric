@@ -2,9 +2,12 @@ package org.AndrewElizabeth.teleportcommandsfabric.utils;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.jetbrains.annotations.NotNull;
+
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.Constants.ASSETS_ID;
+import static org.AndrewElizabeth.teleportcommandsfabric.ModConstants.ASSETS_ID;
 
 public final class TranslationHelper {
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%(\\d+)%");
@@ -28,14 +31,12 @@ public final class TranslationHelper {
 	private TranslationHelper() {
 	}
 
-	public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player,
-			MutableComponent... args) {
+	public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player, MutableComponent... args) {
 		String language = player.clientInformation().language().toLowerCase();
 		return getTranslatedText(key, language, args);
 	}
 
-	public static @NotNull MutableComponent getTranslatedText(String key, String language,
-			MutableComponent... args) {
+	public static @NotNull MutableComponent getTranslatedText(String key, String language, MutableComponent... args) {
 		try {
 			return buildTranslatedComponent(getTranslation(language, key), args);
 		} catch (Exception e) {
@@ -45,8 +46,7 @@ public final class TranslationHelper {
 				}
 			} catch (Exception ignored) {
 			}
-			Constants.LOGGER.error("Key \"{}\" not found in the default language (en_us), sending raw key as fallback.",
-					key);
+			ModConstants.LOGGER.error("Key \"{}\" not found in the default language (en_us), sending raw key as fallback.", key);
 			return Component.literal(key);
 		}
 	}
@@ -64,8 +64,7 @@ public final class TranslationHelper {
 		String filePath = String.format("/assets/%s/lang/%s.json", ASSETS_ID, language);
 		try (InputStream stream = TeleportCommands.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
-				Constants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.",
-						language);
+				ModConstants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling BackCommand to en_us.", language);
 				return "en_us".equals(language) ? new ConcurrentHashMap<>()
 						: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
 			}
@@ -76,7 +75,7 @@ public final class TranslationHelper {
 					.forEach(entry -> translations.put(entry.getKey(), entry.getValue().getAsString()));
 			return translations;
 		} catch (Exception e) {
-			Constants.LOGGER.warn("Failed to load language file: {}, falling back to en_us.", language, e);
+			ModConstants.LOGGER.warn("Failed to load language file: {}, falling BackCommand to en_us.", language, e);
 			return "en_us".equals(language) ? new ConcurrentHashMap<>()
 					: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
 		}
@@ -96,7 +95,7 @@ public final class TranslationHelper {
 				component.append(args[index]);
 			} else {
 				component.append(
-						Component.literal("{MISSING_ARG:" + index + "}").withStyle(net.minecraft.ChatFormatting.RED));
+						Component.literal("{MISSING_ARG:" + index + "}").withStyle(ChatFormatting.RED));
 			}
 
 			lastIndex = matcher.end();

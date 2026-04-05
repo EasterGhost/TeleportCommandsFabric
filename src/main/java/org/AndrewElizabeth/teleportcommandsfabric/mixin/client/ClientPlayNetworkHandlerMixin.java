@@ -1,12 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPlayNetworkHandlerMixin {
@@ -59,12 +60,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.equals("back")
 				|| normalized.startsWith("back ")
 				|| normalized.equals("worldspawn true")
-				|| normalized.equals("teleportcommands status")
-				|| normalized.startsWith("teleportcommands enable ")
-				|| normalized.startsWith("teleportcommands disable ")
-				|| normalized.equals("tpc status")
-				|| normalized.startsWith("tpc enable ")
-				|| normalized.startsWith("tpc disable ")
+				|| normalized.startsWith("tpc ")
 				|| normalized.startsWith("teleportcommandsfabric:");
 	}
 }
