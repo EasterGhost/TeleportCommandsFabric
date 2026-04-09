@@ -18,7 +18,7 @@
 
 - WaypointCrudService 逻辑原子化与自动化
   - 性质：内部清理。
-  - 详细方案：[docs/proposals/crud_refactor.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/crud_refactor.md)
+  - 详细方案：[docs/proposals/crud_refactor.md](docs/proposals/crud_refactor.md)
 
 ## 1.8+ Candidates
 
@@ -38,14 +38,13 @@
   - 涉及复杂交互逻辑和数据存储方式改变。
 
 - 传送点查询效率与状态索引优化
-  - 详细方案：[docs/proposals/storage_optimization.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/storage_optimization.md)
+  - 详细方案：[docs/proposals/storage_optimization.md](docs/proposals/storage_optimization.md)
 
 - 状态对象纯化与 `models -> state` 重命名准备
-  - 详细方案：[docs/proposals/storage_optimization.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/storage_optimization.md)
+  - 详细方案：[docs/proposals/storage_optimization.md](docs/proposals/storage_optimization.md)
 
 - 异步序列化与存储扩展性优化
-
-  - 详细方案：[docs/proposals/storage_optimization.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/storage_optimization.md)
+  - 详细方案：[docs/proposals/storage_optimization.md](docs/proposals/storage_optimization.md)
 
 ## Needs Discussion
 
