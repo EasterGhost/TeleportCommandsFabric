@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -104,6 +105,7 @@ public final class RtpService {
 		int centerX = center.getX();
 		int centerY = center.getY();
 		int centerZ = center.getZ();
+		boolean restrictNetherRoofBedrock = world.dimension().equals(Level.NETHER) && centerY < 128;
 
 		for (int attempt = 0; attempt < attemptBudget; attempt++) {
 			int dx = random.nextInt(maxRadius * 2 + 1) - maxRadius;
@@ -131,7 +133,7 @@ public final class RtpService {
 			int y = centerY + dy;
 
 			pos.set(x, y, z);
-			if (isSafeTeleportPos(world, pos, belowPos, headPos, headTopPos)) {
+			if (isSafeTeleportPos(world, pos, belowPos, headPos, headTopPos, restrictNetherRoofBedrock)) {
 				return Optional.of(pos.immutable());
 			}
 		}
@@ -140,9 +142,12 @@ public final class RtpService {
 	}
 
 	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos, BlockPos.MutableBlockPos belowPos,
-			BlockPos.MutableBlockPos headPos, BlockPos.MutableBlockPos headTopPos) {
+			BlockPos.MutableBlockPos headPos, BlockPos.MutableBlockPos headTopPos, boolean restrictNetherRoofBedrock) {
 		belowPos.set(pos.getX(), pos.getY() - 1, pos.getZ());
 		BlockState belowState = world.getBlockState(belowPos);
+		if (restrictNetherRoofBedrock && belowPos.getY() == 127 && belowState.is(Blocks.BEDROCK)) {
+			return false;
+		}
 		if (belowState.isAir() || !belowState.getFluidState().isEmpty()) {
 			return false;
 		}
