@@ -1,30 +1,74 @@
-## New features
+## 1.7 Release Scope
 
-- 添加传送锚点的失效，并据此实现临时锚点设置（需讨论临时锚点的具体行为逻辑）。
-- 修改rtp在下界的逻辑：不且仅不tp到y=127且脚下为基岩的方块上。
-- 修改rtp的逻辑：引入min_radius。
-- 添加共享锚点机制（需讨论共享锚点的具体行为逻辑）。
-- 添加多维度的worldspawn。
-- 增加tpa距离/维度限制（仍需讨论合理性）。
-- 传送的空间朝向复原。
-- 添加tpa trust系统。
-- home动态配额。
+### Core targets
 
-## Improvements
+- 传送锚点失效 / 临时锚点
 
-- WaypointCrudService 逻辑原子化与自动化（基于约定的 Key/Log 自动生成）
+  - 目标：基于现有 `expiredTime` 完成最小可用闭环。
+  - 范围：设置过期时间、列表过滤、传送前过期判定、存储迁移、文档说明。
+
+- RTP 下界基岩顶修正
+
+  - 目标：避免传送到 `y=127` 且脚下为基岩的方块上。
+  - 性质：小范围行为修正，适合作为 `1.7` 的 bug fix。
+
+- RTP `min_radius`
+
+  - 目标：为 RTP 增加最小半径约束。
+  - 范围：配置项、`/tpc config rtp ...` 管理入口、搜索逻辑约束、文档说明。
+
+### Optional for 1.7
+
+- WaypointCrudService 逻辑原子化与自动化
+  - 性质：内部清理。
   - 详细方案：[docs/proposals/crud_refactor.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/crud_refactor.md)
-- 传送点查询效率与状态索引优化（引入 $O(1)$ 级 Map 索引）
+
+## 1.8+ Candidates
+
+- 共享锚点机制
+
+  - 涉及权限、归属、可见性、Xaero 同步与存储模型，建议单独版本处理。
+
+- 多维度 WorldSpawn
+
+  - 涉及配置结构、命令语义与默认行为，建议单独版本处理。
+
+- TPA trust 系统
+
+  - 会改变现有 TPA 交互模型，建议与权限设计一起处理。
+
+- home 动态配额
+
+  - 涉及权限组、玩家覆盖与配置来源，建议后置。
+
+- warp 锚点靠近解锁
+
+  - 涉及复杂交互逻辑和数据存储方式改变。
+
+- 传送点查询效率与状态索引优化
+
   - 详细方案：[docs/proposals/storage_optimization.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/storage_optimization.md)
-- 状态对象纯化与 `models -> state` 重命名准备（移除对 `storage` 的反向依赖）
+
+- 状态对象纯化与 `models -> state` 重命名准备
+
   - 详细方案：[docs/proposals/storage_optimization.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/storage_optimization.md)
-- 异步序列化与存储扩展性优化（降低主线程序列化负担）
+
+- 异步序列化与存储扩展性优化
+
   - 详细方案：[docs/proposals/storage_optimization.md](file:///f:/LiMuchen/Mods/TeleportCommandsFabric/docs/proposals/storage_optimization.md)
 
-## Bug Fix
+## Needs Discussion
 
-- none
+- 增加 TPA 距离 / 维度限制
 
-## Others
+  - 需要先明确玩法合理性与默认策略。
 
-- none
+- 传送的空间朝向复原
+
+  - 需要先明确是否扩展位置状态模型，以及与已有传送记录的关系。
+
+## Release Prep
+
+- 修正文档中关于 `/teleportcommands` 兼容别名的描述
+
+  - 当前代码只注册 `/tpc`，README / Wiki 文案需要保持一致。
