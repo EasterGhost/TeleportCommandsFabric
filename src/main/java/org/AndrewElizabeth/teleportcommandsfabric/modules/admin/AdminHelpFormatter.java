@@ -44,7 +44,8 @@ final class AdminHelpFormatter {
 		append(message, Component.literal(ROOT_COMMAND + " config warp deleteInvalid <true|false>"),
 				ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " config worldspawn world <worldId>"), ChatFormatting.YELLOW, false);
-		append(message, Component.literal(ROOT_COMMAND + " config rtp radius <blocks>"), ChatFormatting.YELLOW, false);
+		append(message, Component.literal(ROOT_COMMAND + " config rtp maxRadius <blocks>"), ChatFormatting.YELLOW, false);
+		append(message, Component.literal(ROOT_COMMAND + " config rtp minRadius <blocks>"), ChatFormatting.YELLOW, false);
 		append(message, Component.literal(ROOT_COMMAND + " config xaero syncIntervalSeconds <seconds>"),
 				ChatFormatting.YELLOW, false);
 

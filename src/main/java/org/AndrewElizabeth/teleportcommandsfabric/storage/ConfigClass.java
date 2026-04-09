@@ -194,8 +194,10 @@ public class ConfigClass {
 	public final class Rtp {
 		public static final int MIN_RADIUS = 1;
 		public static final int MAX_RADIUS = 128;
+		public static final int MIN_MIN_RADIUS = 0;
 		private boolean enabled = true;
-		private int radius = 32;
+		private int maxRadius = 32;
+		private int minRadius = 4;
 
 		public boolean isEnabled() {
 			return enabled;
@@ -205,12 +207,23 @@ public class ConfigClass {
 			this.enabled = enabled;
 		}
 
-		public int getRadius() {
-			return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
+		public int getMaxRadius() {
+			return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, maxRadius));
 		}
 
-		public void setRadius(int radius) {
-			this.radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
+		public void setMaxRadius(int maxRadius) {
+			this.maxRadius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, maxRadius));
+			if (minRadius > this.maxRadius) {
+				minRadius = this.maxRadius;
+			}
+		}
+
+		public int getMinRadius() {
+			return Math.max(MIN_MIN_RADIUS, Math.min(getMaxRadius(), minRadius));
+		}
+
+		public void setMinRadius(int minRadius) {
+			this.minRadius = Math.max(MIN_MIN_RADIUS, Math.min(getMaxRadius(), minRadius));
 		}
 	}
 

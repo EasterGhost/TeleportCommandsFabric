@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.admin;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -131,11 +132,25 @@ public final class AdminCommand {
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildRtpConfigNode() {
 		return Commands.literal("rtp")
-				.then(AdminConfigNodeFactory.intNode("radius", "blocks", ConfigClass.Rtp.MIN_RADIUS,
+				.then(AdminConfigNodeFactory.intNode("maxRadius", "blocks", ConfigClass.Rtp.MIN_RADIUS,
 						ConfigClass.Rtp.MAX_RADIUS,
-						() -> CONFIG.getRtp().getRadius(),
-						value -> CONFIG.getRtp().setRadius(value),
-						"commands.teleport_commands.admin.config.rtp.radius"));
+						() -> CONFIG.getRtp().getMaxRadius(),
+						value -> CONFIG.getRtp().setMaxRadius(value),
+						"commands.teleport_commands.admin.config.rtp.maxRadius"))
+				.then(buildRtpMinRadiusNode());
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildRtpMinRadiusNode() {
+		return Commands.literal("minRadius")
+				.executes(context -> AdminMessages.sendCurrentValue(context.getSource(), "minRadius",
+						Component.literal(String.valueOf(CONFIG.getRtp().getMinRadius()))))
+				.then(Commands.argument("blocks", IntegerArgumentType.integer(ConfigClass.Rtp.MIN_MIN_RADIUS,
+						ConfigClass.Rtp.MAX_RADIUS))
+						.executes(context -> AdminMessages.setAndSave(context,
+								() -> CONFIG.getRtp().setMinRadius(IntegerArgumentType.getInteger(context, "blocks")),
+								AdminMessages.t(context.getSource(),
+										"commands.teleport_commands.admin.config.rtp.minRadius",
+										Component.literal(String.valueOf(CONFIG.getRtp().getMinRadius()))))));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildXaeroConfigNode() {

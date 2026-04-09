@@ -39,9 +39,9 @@ public final class RtpService {
 		ServerTickEvents.END_SERVER_TICK.register(RtpService::onServerTick);
 	}
 
-	public static int enqueueRandomTeleport(ServerPlayer player, int radius) {
+	public static int enqueueRandomTeleport(ServerPlayer player, int maxRadius, int minRadius) {
 		SEARCH_JOBS.put(player.getUUID(), new RtpSearchJob(player, player.blockPosition().immutable(),
-				player.level().dimension(), radius, MAX_ATTEMPTS));
+				player.level().dimension(), maxRadius, minRadius, MAX_ATTEMPTS));
 		return 0;
 	}
 
@@ -64,7 +64,8 @@ public final class RtpService {
 
 			ServerLevel world = player.level();
 			int budget = Math.min(ATTEMPTS_PER_TICK, job.remainingAttempts());
-			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.radius(), world.getRandom(), budget);
+			Optional<BlockPos> safePos = findSafeRandomPosition(world, job.center(), job.maxRadius(), job.minRadius(),
+					world.getRandom(), budget);
 			if (safePos.isPresent()) {
 				BlockPos blockPos = safePos.get();
 				Vec3 teleportPos = new Vec3(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
@@ -85,15 +86,17 @@ public final class RtpService {
 				continue;
 			}
 
-			SEARCH_JOBS.put(uuid, new RtpSearchJob(player, job.center(), job.centerDimension(), job.radius(), remaining));
+			SEARCH_JOBS.put(uuid,
+					new RtpSearchJob(player, job.center(), job.centerDimension(), job.maxRadius(), job.minRadius(), remaining));
 		}
 	}
 
-	private static Optional<BlockPos> findSafeRandomPosition(ServerLevel world, BlockPos center, int radius,
-			RandomSource random, int attemptBudget) {
+	private static Optional<BlockPos> findSafeRandomPosition(ServerLevel world, BlockPos center, int maxRadius,
+			int minRadius, RandomSource random, int attemptBudget) {
 		int minY = world.getMinY() + 1;
 		int maxY = world.getMaxY();
-		int r2 = radius * radius;
+		int maxR2 = maxRadius * maxRadius;
+		int minR2 = minRadius * minRadius;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
 		BlockPos.MutableBlockPos headPos = new BlockPos.MutableBlockPos();
@@ -103,25 +106,26 @@ public final class RtpService {
 		int centerZ = center.getZ();
 
 		for (int attempt = 0; attempt < attemptBudget; attempt++) {
-			int dx = random.nextInt(radius * 2 + 1) - radius;
-			int dz = random.nextInt(radius * 2 + 1) - radius;
+			int dx = random.nextInt(maxRadius * 2 + 1) - maxRadius;
+			int dz = random.nextInt(maxRadius * 2 + 1) - maxRadius;
 			int horizontalR2 = dx * dx + dz * dz;
-			if (horizontalR2 >= r2) {
+			if (horizontalR2 > maxR2) {
 				continue;
 			}
 
 			int x = centerX + dx;
 			int z = centerZ + dz;
 
-			int yMin = Math.max(minY, centerY - radius + 1);
-			int yMax = Math.min(maxY, centerY + radius);
+			int yMin = Math.max(minY, centerY - maxRadius + 1);
+			int yMax = Math.min(maxY, centerY + maxRadius);
 			yMax = Math.min(yMax, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
 			if (yMin > yMax) {
 				continue;
 			}
 
 			int dy = (yMin + random.nextInt(yMax - yMin + 1)) - centerY;
-			if (horizontalR2 + dy * dy > r2) {
+			int distance2 = horizontalR2 + dy * dy;
+			if (distance2 > maxR2 || distance2 < minR2) {
 				continue;
 			}
 			int y = centerY + dy;
@@ -152,7 +156,7 @@ public final class RtpService {
 		return feetState.isAir() && headState.isAir();
 	}
 
-	private record RtpSearchJob(ServerPlayer player, BlockPos center, ResourceKey<Level> centerDimension, int radius,
-			int remainingAttempts) {
+	private record RtpSearchJob(ServerPlayer player, BlockPos center, ResourceKey<Level> centerDimension, int maxRadius,
+			int minRadius, int remainingAttempts) {
 	}
 }

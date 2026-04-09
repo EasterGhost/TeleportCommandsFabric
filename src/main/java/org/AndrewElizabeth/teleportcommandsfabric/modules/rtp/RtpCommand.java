@@ -31,9 +31,10 @@ public class RtpCommand {
 						return 1;
 					}
 
-					int radius = CONFIG.getRtp().getRadius();
+					int maxRadius = CONFIG.getRtp().getMaxRadius();
+					int minRadius = CONFIG.getRtp().getMinRadius();
 					return RtpMessages.execute(player, "Error while executing /rtp!",
-							() -> RtpService.enqueueRandomTeleport(player, radius));
+							() -> RtpService.enqueueRandomTeleport(player, maxRadius, minRadius));
 				});
 	}
 }
