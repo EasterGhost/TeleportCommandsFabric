@@ -31,26 +31,7 @@ public class StorageMigrator {
 			ModConstants.LOGGER.warn("Storage file is v{}, migrating to v{}!", version, defaultVersion);
 
 			if (version == 0) {
-				if (jsonObject.has("Players") && jsonObject.get("Players").isJsonArray()) {
-					JsonArray players = jsonObject.get("Players").getAsJsonArray();
-
-					for (int i = players.size() - 1; i >= 0; i--) {
-						JsonObject player = players.get(i).getAsJsonObject();
-
-						String UUIDStr = player.has("Player_UUID")
-								? player.get("Player_UUID").getAsString()
-								: (player.has("UUID")
-										? player.get("UUID").getAsString()
-										: null);
-
-						if (UUIDStr == null || UUIDStr.isBlank()) {
-							players.remove(i);
-						} else {
-							player.remove("Player_UUID");
-							player.addProperty("UUID", UUIDStr);
-						}
-					}
-				}
+				migrateLegacyPlayerUuidField(jsonObject);
 			}
 
 			if (version < 3) {
@@ -59,6 +40,10 @@ public class StorageMigrator {
 
 			if (version < 4) {
 				migrateHistoricalVersion3DataToVersion4(jsonObject);
+			}
+
+			if (version < 5) {
+				migrateToVersion5(jsonObject);
 			}
 
 			jsonObject.addProperty("version", defaultVersion);
@@ -79,6 +64,35 @@ public class StorageMigrator {
 		}
 	}
 
+	private static void migrateLegacyPlayerUuidField(JsonObject root) {
+		if (!root.has("Players") || !root.get("Players").isJsonArray()) {
+			return;
+		}
+
+		JsonArray players = root.getAsJsonArray("Players");
+		for (int i = players.size() - 1; i >= 0; i--) {
+			JsonElement element = players.get(i);
+			if (!element.isJsonObject()) {
+				players.remove(i);
+				continue;
+			}
+
+			JsonObject player = element.getAsJsonObject();
+			String uuid = getTrimmedString(player, "Player_UUID");
+			if (uuid == null) {
+				uuid = getTrimmedString(player, "UUID");
+			}
+
+			if (uuid == null || uuid.isBlank()) {
+				players.remove(i);
+				continue;
+			}
+
+			player.remove("Player_UUID");
+			player.addProperty("UUID", uuid);
+		}
+	}
+
 	private static void migrateToVersion3(JsonObject root) {
 		normalizeNamedLocationYAsDouble(root);
 		ensureNamedLocationXaeroVisible(root);
@@ -88,6 +102,10 @@ public class StorageMigrator {
 		ensureNamedLocationUuid(root);
 		migrateDefaultHomeToUuid(root);
 		ensurePlayerHiddenWarpUuids(root);
+	}
+
+	private static void migrateToVersion5(JsonObject root) {
+		ensureNamedLocationExpiredTime(root);
 	}
 
 	private static void normalizeNamedLocationYAsDouble(JsonObject root) {
@@ -135,6 +153,21 @@ public class StorageMigrator {
 		}
 	}
 
+	private static void ensureNamedLocationExpiredTime(JsonObject root) {
+		ensureLocationsArrayExpiredTime(root.getAsJsonArray("Warps"));
+
+		if (root.has("Players") && root.get("Players").isJsonArray()) {
+			JsonArray players = root.getAsJsonArray("Players");
+			for (JsonElement element : players) {
+				if (!element.isJsonObject()) {
+					continue;
+				}
+				JsonObject player = element.getAsJsonObject();
+				ensureLocationsArrayExpiredTime(player.getAsJsonArray("Homes"));
+			}
+		}
+	}
+
 	private static void ensureLocationsArrayUuid(JsonArray locations) {
 		if (locations == null) {
 			return;
@@ -147,6 +180,25 @@ public class StorageMigrator {
 			if (!location.has("uuid") || location.get("uuid").isJsonNull()
 					|| location.get("uuid").getAsString().isBlank()) {
 				location.addProperty("uuid", UUID.randomUUID().toString());
+			}
+		}
+	}
+
+	private static void ensureLocationsArrayExpiredTime(JsonArray locations) {
+		if (locations == null) {
+			return;
+		}
+
+		for (JsonElement element : locations) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+
+			JsonObject location = element.getAsJsonObject();
+			if (!location.has("expiredTime")
+					|| !location.get("expiredTime").isJsonPrimitive()
+					|| !location.get("expiredTime").getAsJsonPrimitive().isNumber()) {
+				location.addProperty("expiredTime", 0L);
 			}
 		}
 	}
@@ -219,6 +271,21 @@ public class StorageMigrator {
 			}
 		}
 	}
+
+	private static String getTrimmedString(JsonObject object, String key) {
+		if (!object.has(key) || object.get(key).isJsonNull()) {
+			return null;
+		}
+
+		JsonElement element = object.get(key);
+		if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+			return null;
+		}
+
+		String value = element.getAsString();
+		return value == null ? null : value.trim();
+	}
+
 
 	private static void ensureLocationsArrayXaeroVisible(JsonArray locations) {
 		if (locations == null) {
