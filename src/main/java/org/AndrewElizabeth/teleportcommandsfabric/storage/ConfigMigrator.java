@@ -25,13 +25,14 @@ public class ConfigMigrator {
  
 		if (version < defaultVersion) {
 			ModConstants.LOGGER.warn("Config file is v{}, migrating to v{}!", version, defaultVersion);
- 
-			if (jsonObject.has("wild") && !jsonObject.has("rtp")) {
-				jsonObject.add("rtp", jsonObject.get("wild"));
-				jsonObject.remove("wild");
+
+			if (version < 2) {
+				migrateToVersion2(jsonObject);
 			}
- 
-			normalizeXaeroSetNames(jsonObject);
+
+			if (version < 3) {
+				migrateToVersion3(jsonObject);
+			}
  
 			jsonObject.addProperty("version", defaultVersion);
  
@@ -48,6 +49,29 @@ public class ConfigMigrator {
 					version, defaultVersion, configFile.toAbsolutePath());
  
 			throw new IllegalStateException(message);
+		}
+	}
+
+	private static void migrateToVersion2(JsonObject root) {
+		if (root.has("wild") && !root.has("rtp")) {
+			root.add("rtp", root.get("wild"));
+			root.remove("wild");
+		}
+
+		normalizeXaeroSetNames(root);
+	}
+
+	private static void migrateToVersion3(JsonObject root) {
+		if (!root.has("rtp") || !root.get("rtp").isJsonObject()) {
+			return;
+		}
+
+		JsonObject rtp = root.getAsJsonObject("rtp");
+		if (rtp.has("radius") && !rtp.has("maxRadius")) {
+			rtp.add("maxRadius", rtp.get("radius"));
+		}
+		if (rtp.has("radius")) {
+			rtp.remove("radius");
 		}
 	}
  
