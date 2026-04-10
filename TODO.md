@@ -5,6 +5,7 @@
 - 传送锚点失效 / 临时锚点
   - 目标：基于现有 `expiredTime` 完成最小可用闭环。
   - 范围：设置过期时间、列表过滤、传送前过期判定、存储迁移、文档说明。
+  - 详细方案：[docs/proposals/temporary_waypoints.md](docs/proposals/temporary_waypoints.md)
 
 - RTP 下界基岩顶修正
   - 目标：避免传送到 `y=127` 且脚下为基岩的方块上。
