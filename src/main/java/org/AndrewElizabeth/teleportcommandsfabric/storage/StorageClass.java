@@ -50,17 +50,16 @@ public class StorageClass {
 					}
 				}
 
-				changed |= player.ensureDefaultHomeUuid();
+				changed |= player.refreshHomeState();
 			}
 
 			if (!CONFIG.getHome().isDeleteInvalid()) {
 				for (NamedLocation home : player.getHomes()) {
 					changed |= home.ensureUuid();
 				}
-				changed |= player.ensureDefaultHomeUuid();
+				changed |= player.refreshHomeState();
 			}
 			changed |= player.ensureHiddenWarpUuids();
-			changed |= player.removeExpiredHomes();
 
 			if (player.isEmpty()) {
 				iterator.remove();

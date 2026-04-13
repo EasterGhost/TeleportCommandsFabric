@@ -22,8 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.AndrewElizabeth.teleportcommandsfabric.ModConstants.ASSETS_ID;
-
 public final class TranslationHelper {
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%(\\d+)%");
 	private static final Map<String, Map<String, String>> TRANSLATION_CACHE = new ConcurrentHashMap<>();
@@ -61,7 +59,7 @@ public final class TranslationHelper {
 	}
 
 	private static Map<String, String> loadLanguage(String language) {
-		String filePath = String.format("/assets/%s/lang/%s.json", ASSETS_ID, language);
+		String filePath = String.format("/assets/%s/lang/%s.json", ModConstants.ASSETS_ID, language);
 		try (InputStream stream = TeleportCommands.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
 				ModConstants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling BackCommand to en_us.", language);

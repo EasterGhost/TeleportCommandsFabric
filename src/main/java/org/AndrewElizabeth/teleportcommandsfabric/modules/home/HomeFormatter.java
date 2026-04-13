@@ -54,12 +54,16 @@ final class HomeFormatter {
 				? getTranslatedText("commands.teleport_commands.common.default", player)
 						.withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)
 				: null;
+		MutableComponent temporaryMarker = currentHome.isTemporary()
+				? getTranslatedText("commands.teleport_commands.home.temporary", player)
+						.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+				: null;
 		MutableComponent mapState = getTranslatedText(currentHome.isXaeroVisible()
 				? "commands.teleport_commands.common.mapVisible"
 				: "commands.teleport_commands.common.mapHidden", player)
 						.withStyle(currentHome.isXaeroVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY);
 
-		CommandUiSupport.appendNameLine(message, currentHome.getName(), defaultMarker, mapState);
+		CommandUiSupport.appendNameLine(message, currentHome.getName(), defaultMarker, temporaryMarker, mapState);
 		CommandUiSupport.appendLocationLine(message, player, currentHome);
 
 		message.append("\n");
@@ -74,7 +78,7 @@ final class HomeFormatter {
 						ChatFormatting.YELLOW, new ClickEvent.RunCommand("updatehome " + quotedName)))
 				.append(" ");
 
-		if (!currentHome.getUuid().equals(playerStorage.getDefaultHomeUuid())) {
+		if (!currentHome.isTemporary() && !currentHome.getUuid().equals(playerStorage.getDefaultHomeUuid())) {
 			message.append(CommandUiSupport.translatedButton(player, "commands.teleport_commands.common.defaultPrompt",
 					ChatFormatting.DARK_AQUA, new ClickEvent.RunCommand("defaulthome " + quotedName)))
 					.append(" ");

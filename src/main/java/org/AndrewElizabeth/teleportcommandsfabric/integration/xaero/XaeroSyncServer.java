@@ -130,6 +130,7 @@ public final class XaeroSyncServer {
 		}
 
 		StorageManager.STORAGE.getPlayer(player.getStringUUID()).ifPresent(playerData -> {
+			playerData.refreshHomeState();
 			for (NamedLocation home : playerData.getHomes()) {
 				if (!home.isXaeroVisible()) {
 					continue;

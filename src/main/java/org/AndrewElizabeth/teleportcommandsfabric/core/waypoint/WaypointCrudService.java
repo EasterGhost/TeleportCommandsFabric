@@ -21,20 +21,38 @@ public class WaypointCrudService {
 			final String normalizedName = LocationResolver.normalizeName(name);
 			final int max = source.getMaxLimit();
 			final boolean alreadyExists = source.getByName(normalizedName).isPresent();
+			final Optional<WaypointSource.CreateFailure> createFailure;
 
-			if (!alreadyExists && max > 0 && source.getAll().size() >= max) {
+			if (alreadyExists) {
+				CommandExecutionSupport.send(player, existsKey, ChatFormatting.RED);
+				return;
+			}
+
+			createFailure = source.validateCreate(player, normalizedName);
+			if (createFailure.isPresent()) {
+				sendCreateFailure(player, createFailure.get());
+				return;
+			}
+
+			if (max > 0 && source.getAll().size() >= max) {
 				CommandExecutionSupport.sendWithArgs(player, maxReachedKey, ChatFormatting.RED, String.valueOf(max));
 				return;
 			}
 
-			final String worldString = WorldResolver.getDimensionId(player.level().dimension());
-			final NamedLocation location = NamedLocation.create(normalizedName, player.getBlockX(), player.getY(),
-					player.getBlockZ(), worldString);
+			final NamedLocation location = source.createLocation(player, normalizedName);
 
 			source.add(location);
 			source.onAdded(location);
 			CommandExecutionSupport.send(player, successKey);
 		});
+	}
+
+	private static void sendCreateFailure(ServerPlayer player, WaypointSource.CreateFailure failure) {
+		if (failure.args().length == 0) {
+			CommandExecutionSupport.send(player, failure.messageKey(), failure.formatting());
+			return;
+		}
+		CommandExecutionSupport.sendWithArgs(player, failure.messageKey(), failure.formatting(), failure.args());
 	}
 
 	public static int delete(ServerPlayer player, String name, WaypointSource source, String logPrefix, String errorKey,

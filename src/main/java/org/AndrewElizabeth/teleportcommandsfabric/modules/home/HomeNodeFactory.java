@@ -28,12 +28,26 @@ final class HomeNodeFactory {
 		return new PlayerHomeSource(StorageManager.STORAGE.addPlayer(player.getStringUUID()));
 	}
 
+	private static TemporaryHomeSource getTemporarySource(ServerPlayer player) {
+		return new TemporaryHomeSource(StorageManager.STORAGE.addPlayer(player.getStringUUID()));
+	}
+
 	static LiteralArgumentBuilder<CommandSourceStack> buildSetNode() {
 		return WaypointNodeBuilder.buildActionNode(
 				"sethome", REQUIRE_PLAYER, new HomeSuggestionProvider(), HomeNodeFactory::getSource, DISABLED_KEY,
 				(player, name, source) -> WaypointCrudService.set(player, name, source, "Error while setting a home!",
 						"commands.teleport_commands.home.setError", "commands.teleport_commands.home.set",
 						"commands.teleport_commands.home.exists", "commands.teleport_commands.home.max"));
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildTemporarySetNode() {
+		return WaypointNodeBuilder.buildActionNode(
+				"tmphome", REQUIRE_PLAYER, new HomeSuggestionProvider(), HomeNodeFactory::getTemporarySource,
+				DISABLED_KEY,
+				(player, name, source) -> WaypointCrudService.set(player, name, source,
+						"Error while setting a temporary home!", "commands.teleport_commands.home.tempSetError",
+						"commands.teleport_commands.home.tempSet", "commands.teleport_commands.home.exists",
+						"commands.teleport_commands.home.max"));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildDeleteNode() {
@@ -46,11 +60,9 @@ final class HomeNodeFactory {
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildDefaultNode() {
 		return WaypointNodeBuilder.buildActionNode(
-				"defaulthome", REQUIRE_PLAYER, new HomeSuggestionProvider(), HomeNodeFactory::getSource, DISABLED_KEY,
-				(player, name, source) -> WaypointCrudService.setDefault(player, name, source,
-						"Error while setting the default home!", "commands.teleport_commands.home.defaultError",
-						"commands.teleport_commands.home.default", "commands.teleport_commands.home.notFound",
-						"commands.teleport_commands.home.defaultSame"));
+				"defaulthome", REQUIRE_PLAYER, new HomeSuggestionProvider(home -> !home.isTemporary()),
+				HomeNodeFactory::getSource, DISABLED_KEY,
+				(player, name, source) -> HomeMutationActions.setDefaultHome(player, name, (PlayerHomeSource) source));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildUpdateNode() {

@@ -38,6 +38,10 @@ public class NamedLocation {
 		return new NamedLocation(UUID.randomUUID(), name, x, y, z, world, true, 0L);
 	}
 
+	public static NamedLocation createTemporary(String name, int x, double y, int z, String world, long expiredTime) {
+		return new NamedLocation(UUID.randomUUID(), name, x, y, z, world, true, expiredTime);
+	}
+
 	public String getName() {
 		return this.name;
 	}
@@ -105,8 +109,12 @@ public class NamedLocation {
 		StorageManager.markDirty();
 	}
 
+	public boolean isTemporary() {
+		return expiredTime > 0;
+	}
+
 	public boolean isExpired() {
-		return expiredTime > 0 && System.currentTimeMillis() > expiredTime;
+		return expiredTime > 0 && System.currentTimeMillis() >= expiredTime;
 	}
 
 	public boolean ensureUuid() {

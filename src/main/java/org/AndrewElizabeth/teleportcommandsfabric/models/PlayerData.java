@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,7 +31,7 @@ public class PlayerData {
 	}
 
 	public String getDefaultHome() {
-		return getHomeByUuid(DefaultHomeUuid)
+		return getDefaultHomeLocation()
 				.map(NamedLocation::getName)
 				.orElse("");
 	}
@@ -45,14 +46,32 @@ public class PlayerData {
 
 	public Optional<NamedLocation> getHome(String name) {
 		return Homes.stream()
+				.filter(home -> !home.isExpired())
 				.filter(home -> Objects.equals(home.getName(), name))
 				.findFirst();
 	}
 
 	public Optional<NamedLocation> getHomeByUuid(UUID uuid) {
 		return Homes.stream()
+				.filter(home -> !home.isExpired())
 				.filter(home -> Objects.equals(home.getUuid(), uuid))
 				.findFirst();
+	}
+
+	public Optional<NamedLocation> getDefaultHomeLocation() {
+		return getHomeByUuid(DefaultHomeUuid)
+				.filter(this::isEligibleDefaultHome);
+	}
+
+	public Optional<NamedLocation> getTemporaryHome() {
+		return Homes.stream()
+				.filter(home -> !home.isExpired())
+				.filter(NamedLocation::isTemporary)
+				.findFirst();
+	}
+
+	public boolean hasTemporaryHome() {
+		return getTemporaryHome().isPresent();
 	}
 
 	public boolean isWarpHidden(UUID warpUuid) {
@@ -70,6 +89,7 @@ public class PlayerData {
 			return;
 		}
 		this.DefaultHomeUuid = getHome(defaultHome)
+				.filter(this::isEligibleDefaultHome)
 				.map(NamedLocation::getUuid)
 				.orElse(null);
 	}
@@ -84,7 +104,10 @@ public class PlayerData {
 	}
 
 	public void setDefaultHomeByUuidNoSave(UUID defaultHomeUuid) {
-		this.DefaultHomeUuid = defaultHomeUuid;
+		this.DefaultHomeUuid = getHomeByUuid(defaultHomeUuid)
+				.filter(this::isEligibleDefaultHome)
+				.map(NamedLocation::getUuid)
+				.orElse(null);
 	}
 
 	public boolean addHome(NamedLocation home) throws Exception {
@@ -139,7 +162,7 @@ public class PlayerData {
 		if (DefaultHomeUuid == null) {
 			return false;
 		}
-		if (getHomeByUuid(DefaultHomeUuid).isPresent()) {
+		if (getDefaultHomeLocation().isPresent()) {
 			return false;
 		}
 		DefaultHomeUuid = null;
@@ -155,7 +178,28 @@ public class PlayerData {
 	}
 
 	public boolean removeExpiredHomes() {
-		return Homes.removeIf(NamedLocation::isExpired);
+		boolean changed = false;
+		for (Iterator<NamedLocation> iterator = Homes.iterator(); iterator.hasNext();) {
+			NamedLocation home = iterator.next();
+			if (!home.isExpired()) {
+				continue;
+			}
+			if (Objects.equals(DefaultHomeUuid, home.getUuid())) {
+				DefaultHomeUuid = null;
+			}
+			iterator.remove();
+			changed = true;
+		}
+		return changed;
+	}
+
+	public boolean refreshHomeState() {
+		boolean changed = removeExpiredHomes();
+		changed |= ensureDefaultHomeUuid();
+		if (changed) {
+			StorageManager.markDirty();
+		}
+		return changed;
 	}
 
 	public boolean isEmpty() {
@@ -169,5 +213,9 @@ public class PlayerData {
 			HiddenWarpUuids = new HashSet<>();
 		}
 		return HiddenWarpUuids;
+	}
+
+	public boolean isEligibleDefaultHome(NamedLocation home) {
+		return home != null && !home.isTemporary() && !home.isExpired();
 	}
 }

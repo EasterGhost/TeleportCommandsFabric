@@ -15,8 +15,19 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class HomeSuggestionProvider implements SuggestionProvider<CommandSourceStack> {
+	private final Predicate<NamedLocation> filter;
+
+	public HomeSuggestionProvider() {
+		this(home -> true);
+	}
+
+	public HomeSuggestionProvider(Predicate<NamedLocation> filter) {
+		this.filter = filter;
+	}
+
 	@Override
 	public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context,
 			SuggestionsBuilder builder) {
@@ -28,7 +39,9 @@ public class HomeSuggestionProvider implements SuggestionProvider<CommandSourceS
 			}
 
 			PlayerData playerStorage = optionalPlayerStorage.get();
+			playerStorage.refreshHomeState();
 			return playerStorage.getHomes().stream()
+					.filter(filter)
 					.map(NamedLocation::getName)
 					.toList();
 		});

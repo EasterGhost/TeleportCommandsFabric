@@ -29,7 +29,13 @@ final class HomeCommandSupport {
 			HomeMessages.sendHomeless(player);
 			return;
 		}
-		action.run(optionalPlayerStorage.get());
+		PlayerData playerStorage = optionalPlayerStorage.get();
+		playerStorage.refreshHomeState();
+		if (playerStorage.getHomes().isEmpty()) {
+			HomeMessages.sendHomeless(player);
+			return;
+		}
+		action.run(playerStorage);
 	}
 
 	static void withOptionalPlayerStorage(ServerPlayer player, HomePlayerAction action) throws Exception {
@@ -38,7 +44,9 @@ final class HomeCommandSupport {
 			action.run(null);
 			return;
 		}
-		action.run(optionalPlayerStorage.get());
+		PlayerData playerStorage = optionalPlayerStorage.get();
+		playerStorage.refreshHomeState();
+		action.run(playerStorage);
 	}
 
 	static void printHomes(ServerPlayer player, PlayerData playerStorage) {

@@ -48,6 +48,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.equals("homes")
 				|| normalized.startsWith("homes ")
 				|| normalized.startsWith("home ")
+				|| normalized.startsWith("tmphome ")
 				|| normalized.startsWith("maphome ")
 				|| normalized.startsWith("updatehome ")
 				|| normalized.startsWith("defaulthome ")

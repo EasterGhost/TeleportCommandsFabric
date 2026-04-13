@@ -17,6 +17,7 @@ public class HomeCommand {
 
 	public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
 		commandDispatcher.register(HomeNodeFactory.buildSetNode());
+		commandDispatcher.register(HomeNodeFactory.buildTemporarySetNode());
 		commandDispatcher.register(HomeNodeFactory.buildUpdateNode());
 		commandDispatcher.register(HomeNodeFactory.buildTeleportNode());
 		commandDispatcher.register(HomeNodeFactory.buildDeleteNode());

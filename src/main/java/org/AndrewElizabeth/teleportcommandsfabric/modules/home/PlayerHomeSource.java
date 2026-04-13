@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.home;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.LocationResolver;
 import org.AndrewElizabeth.teleportcommandsfabric.models.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.models.PlayerData;
 
@@ -16,14 +17,20 @@ public class PlayerHomeSource implements WaypointSource {
 		this.player = player;
 	}
 
+	protected PlayerData player() {
+		return player;
+	}
+
 	@Override
 	public List<NamedLocation> getAll() {
+		player.refreshHomeState();
 		return player.getHomes();
 	}
 
 	@Override
 	public Optional<NamedLocation> getByName(String name) {
-		return player.getHome(name);
+		player.refreshHomeState();
+		return player.getHome(LocationResolver.normalizeName(name));
 	}
 
 	@Override
@@ -58,7 +65,7 @@ public class PlayerHomeSource implements WaypointSource {
 
 	@Override
 	public void onAdded(NamedLocation location) {
-		if (player.getHomes().size() == 1) {
+		if (player.getDefaultHomeUuid() == null && player.isEligibleDefaultHome(location)) {
 			try {
 				player.setDefaultHomeByUuid(location.getUuid());
 			} catch (Exception ignored) {
@@ -74,6 +81,15 @@ public class PlayerHomeSource implements WaypointSource {
 			} catch (Exception ignored) {
 			}
 		}
+	}
+
+	boolean hasTemporaryHome() {
+		player.refreshHomeState();
+		return player.hasTemporaryHome();
+	}
+
+	boolean canBeDefault(NamedLocation location) {
+		return player.isEligibleDefaultHome(location);
 	}
 }
 
