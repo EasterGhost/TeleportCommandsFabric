@@ -1,141 +1,217 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.waypoint;
 
-import org.AndrewElizabeth.teleportcommandsfabric.core.command.CommandExecutionSupport;
-import org.AndrewElizabeth.teleportcommandsfabric.models.NamedLocation;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 
-import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class WaypointCrudService {
 
 	private WaypointCrudService() {
 	}
 
-	public static int set(ServerPlayer player, String name, WaypointSource source, String logPrefix, String errorKey,
-			String successKey, String existsKey, String maxReachedKey) {
+	public static CompletableFuture<List<NamedLocationView>> getAll(AsyncWaypointSource source) {
+		return source.getAll();
+	}
 
-		return CommandExecutionSupport.execute(player, logPrefix, errorKey, () -> {
-			final String normalizedName = LocationResolver.normalizeName(name);
-			final int max = source.getMaxLimit();
-			final boolean alreadyExists = source.getByName(normalizedName).isPresent();
-			final Optional<WaypointSource.CreateFailure> createFailure;
+	public static CompletableFuture<Optional<NamedLocationView>> getByName(String name, AsyncWaypointSource source) {
+		return source.getByName(name);
+	}
 
-			if (alreadyExists) {
-				CommandExecutionSupport.send(player, existsKey, ChatFormatting.RED);
-				return;
+	public static CompletableFuture<WaypointOperationResult> add(ServerPlayer player, String name, AsyncWaypointSource source) {
+		int px = player.getBlockX();
+		double py = player.getY();
+		int pz = player.getBlockZ();
+		ResourceKey<Level> pDim = player.level().dimension();
+
+		return source.mutateAtomic(accessor -> {
+			if (accessor.findByName(name).isPresent()) {
+				return WaypointOperationResult.ALREADY_EXISTS;
 			}
 
-			createFailure = source.validateCreate(player, normalizedName);
-			if (createFailure.isPresent()) {
-				sendCreateFailure(player, createFailure.get());
-				return;
+			int maxLimit = source.getMaxLimit();
+			if (maxLimit > 0 && accessor.getCount() >= maxLimit) {
+				return WaypointOperationResult.LIMIT_REACHED;
 			}
 
-			if (max > 0 && source.getAll().size() >= max) {
-				CommandExecutionSupport.sendWithArgs(player, maxReachedKey, ChatFormatting.RED, String.valueOf(max));
-				return;
+			NamedLocation newLoc = source.createLocation(name, px, py, pz, pDim);
+			if (!accessor.put(newLoc)) {
+				return WaypointOperationResult.INTERNAL_ERROR;
 			}
 
-			final NamedLocation location = source.createLocation(player, normalizedName);
+			if (source.isDefaultSupported() && !accessor.hasDefault() && !newLoc.isTemporary()) {
+				if (!accessor.setDefault(newLoc)) {
+					return WaypointOperationResult.INTERNAL_ERROR;
+				}
+			}
 
-			source.add(location);
-			source.onAdded(location);
-			CommandExecutionSupport.send(player, successKey);
+			return WaypointOperationResult.SUCCESS;
 		});
 	}
 
-	private static void sendCreateFailure(ServerPlayer player, WaypointSource.CreateFailure failure) {
-		if (failure.args().length == 0) {
-			CommandExecutionSupport.send(player, failure.messageKey(), failure.formatting());
-			return;
+	public static CompletableFuture<WaypointOperationResult> addTemporary(ServerPlayer player, String name, long expiredTime, AsyncWaypointSource source) {
+		if (!source.isTemporarySupported()) {
+			return CompletableFuture.completedFuture(WaypointOperationResult.TEMPORARY_NOT_SUPPORTED);
 		}
-		CommandExecutionSupport.sendWithArgs(player, failure.messageKey(), failure.formatting(), failure.args());
-	}
 
-	public static int delete(ServerPlayer player, String name, WaypointSource source, String logPrefix, String errorKey,
-			String successKey, String notFoundKey) {
+		if (expiredTime <= System.currentTimeMillis()) {
+			return CompletableFuture.completedFuture(WaypointOperationResult.INVALID_EXPIRED_TIME);
+		}
 
-		return CommandExecutionSupport.execute(player, logPrefix, errorKey, () -> {
-			Optional<NamedLocation> location = source.getByName(name);
-			if (location.isEmpty()) {
-				CommandExecutionSupport.send(player, notFoundKey, ChatFormatting.RED);
-				return;
+		int px = player.getBlockX();
+		double py = player.getY();
+		int pz = player.getBlockZ();
+		ResourceKey<Level> pDim = player.level().dimension();
+
+		return source.mutateAtomic(accessor -> {
+			if (accessor.hasTemporary()) {
+				return WaypointOperationResult.TEMP_HOME_EXISTS;
 			}
 
-			source.remove(location.get());
-			source.onRemoved(location.get());
-			CommandExecutionSupport.send(player, successKey);
+			int maxLimit = source.getMaxLimit();
+			if (maxLimit > 0 && accessor.getCount() >= maxLimit) {
+				return WaypointOperationResult.LIMIT_REACHED;
+			}
+
+			if (accessor.findByName(name).isPresent()) {
+				return WaypointOperationResult.ALREADY_EXISTS;
+			}
+
+			NamedLocation newLoc = source.createTemporaryLocation(name, px, py, pz, pDim, expiredTime);
+			if (!accessor.put(newLoc)) {
+				return WaypointOperationResult.INTERNAL_ERROR;
+			}
+
+			return WaypointOperationResult.SUCCESS;
 		});
 	}
 
-	public static int update(ServerPlayer player, String name, WaypointSource source, String logPrefix, String errorKey,
-			String successKey, String notFoundKey, String sameLocationKey) {
-
-		return CommandExecutionSupport.execute(player, logPrefix, errorKey, () -> {
-			Optional<NamedLocation> location = source.getByName(name);
-			if (location.isEmpty()) {
-				CommandExecutionSupport.send(player, notFoundKey, ChatFormatting.RED);
-				return;
+	public static CompletableFuture<WaypointOperationResult> delete(String name, AsyncWaypointSource source) {
+		return source.mutateAtomic(accessor -> {
+			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			if (locationOpt.isEmpty()) {
+				return WaypointOperationResult.NOT_FOUND;
 			}
 
-			final String worldString = WorldResolver.getDimensionId(player.level().dimension());
-			if (player.blockPosition().equals(location.get().getBlockPos())
-					&& worldString.equals(location.get().getWorldString())) {
-				CommandExecutionSupport.send(player, sameLocationKey, ChatFormatting.AQUA);
-				return;
-			}
-
-			location.get().setCoordinates(player.getBlockX(), player.getY(), player.getBlockZ(), worldString);
-
-			source.onRenamed(location.get(), location.get().getName());
-			CommandExecutionSupport.send(player, successKey);
+			accessor.remove(locationOpt.get());
+			return WaypointOperationResult.SUCCESS;
 		});
 	}
 
-	public static int rename(ServerPlayer player, String name, String newName, WaypointSource source, String logPrefix,
-			String errorKey, String successKey, String notFoundKey, String nameExistsKey) {
+	public static CompletableFuture<WaypointOperationResult> update(ServerPlayer player, String name, AsyncWaypointSource source) {
+		net.minecraft.core.BlockPos currentPos = player.blockPosition();
+		double currentY = player.getY();
+		ResourceKey<Level> currentDim = player.level().dimension();
 
-		return CommandExecutionSupport.execute(player, logPrefix, errorKey, () -> {
-			final String normalizedNewName = LocationResolver.normalizeName(newName);
-
-			if (source.getByName(normalizedNewName).isPresent()) {
-				CommandExecutionSupport.send(player, nameExistsKey, ChatFormatting.RED);
-				return;
+		return source.mutateAtomic(accessor -> {
+			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			if (locationOpt.isEmpty()) {
+				return WaypointOperationResult.NOT_FOUND;
 			}
 
-			Optional<NamedLocation> location = source.getByName(name);
-			if (location.isEmpty()) {
-				CommandExecutionSupport.send(player, notFoundKey, ChatFormatting.RED);
-				return;
+			NamedLocation location = locationOpt.get();
+
+			if (currentPos.getX() == location.getX() &&
+				Double.compare(currentY, location.getYPrecise()) == 0 &&
+				currentPos.getZ() == location.getZ() &&
+				currentDim.equals(location.getDimension())) {
+				return WaypointOperationResult.SAME_LOCATION;
 			}
 
-			String oldName = location.get().getName();
-			location.get().setName(normalizedNewName);
-			source.onRenamed(location.get(), oldName);
-			CommandExecutionSupport.send(player, successKey);
+			NamedLocation newLoc = NamedLocation.copyOf(location);
+			newLoc.setCoordinates(currentPos.getX(), currentY, currentPos.getZ(), currentDim);
+			if (!accessor.put(newLoc)) {
+				return WaypointOperationResult.INTERNAL_ERROR;
+			}
+
+			return WaypointOperationResult.SUCCESS;
 		});
 	}
 
-	public static int setDefault(ServerPlayer player, String name, WaypointSource source, String logPrefix,
-			String errorKey, String successKey, String notFoundKey, String sameDefaultKey) {
+	public static CompletableFuture<WaypointOperationResult> rename(String oldName, String newName, AsyncWaypointSource source) {
+		return source.mutateAtomic(accessor -> {
+			Optional<NamedLocation> locationOpt = accessor.findByName(oldName);
+			if (locationOpt.isEmpty()) {
+				return WaypointOperationResult.NOT_FOUND;
+			}
+			NamedLocation location = locationOpt.get();
 
-		return CommandExecutionSupport.execute(player, logPrefix, errorKey, () -> {
-			Optional<NamedLocation> location = source.getByName(name);
-			if (location.isEmpty()) {
-				CommandExecutionSupport.send(player, notFoundKey, ChatFormatting.RED);
-				return;
+			Optional<NamedLocation> newLocationOpt = accessor.findByName(newName);
+			if (newLocationOpt.isPresent()) {
+				if (!newLocationOpt.get().getUuid().equals(location.getUuid())) {
+					return WaypointOperationResult.ALREADY_EXISTS;
+				}
 			}
 
-			if (source.isDefault(location.get())) {
-				CommandExecutionSupport.send(player, sameDefaultKey, ChatFormatting.AQUA);
-				return;
+			if (location.getName().equals(newName)) {
+				return WaypointOperationResult.SAME_NAME;
 			}
 
-			source.setDefault(location.get());
-			CommandExecutionSupport.send(player, successKey);
+			NamedLocation newLoc = NamedLocation.copyOf(location);
+			newLoc.setName(newName);
+			if (!accessor.put(newLoc)) {
+				return WaypointOperationResult.INTERNAL_ERROR;
+			}
+
+			return WaypointOperationResult.SUCCESS;
+		});
+	}
+
+	public static CompletableFuture<WaypointOperationResult> updateVisibility(String name, boolean visible, AsyncWaypointSource source) {
+		return source.mutateAtomic(accessor -> {
+			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			if (locationOpt.isEmpty()) {
+				return WaypointOperationResult.NOT_FOUND;
+			}
+
+			NamedLocation location = locationOpt.get();
+
+			if (location.isVisible() == visible) {
+				return WaypointOperationResult.SUCCESS;
+			}
+
+			NamedLocation newLoc = NamedLocation.copyOf(location);
+			newLoc.setVisible(visible);
+			if (!accessor.put(newLoc)) {
+				return WaypointOperationResult.INTERNAL_ERROR;
+			}
+
+			return WaypointOperationResult.SUCCESS;
+		});
+	}
+
+	public static CompletableFuture<WaypointOperationResult> setDefault(String name, AsyncWaypointSource source) {
+		return source.mutateAtomic(accessor -> {
+			if (!source.isDefaultSupported()) {
+				// Sources without default support expose this as "no default target found" to callers.
+				return WaypointOperationResult.NOT_FOUND;
+			}
+
+			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			if (locationOpt.isEmpty()) {
+				return WaypointOperationResult.NOT_FOUND;
+			}
+
+			NamedLocation location = locationOpt.get();
+
+			if (location.isTemporary()) {
+				return WaypointOperationResult.CANNOT_BE_DEFAULT;
+			}
+
+			if (accessor.isDefault(location)) {
+				return WaypointOperationResult.SAME_DEFAULT;
+			}
+
+			if (!accessor.setDefault(location)) {
+				return WaypointOperationResult.INTERNAL_ERROR;
+			}
+			return WaypointOperationResult.SUCCESS;
 		});
 	}
 }

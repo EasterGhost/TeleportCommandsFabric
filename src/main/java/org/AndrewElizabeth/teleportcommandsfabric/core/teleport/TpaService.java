@@ -1,228 +1,182 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport;
 
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocationSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.Tpa;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Util;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Collection;
+import java.time.Duration;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper.getTranslatedText;
-import static org.AndrewElizabeth.teleportcommandsfabric.storage.ConfigManager.CONFIG;
 
 public final class TpaService {
-	private static final Map<UUID, Request> requestsById = new ConcurrentHashMap<>();
-	private static final ScheduledExecutorService REQUEST_EXPIRATION_SCHEDULER = Executors
-			.newSingleThreadScheduledExecutor(runnable -> {
-				Thread thread = new Thread(runnable, "teleportcommands-TpaCommand-expiration");
-				thread.setDaemon(true);
-				return thread;
-			});
-	private static final Map<UUID, ScheduledFuture<?>> requestExpiryTasks = new ConcurrentHashMap<>();
+	private final AsyncRecordedLocationSource recordedSource;
+	private final Map<UUID, Tpa.Session> sessions = new LinkedHashMap<>(1280);
+	private final Map<UUID, LinkedHashSet<UUID>> targetIncoming = new HashMap<>(128);
+	private final ArrayDeque<TpaTask> executionQueue = new ArrayDeque<>();
 
-	private TpaService() {
+	private static final int TPA_BATCH_LIMIT = 128;
+
+	public TpaService(AsyncRecordedLocationSource recordedSource) {
+		this.recordedSource = recordedSource;
 	}
 
-	public static final class Request {
-		public final String initPlayer;
-		public final String recPlayer;
-		public final UUID requestId;
-		public final boolean here;
+	public Tpa.Session createRequest(UUID sender, UUID target, Tpa.Type type, Duration expiry) {
+		UUID sessionId = UUID.randomUUID();
+		long expiredTime = Util.getMillis() + expiry.toMillis();
+		Tpa.Session session = new Tpa.Session(sessionId, sender, target, type, expiredTime);
 
-		public Request(String initPlayer, String recPlayer, boolean here) {
-			this.initPlayer = initPlayer;
-			this.recPlayer = recPlayer;
-			this.requestId = UUID.randomUUID();
-			this.here = here;
-			requestsById.put(requestId, this);
-		}
+		sessions.put(sessionId, session);
+		targetIncoming.computeIfAbsent(target, k -> new LinkedHashSet<>()).add(sessionId);
+
+		return session;
 	}
 
-	public static void sendRequest(ServerPlayer fromPlayer, ServerPlayer toPlayer, boolean here) {
-		long playerTpaList = getRequests().stream()
-				.filter(TpaCommand -> Objects.equals(fromPlayer.getStringUUID(), TpaCommand.initPlayer))
-				.filter(TpaCommand -> Objects.equals(toPlayer.getStringUUID(), TpaCommand.recPlayer))
-				.count();
+	public Optional<Tpa.Session> getSession(UUID sessionId) {
+		if (sessionId == null)
+			return Optional.empty();
+		return Optional.ofNullable(sessions.get(sessionId));
+	}
 
-		if (fromPlayer == toPlayer) {
-			fromPlayer.sendSystemMessage(
-					getTranslatedText("commands.teleport_commands.tpa.self", fromPlayer).withStyle(ChatFormatting.AQUA), true);
-			return;
+	public Optional<Tpa.Session> getLatestIncoming(UUID targetUuid) {
+		LinkedHashSet<UUID> incoming = targetIncoming.get(targetUuid);
+		if (incoming == null || incoming.isEmpty()) {
+			return Optional.empty();
 		}
 
-		if (playerTpaList >= 1) {
-			fromPlayer.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.alreadySent", fromPlayer,
-					Component.literal(Objects.requireNonNull(toPlayer.getName().getString(),
-							"ToPlayer name cannot be null")).withStyle(ChatFormatting.BOLD))
-									.withStyle(ChatFormatting.AQUA),
-					true);
-			return;
+		UUID lastId = null;
+		for (UUID id : incoming) {
+			lastId = id;
+		}
+		return getSession(lastId);
+	}
+
+	public boolean acceptRequest(MinecraftServer server, UUID sessionId) {
+		Tpa.Session session = sessions.get(sessionId);
+		if (session == null || session.isExpired(Util.getMillis())) {
+			remove(sessionId);
+			return false;
 		}
 
-		String hereText = here ? "Here" : "";
-		Request request = new Request(fromPlayer.getStringUUID(), toPlayer.getStringUUID(), here);
+		ServerPlayer sender = server.getPlayerList().getPlayer(session.sender());
+		ServerPlayer target = server.getPlayerList().getPlayer(session.target());
 
-		String receivedFromPlayer = Objects.requireNonNull(fromPlayer.getName().getString(),
-				"FromPlayer name cannot be null");
-		String sentToPlayer = Objects.requireNonNull(toPlayer.getName().getString(), "ToPlayer name cannot be null");
+		if (sender == null || target == null) {
+			remove(sessionId);
+			return false;
+		}
 
-		fromPlayer.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.sent", fromPlayer,
-				Component.literal(hereText), Component.literal(sentToPlayer).withStyle(ChatFormatting.BOLD)), true);
+		ServerPlayer playerToMove = (session.type() == Tpa.Type.TPA) ? sender : target;
+		ServerPlayer targetPlayer = (session.type() == Tpa.Type.TPA) ? target : sender;
 
-		toPlayer.sendSystemMessage(
-				getTranslatedText("commands.teleport_commands.tpa.received", toPlayer, Component.literal(hereText),
-						Component.literal(receivedFromPlayer).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD))
-								.withStyle(ChatFormatting.AQUA)
-								.append("\n")
-								.append(getTranslatedText("commands.teleport_commands.tpa.accept", toPlayer)
-										.withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
-										.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(
-												String.format("tpaaccept %s %s", receivedFromPlayer, request.requestId)))))
-								.append(" ")
-								.append(getTranslatedText("commands.teleport_commands.tpa.deny", toPlayer)
-										.withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
-										.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(
-												String.format("tpadeny %s %s", receivedFromPlayer, request.requestId))))),
-				false);
+		executionQueue.add(new TpaTask(
+				playerToMove,
+				(ServerLevel) targetPlayer.level(),
+				targetPlayer.position(),
+				targetPlayer.getYRot(),
+				targetPlayer.getXRot()));
 
-		long requestExpireTimeSeconds = Math.max(0, CONFIG.getTpa().getRequestExpireTime());
-		ScheduledFuture<?> expiryTask = REQUEST_EXPIRATION_SCHEDULER.schedule(() -> {
-			if (TeleportCommands.SERVER != null) {
-				TeleportCommands.SERVER.execute(() -> expireRequest(request, fromPlayer, toPlayer, hereText));
+		remove(sessionId);
+		return true;
+	}
+
+	public void remove(UUID sessionId) {
+		if (sessionId == null)
+			return;
+		Tpa.Session session = sessions.remove(sessionId);
+		if (session != null) {
+			LinkedHashSet<UUID> incoming = targetIncoming.get(session.target());
+			if (incoming != null) {
+				incoming.remove(sessionId);
+				if (incoming.isEmpty()) {
+					targetIncoming.remove(session.target());
+				}
 			}
-		}, requestExpireTimeSeconds, TimeUnit.SECONDS);
-		requestExpiryTasks.put(request.requestId, expiryTask);
-	}
-
-	public static void acceptRequest(ServerPlayer recipient, ServerPlayer sender, UUID requestId) {
-		if (recipient == sender) {
-			recipient.sendSystemMessage(
-					getTranslatedText("commands.teleport_commands.tpa.self", recipient).withStyle(ChatFormatting.AQUA), true);
-			return;
-		}
-
-		Optional<Request> request = findMatchingRequest(recipient, sender, requestId);
-		if (request.isEmpty()) {
-			recipient.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.notFound", recipient)
-					.withStyle(ChatFormatting.RED), true);
-			return;
-		}
-
-		ServerPlayer destinationPlayer = request.get().here ? sender : recipient;
-		ServerPlayer teleportedPlayer = request.get().here ? recipient : sender;
-
-		Optional<BlockPos> teleportData = TeleportSafety.getSafeBlockPos(destinationPlayer.blockPosition(),
-				destinationPlayer.level());
-
-		boolean teleportSuccess;
-		if (teleportData.isPresent()) {
-			BlockPos safeBlockPos = teleportData.get();
-			Vec3 teleportPos = new Vec3(safeBlockPos.getX() + 0.5, safeBlockPos.getY(), safeBlockPos.getZ() + 0.5);
-
-			teleportSuccess = TeleportService.teleportWithDelayAndCooldown(teleportedPlayer, destinationPlayer.level(),
-					teleportPos, false);
-		} else {
-			teleportSuccess = TeleportService.teleportWithDelayAndCooldown(teleportedPlayer, destinationPlayer.level(),
-					destinationPlayer.position(), false);
-		}
-
-		if (!teleportSuccess) {
-			return;
-		}
-
-		recipient.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.accepted", recipient)
-				.withStyle(ChatFormatting.WHITE), true);
-		sender.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.accepted", sender)
-				.withStyle(ChatFormatting.GREEN), true);
-		removeRequest(request.get());
-		cancelExpiryTask(request.get().requestId);
-	}
-
-	public static void denyRequest(ServerPlayer recipient, ServerPlayer sender, UUID requestId) {
-		if (recipient == sender) {
-			recipient.sendSystemMessage(
-					getTranslatedText("commands.teleport_commands.tpa.self", recipient).withStyle(ChatFormatting.AQUA), true);
-			return;
-		}
-
-		Optional<Request> request = findMatchingRequest(recipient, sender, requestId);
-		if (request.isEmpty()) {
-			recipient.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.notFound", recipient)
-					.withStyle(ChatFormatting.RED), true);
-			return;
-		}
-
-		removeRequest(request.get());
-		cancelExpiryTask(request.get().requestId);
-
-		sender.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.denied", sender)
-				.withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
-		recipient.sendSystemMessage(getTranslatedText("commands.teleport_commands.tpa.denied", recipient)
-				.withStyle(ChatFormatting.WHITE), true);
-	}
-
-	public static Collection<Request> getRequests() {
-		return requestsById.values();
-	}
-
-	private static void expireRequest(Request request, ServerPlayer fromPlayer, ServerPlayer toPlayer, String hereText) {
-		requestExpiryTasks.remove(request.requestId);
-
-		boolean successful = removeRequest(request);
-		if (!successful) {
-			return;
-		}
-
-		fromPlayer.sendSystemMessage(
-				getTranslatedText("commands.teleport_commands.tpa.expired", fromPlayer, Component.literal(hereText))
-						.withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
-				true);
-		toPlayer.sendSystemMessage(
-				getTranslatedText("commands.teleport_commands.tpa.expired", toPlayer, Component.literal(hereText))
-						.withStyle(ChatFormatting.WHITE),
-				true);
-	}
-
-	private static void cancelExpiryTask(UUID requestId) {
-		ScheduledFuture<?> expiryTask = requestExpiryTasks.remove(requestId);
-		if (expiryTask != null) {
-			expiryTask.cancel(false);
 		}
 	}
 
-	private static Optional<Request> findMatchingRequest(ServerPlayer recipient, ServerPlayer sender, UUID requestId) {
-		if (requestId == null) {
-			return getRequests().stream()
-					.filter(TpaCommand -> Objects.equals(sender.getStringUUID(), TpaCommand.initPlayer))
-					.filter(TpaCommand -> Objects.equals(recipient.getStringUUID(), TpaCommand.recPlayer))
-					.findFirst();
+	public void tick() {
+		int executed = 0;
+		while (executed < TPA_BATCH_LIMIT && !executionQueue.isEmpty()) {
+			TpaTask task = executionQueue.poll();
+			if (task.player.level().getServer() != null && !task.player.isDeadOrDying()) {
+				if (recordedSource != null) {
+					recordedSource.recordPreviousTeleportLocation(task.player.getUUID(), task.player.blockPosition(), task.player.level().dimension())
+							.whenComplete((ignored, throwable) -> {
+								if (throwable != null) {
+									ModConstants.LOGGER.warn("Failed to record previous teleport location for TPA", throwable);
+								}
+							});
+				}
+				task.player.teleportTo(task.world, task.pos.x, task.pos.y, task.pos.z, Set.of(), task.yRot, task.xRot, false);
+			}
+			executed++;
 		}
-		Request request = requestsById.get(requestId);
-		if (request == null) {
-			return Optional.empty();
+
+		long now = Util.getMillis();
+		Iterator<Map.Entry<UUID, Tpa.Session>> it = sessions.entrySet().iterator();
+		while (it.hasNext()) {
+			Tpa.Session session = it.next().getValue();
+			if (session.isExpired(now)) {
+				LinkedHashSet<UUID> targetSet = targetIncoming.get(session.target());
+				if (targetSet != null) {
+					targetSet.remove(session.sessionId());
+					if (targetSet.isEmpty())
+						targetIncoming.remove(session.target());
+				}
+				it.remove();
+			} else {
+				break;
+			}
 		}
-		if (!Objects.equals(sender.getStringUUID(), request.initPlayer)
-				|| !Objects.equals(recipient.getStringUUID(), request.recPlayer)) {
-			return Optional.empty();
-		}
-		return Optional.of(request);
 	}
 
-	private static boolean removeRequest(Request request) {
-		return requestsById.remove(request.requestId, request);
+	public void onPlayerQuit(UUID playerUuid) {
+		executionQueue.removeIf(task -> task.player.getUUID().equals(playerUuid));
+
+		LinkedHashSet<UUID> incoming = targetIncoming.remove(playerUuid);
+		if (incoming != null) {
+			for (UUID id : incoming) {
+				sessions.remove(id);
+			}
+		}
+
+		Iterator<Tpa.Session> iterator = sessions.values().iterator();
+		while (iterator.hasNext()) {
+			Tpa.Session session = iterator.next();
+			if (session.sender().equals(playerUuid)) {
+				LinkedHashSet<UUID> targetSet = targetIncoming.get(session.target());
+				if (targetSet != null) {
+					targetSet.remove(session.sessionId());
+				}
+				iterator.remove();
+			}
+		}
+	}
+
+	public void clear() {
+		sessions.clear();
+		targetIncoming.clear();
+		executionQueue.clear();
+	}
+
+	private record TpaTask(
+			ServerPlayer player,
+			ServerLevel world,
+			Vec3 pos,
+			float yRot,
+			float xRot) {
 	}
 }
-

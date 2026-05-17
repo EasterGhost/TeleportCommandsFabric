@@ -1,0 +1,16 @@
+package org.AndrewElizabeth.teleportcommandsfabric.core.waypoint;
+
+public enum WaypointOperationResult {
+	SUCCESS,
+	SAME_NAME,
+	SAME_LOCATION,
+	SAME_DEFAULT,
+	NOT_FOUND,
+	ALREADY_EXISTS,
+	LIMIT_REACHED,
+	TEMP_HOME_EXISTS,
+	TEMPORARY_NOT_SUPPORTED,
+	INVALID_EXPIRED_TIME,
+	CANNOT_BE_DEFAULT,
+	INTERNAL_ERROR
+}
