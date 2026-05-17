@@ -1,0 +1,19 @@
+tasks.register('inspectClass') {
+    doLast {
+        def url = sourceSets.main.compileClasspath.find { it.name.contains('minecraft') }.toURI().toURL()
+        def cl = new java.net.URLClassLoader([url] as java.net.URL[], null)
+        def clazz = cl.loadClass('net.minecraft.server.level.ServerLevel')
+        clazz.getMethods().each {
+            if (it.name.toLowerCase().contains('spawn')) {
+                println it.name
+            }
+        }
+        
+        def lvlData = cl.loadClass('net.minecraft.world.level.storage.ServerLevelData')
+        lvlData.getMethods().each {
+            if (it.name.toLowerCase().contains('spawn')) {
+                println 'ServerLevelData: ' + it.name
+            }
+        }
+    }
+}

@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.15.4'
+    id 'net.fabricmc.fabric-loom' version '1.15.5'
     id 'maven-publish'
 }
 
@@ -45,6 +45,40 @@ dependencies {
     compileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
     compileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
     compileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
+}
+
+sourceSets {
+    teleportTest {
+        java {
+            srcDirs = ["src/main/java", "src/test/java"]
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportStatus.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportTarget.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportTargetResult.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportOptions.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportRequest.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportPending.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TeleportServiceSettings.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/manager/TeleportCooldownManager.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/TeleportBatchDispatcher.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/record/AsyncRecordedLocationSource.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/record/RecordedLocationTeleportTargets.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocation.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocationView.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocationSnapshot.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TeleportServiceScenarioTests.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/test/**"
+        }
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+tasks.register("teleportCoreTest", JavaExec) {
+    group = "verification"
+    description = "Runs standalone core.teleport tests without compiling unfinished modules."
+    dependsOn tasks.named("compileTeleportTestJava")
+    classpath = sourceSets.teleportTest.runtimeClasspath
+    mainClass = "org.AndrewElizabeth.teleportcommandsfabric.core.teleport.test.TeleportCoreTestSuite"
 }
 
 processResources {

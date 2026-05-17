@@ -138,6 +138,7 @@ build_log.txt
 *.bak
 src_pre_refactor_backup/
 src_post_refactor_checkpoint/
+backup/
 
 # txt files
 *.txt

@@ -1,0 +1,866 @@
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.test;
+
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceScenarioTests;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
+
+import org.AndrewElizabeth.teleportcommandsfabric.core.record.RecordedLocationTeleportTargets;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.SharedConstants;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+
+public final class TeleportCoreTestSuite {
+	private static final TeleportTarget DUMMY_TARGET = createDummyTarget();
+	private static final String SECTION_SEPARATOR = "================================================================================";
+
+	private TeleportCoreTestSuite() {
+	}
+
+	public static void main(String[] args) throws Exception {
+		SharedConstants.tryDetectVersion();
+		Bootstrap.bootStrap();
+		System.out.println("Teleport core debug run");
+		debug("GLOBAL PARAMS", "fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD
+				+ ", maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK
+				+ ", admissionRamp=[" + TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT
+				+ ", " + TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT + " steady]"
+				+ ", maxBudgetNanos=" + formatNumber(TeleportServiceSettings.MAX_TELEPORT_BUDGET_NANOS)
+				+ ", timeCheckInterval=" + TeleportServiceSettings.TIME_CHECK_INTERVAL
+				+ ", safetyWorkerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
+				+ ", safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE);
+		run("TeleportOptions values and effective cooldown",
+				"Verify current option constructor and effective cooldown values.",
+				"caseA delayTicks=0 cooldownMillis=0 safetyEnabled=true recordPrevious=true; caseB delayTicks=3 cooldownMillis=100",
+				TeleportCoreTestSuite::testTeleportOptions);
+		run("TeleportCooldownManager pending lifecycle",
+				"Verify create, replace, event cancel, success cooldown refresh, and quit cancel.",
+				"delayTicks=5 cooldownMillis=10000 createdAtTicks=[10,20,30,40] quitTick=50 eventCancelStatus=CANCELLED_BY_EVENT",
+				TeleportCoreTestSuite::testPendingLifecycle);
+		run("TeleportBatchDispatcher fast path threshold",
+				"Verify same-tick fast path stops after the configured threshold.",
+				"fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD,
+				TeleportCoreTestSuite::testDispatcherFastPathThreshold);
+		run("Ready admission ramp limits",
+				"Verify the configured ready admission ramp used to avoid first-tick burst spikes.",
+				"tick1=16 ticks2+=" + TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT,
+				TeleportCoreTestSuite::testReadyAdmissionRamp);
+		run("TeleportBatchDispatcher hard limit",
+				"Verify one drain cannot process more than the per-tick hard limit.",
+				"queued=" + (TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK + 20)
+						+ " maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK,
+				TeleportCoreTestSuite::testDispatcherHardLimit);
+		run("TeleportBatchDispatcher budget hit",
+				"Verify a slow executor stops drain when the time budget is exceeded.",
+				"queued=32 executorSleepMillis=1 maxBudgetNanos=" + formatNumber(TeleportServiceSettings.MAX_TELEPORT_BUDGET_NANOS)
+						+ " timeCheckInterval=" + TeleportServiceSettings.TIME_CHECK_INTERVAL,
+				TeleportCoreTestSuite::testDispatcherBudgetHit);
+		run("TeleportBatchDispatcher queue convergence",
+				"Verify a large queue drains across ticks and eventually reaches zero.",
+				"queued=" + formatNumber(10_000) + " maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK,
+				TeleportCoreTestSuite::testDispatcherQueueConvergence);
+		run("TeleportSafety fabricated main-thread workload",
+				"Estimate main-thread safety cost with real BlockState collision checks on a fake BlockGetter.",
+				"requests=10,000 admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3) defaultBlock=AIR",
+				TeleportCoreTestSuite::testFabricatedSafetyMainThreadWorkload);
+		run("TeleportSafety fabricated worker workload",
+				"Estimate batch safety cost when worker threads perform collision checks concurrently.",
+				"requests=10,000 workerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
+						+ " safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE
+						+ " admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3)",
+				TeleportCoreTestSuite::testFabricatedSafetyWorkerWorkload);
+		run("RecordedLocationSnapshot is detached",
+				"Verify recorded location snapshots do not expose mutable storage objects.",
+				"initialPos=(1,2,3) mutatedSourcePos=(4,5,6) dimension=minecraft:overworld",
+				TeleportCoreTestSuite::testRecordedLocationSnapshot);
+		run("Recorded target resolver maps empty target",
+				"Verify missing death/previous records map to a failed target result.",
+				"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
+				TeleportCoreTestSuite::testRecordedTargetEmpty);
+		run("TeleportService runtime scenarios",
+				"Verify request-to-tick orchestration for success, delay, replacement, preload, and event cancellation.",
+				"fakeServerThread=true fakePlayerOnline=true fakePreload toggles loaded/unloaded",
+				TeleportServiceScenarioTests::runAll);
+		System.out.println("Teleport core tests passed.");
+	}
+
+	private static void testTeleportOptions() {
+		TeleportOptions options = new TeleportOptions(0, 0L, true, true);
+		requireEquals(0, options.delayTicks(), "delay ticks should clamp");
+		requireEquals(0L, options.cooldownMillis(), "cooldown millis should match constructor value");
+		requireEquals(0L, options.effectiveCooldownMillis(), "effective cooldown should use configured millis");
+
+		TeleportOptions delayed = new TeleportOptions(3, 100L, false, false);
+		requireEquals(3, delayed.delayTicks(), "delay should use configured value");
+		requireEquals(100L, delayed.effectiveCooldownMillis(), "cooldown should use configured millis");
+		debug("DATA options", "clampedDelay=" + options.delayTicks()
+				+ ", cooldownMillis=" + options.cooldownMillis()
+				+ ", delayedDelay=" + delayed.delayTicks()
+				+ ", delayedCooldownMillis=" + delayed.effectiveCooldownMillis());
+	}
+
+	private static void testPendingLifecycle() {
+		TeleportCooldownManager manager = new TeleportCooldownManager();
+		UUID playerUuid = UUID.randomUUID();
+		TeleportRequest firstRequest = request();
+		TeleportRequest secondRequest = request();
+
+		TeleportCooldownManager.PendingCreateResult first = manager.createPending(playerUuid, firstRequest, 10L);
+		require(manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should be current");
+		require(manager.hasCurrentPendings(), "first pending should make manager active");
+		requireEquals(15L, first.pending().delayUntilTick(), "delay deadline should be based on current tick");
+		debug("DATA pending.first", "sequence=" + first.pending().pendingSequence()
+				+ ", createTick=" + first.pending().createTick()
+				+ ", delayUntilTick=" + first.pending().delayUntilTick());
+
+		TeleportCooldownManager.PendingCreateResult second = manager.createPending(playerUuid, secondRequest, 20L);
+		require(first.pending().resultFuture().isDone(), "replaced pending should complete");
+		requireEquals(TeleportStatus.CANCELLED, first.pending().resultFuture().join(), "replaced pending should cancel");
+		require(second.replaced().isPresent(), "replacement should be reported");
+		require(!manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should no longer be current");
+		require(manager.isCurrent(playerUuid, second.pending().pendingSequence()), "second pending should be current");
+		requireEquals(1, manager.visitCurrentPendings(ignored -> true), "replacement should leave one active pending");
+		debug("DATA pending.replace", "oldSequence=" + first.pending().pendingSequence()
+				+ ", newSequence=" + second.pending().pendingSequence()
+				+ ", oldStatus=" + first.pending().resultFuture().join());
+
+		require(manager.cancelPending(playerUuid, second.pending().pendingSequence(), TeleportStatus.CANCELLED_BY_EVENT), "cancel should succeed");
+		requireEquals(TeleportStatus.CANCELLED_BY_EVENT, second.pending().resultFuture().join(), "cancel status should be preserved");
+		require(!manager.isCurrent(playerUuid, second.pending().pendingSequence()), "cancelled pending should not be current");
+		require(!manager.hasCurrentPendings(), "cancelled pending should leave no active pending");
+		debug("DATA pending.cancel", "sequence=" + second.pending().pendingSequence()
+				+ ", status=" + second.pending().resultFuture().join());
+
+		TeleportCooldownManager.PendingCreateResult success = manager.createPending(playerUuid, request(), 30L);
+		manager.markSuccess(playerUuid, success.pending().pendingSequence());
+		require(!manager.isCurrent(playerUuid, success.pending().pendingSequence()), "successful pending should be cleared");
+		require(!manager.hasCurrentPendings(), "successful pending should leave no active pending");
+		long remainingCooldown = manager.getRemainingCooldownMillis(playerUuid, 10_000L);
+		require(remainingCooldown > 0L, "success should refresh cooldown");
+		debug("DATA pending.success", "sequence=" + success.pending().pendingSequence()
+				+ ", remainingCooldownMillis=" + formatNumber(remainingCooldown));
+
+		TeleportCooldownManager.PendingCreateResult quit = manager.createPending(playerUuid, request(), 40L);
+		Optional<TeleportPending> quitPending = manager.onPlayerQuit(playerUuid, 50L);
+		require(quitPending.isPresent(), "quit should return current pending");
+		requireEquals(quit.pending().pendingSequence(), quitPending.get().pendingSequence(), "quit should return matching pending");
+		requireEquals(TeleportStatus.CANCELLED, quit.pending().resultFuture().join(), "quit should cancel pending");
+		require(!manager.hasCurrentPendings(), "quit should leave no active pending");
+		debug("DATA pending.quit", "sequence=" + quit.pending().pendingSequence()
+				+ ", status=" + quit.pending().resultFuture().join());
+	}
+
+	private static void testDispatcherFastPathThreshold() {
+		TeleportBatchDispatcher dispatcher = new TeleportBatchDispatcher();
+		dispatcher.beginTick();
+		require(dispatcher.canUseFastPath(), "empty dispatcher should allow fast path");
+		for (int i = 0; i < TeleportServiceSettings.FAST_PATH_THRESHOLD; i++) {
+			require(dispatcher.canUseFastPath(), "fast path should be allowed before threshold is exhausted");
+			dispatcher.noteFastPathUse();
+		}
+		require(!dispatcher.canUseFastPath(), "fast path should stop after threshold");
+		debug("DATA dispatcher.fastPath", "threshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD
+				+ ", queueSize=" + dispatcher.queueSize()
+				+ ", canUseFastPathAfterThreshold=" + dispatcher.canUseFastPath());
+	}
+
+	private static void testReadyAdmissionRamp() {
+		int[] firstTwentyOneLimits = new int[21];
+		for (int i = 0; i < firstTwentyOneLimits.length; i++) {
+			firstTwentyOneLimits[i] = simulatedReadyAdmissionLimit(i + 1);
+		}
+		requireEquals(TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT, firstTwentyOneLimits[0], "tick 1 admission should be first-tick limit");
+		int steadyLimit = TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT;
+		requireEquals(steadyLimit, firstTwentyOneLimits[1], "tick 2 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[4], "tick 5 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[5], "tick 6 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[9], "tick 10 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[10], "tick 11 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[14], "tick 15 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[15], "tick 16 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[19], "tick 20 admission should be steady limit");
+		requireEquals(steadyLimit, firstTwentyOneLimits[20], "tick 21 admission should be steady limit");
+		debug("DATA admission.ramp", "first21Limits=[" + formatIntArray(firstTwentyOneLimits) + "]");
+	}
+
+	private static void testDispatcherHardLimit() {
+		TeleportBatchDispatcher dispatcher = new TeleportBatchDispatcher();
+		int queued = TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK + 20;
+		for (int i = 0; i < queued; i++) {
+			dispatcher.enqueue(entry(i));
+		}
+
+		TeleportBatchDispatcher.DrainResult result = dispatcher.drain(entry -> TeleportStatus.SUCCESS);
+		requireEquals(TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK, result.processed(), "dispatcher should honor hard limit");
+		requireEquals(20, dispatcher.queueSize(), "remaining entries should stay queued");
+		debug("DATA dispatcher.hardLimit", "queued=" + queued
+				+ ", processed=" + result.processed()
+				+ ", remaining=" + dispatcher.queueSize()
+				+ ", budgetHit=" + result.budgetHit()
+				+ ", elapsedNanos=" + formatNumber(result.elapsedNanos()));
+	}
+
+	private static void testDispatcherBudgetHit() {
+		TeleportBatchDispatcher dispatcher = new TeleportBatchDispatcher();
+		for (int i = 0; i < 32; i++) {
+			dispatcher.enqueue(entry(i));
+		}
+
+		TeleportBatchDispatcher.DrainResult result = dispatcher.drain(entry -> {
+			try {
+				Thread.sleep(1L);
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				throw new AssertionError(exception);
+			}
+			return TeleportStatus.SUCCESS;
+		});
+
+		require(result.budgetHit(), "slow executor should hit budget");
+		require(result.processed() < 32, "budget hit should leave entries queued");
+		debug("DATA dispatcher.budget", "queued=32"
+				+ ", processed=" + result.processed()
+				+ ", remaining=" + dispatcher.queueSize()
+				+ ", budgetHit=" + result.budgetHit()
+				+ ", elapsedNanos=" + formatNumber(result.elapsedNanos()));
+	}
+
+	private static void testDispatcherQueueConvergence() {
+		TeleportBatchDispatcher dispatcher = new TeleportBatchDispatcher();
+		int queued = 10_000;
+		for (int i = 0; i < queued; i++) {
+			dispatcher.enqueue(entry(i));
+		}
+
+		int ticks = 0;
+		int totalProcessed = 0;
+		int budgetHits = 0;
+		long elapsedNanos = 0L;
+		while (dispatcher.queueSize() > 0) {
+			TeleportBatchDispatcher.DrainResult result = dispatcher.drain(entry -> TeleportStatus.SUCCESS);
+			ticks++;
+			totalProcessed += result.processed();
+			elapsedNanos += result.elapsedNanos();
+			if (result.budgetHit()) {
+				budgetHits++;
+			}
+			require(result.processed() <= TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK, "drain should honor hard limit on every tick");
+			require(result.processed() > 0, "dispatcher should make progress while queue is non-empty");
+		}
+
+		requireEquals(queued, totalProcessed, "dispatcher should process all queued entries");
+		debug("DATA dispatcher.convergence", "queued=" + formatNumber(queued)
+				+ ", ticks=" + ticks
+				+ ", totalProcessed=" + formatNumber(totalProcessed)
+				+ ", finalQueue=" + dispatcher.queueSize()
+				+ ", budgetHits=" + budgetHits
+				+ ", totalElapsedNanos=" + formatNumber(elapsedNanos));
+	}
+
+	private static void testFabricatedSafetyMainThreadWorkload() {
+		FakeSafetyWorld world = new FakeSafetyWorld(Blocks.AIR.defaultBlockState());
+		BlockPos base = new BlockPos(0, 64, 0);
+		BlockPos expectedSafePos = base.offset(3, -3, 3);
+		world.setBlock(expectedSafePos.below(), Blocks.STONE.defaultBlockState());
+
+		Optional<BlockPos> singleResult = TestTeleportSafety.getSafeBlockPos(base, world);
+		requireEquals(expectedSafePos, singleResult.orElseThrow(), "fabricated world should resolve the late safe offset");
+
+		long warmupStart = System.nanoTime();
+		int warmupIterations = 5_000;
+		for (int i = 0; i < warmupIterations; i++) {
+			if (TestTeleportSafety.getSafeBlockPos(base, world).isEmpty()) {
+				throw new IllegalStateException("Warmup safety check failed");
+			}
+		}
+		long warmupElapsed = System.nanoTime() - warmupStart;
+		debug("DATA safety.main.warmup", "elapsedNanos=" + formatNumber(warmupElapsed) + ", iterations=" + formatNumber(warmupIterations));
+
+		int requests = 10_000;
+		int processed = 0;
+		int ticks = 0;
+		long totalSafetyElapsedNanos = 0L;
+		long maxTickNanos = 0L;
+		int maxTickIndex = -1;
+		long readsBeforeBatch = world.blockStateReads();
+		long firstTickNanos = 0L;
+		long secondTickNanos = 0L;
+		long thirdTickNanos = 0L;
+		long lastTickNanos = 0L;
+		long[] firstTwentyTickNanos = new long[20];
+
+		while (processed < requests) {
+			int batchSize = Math.min(simulatedReadyAdmissionLimit(ticks + 1), requests - processed);
+			long tickStart = System.nanoTime();
+			for (int i = 0; i < batchSize; i++) {
+				Optional<BlockPos> safePos = TestTeleportSafety.getSafeBlockPos(base, world);
+				requireEquals(expectedSafePos, safePos.orElseThrow(), "safety should resolve the same fabricated safe point");
+			}
+			long tickElapsed = System.nanoTime() - tickStart;
+			totalSafetyElapsedNanos += tickElapsed;
+			if (ticks == 0) {
+				firstTickNanos = tickElapsed;
+			} else if (ticks == 1) {
+				secondTickNanos = tickElapsed;
+			} else if (ticks == 2) {
+				thirdTickNanos = tickElapsed;
+			}
+			if (ticks < firstTwentyTickNanos.length) {
+				firstTwentyTickNanos[ticks] = tickElapsed;
+			}
+			lastTickNanos = tickElapsed;
+			if (tickElapsed > maxTickNanos) {
+				maxTickNanos = tickElapsed;
+				maxTickIndex = ticks + 1;
+			}
+			processed += batchSize;
+			ticks++;
+		}
+
+		long readsDuringBatch = world.blockStateReads() - readsBeforeBatch;
+		debug("DATA safety.fabricated", "requests=" + formatNumber(requests)
+				+ ", ticks=" + ticks
+				+ ", processed=" + formatNumber(processed)
+				+ ", blockStateReads=" + formatNumber(readsDuringBatch)
+				+ ", readsPerRequest=" + formatDecimal((double) readsDuringBatch / requests)
+				+ ", totalSafetyElapsedNanos=" + formatNumber(totalSafetyElapsedNanos)
+				+ ", avgTickNanos=" + formatNumber(totalSafetyElapsedNanos / ticks)
+				+ ", maxTickNanos=" + formatNumber(maxTickNanos)
+				+ ", maxTickIndex=" + maxTickIndex
+				+ ", firstTickNanos=" + formatNumber(firstTickNanos)
+				+ ", secondTickNanos=" + formatNumber(secondTickNanos)
+				+ ", thirdTickNanos=" + formatNumber(thirdTickNanos)
+				+ ", lastTickNanos=" + formatNumber(lastTickNanos)
+				+ ", first20TickNanos=[" + formatLongArray(firstTwentyTickNanos) + "]"
+				+ ", avgRequestNanos=" + formatNumber(totalSafetyElapsedNanos / requests));
+	}
+
+	private static void testFabricatedSafetyWorkerWorkload() {
+		FakeSafetyWorld world = new FakeSafetyWorld(Blocks.AIR.defaultBlockState());
+		BlockPos base = new BlockPos(0, 64, 0);
+		BlockPos expectedSafePos = base.offset(3, -3, 3);
+		world.setBlock(expectedSafePos.below(), Blocks.STONE.defaultBlockState());
+
+		Optional<BlockPos> singleResult = TestTeleportSafety.getSafeBlockPos(base, world);
+		requireEquals(expectedSafePos, singleResult.orElseThrow(), "fabricated world should resolve the late safe offset");
+
+		int requests = 10_000;
+		int processed = 0;
+		int ticks = 0;
+		long totalTickWallNanos = 0L;
+		long totalTaskNanos = 0L;
+		long maxTickNanos = 0L;
+		int maxTickIndex = -1;
+		long firstTickNanos = 0L;
+		long secondTickNanos = 0L;
+		long thirdTickNanos = 0L;
+		long lastTickNanos = 0L;
+		long[] firstTwentyTickNanos = new long[20];
+		ThreadPoolExecutor executor = new ThreadPoolExecutor(
+				TeleportServiceSettings.SAFETY_WORKER_THREADS,
+				TeleportServiceSettings.SAFETY_WORKER_THREADS,
+				0L,
+				TimeUnit.MILLISECONDS,
+				new LinkedBlockingQueue<>(),
+				runnable -> {
+					Thread thread = new Thread(runnable, "TeleportSafetyTestWorker");
+					thread.setDaemon(true);
+					return thread;
+				});
+		executor.prestartAllCoreThreads();
+
+		long warmupStart = System.nanoTime();
+		// Intensive warmup phase for safety workers, JIT compilation, and ThreadLocal
+		int threads = TeleportServiceSettings.SAFETY_WORKER_THREADS;
+		int warmupIterationsPerThread = 5_000;
+		CyclicBarrier barrier = new CyclicBarrier(threads);
+		List<CompletableFuture<Void>> warmupFutures = new ArrayList<>(threads);
+		for (int i = 0; i < threads; i++) {
+			warmupFutures.add(CompletableFuture.runAsync(() -> {
+				try {
+					barrier.await(5, TimeUnit.SECONDS);
+				} catch (Exception ignored) {
+				}
+				for (int j = 0; j < warmupIterationsPerThread; j++) {
+					long start = System.nanoTime();
+					Optional<BlockPos> safePos = TestTeleportSafety.getSafeBlockPos(base, world);
+					SafetyTaskResult result = new SafetyTaskResult(safePos, System.nanoTime() - start);
+					if (result.safePos().isEmpty()) {
+						throw new IllegalStateException("Warmup safety check failed");
+					}
+				}
+			}, executor));
+		}
+		for (CompletableFuture<Void> future : warmupFutures) {
+			future.join();
+		}
+		long warmupElapsed = System.nanoTime() - warmupStart;
+		debug("DATA safety.concurrent.warmup",
+				"elapsedNanos=" + formatNumber(warmupElapsed) + ", iterationsPerThread=" + formatNumber(warmupIterationsPerThread));
+
+		long readsBeforeBatch = world.blockStateReads();
+		try {
+			while (processed < requests) {
+				int tickBatchSize = Math.min(simulatedReadyAdmissionLimit(ticks + 1), requests - processed);
+				long tickStart = System.nanoTime();
+				long tickTaskNanos = 0L;
+				int remainingThisTick = tickBatchSize;
+				while (remainingThisTick > 0) {
+					int workerBatchSize = Math.min(TeleportServiceSettings.SAFETY_BATCH_SIZE, remainingThisTick);
+					List<CompletableFuture<SafetyTaskResult>> futures = new ArrayList<>(workerBatchSize);
+					for (int i = 0; i < workerBatchSize; i++) {
+						futures.add(CompletableFuture.supplyAsync(() -> {
+							long start = System.nanoTime();
+							Optional<BlockPos> safePos = TestTeleportSafety.getSafeBlockPos(base, world);
+							return new SafetyTaskResult(safePos, System.nanoTime() - start);
+						}, executor));
+					}
+
+					for (CompletableFuture<SafetyTaskResult> future : futures) {
+						SafetyTaskResult result = future.join();
+						requireEquals(expectedSafePos, result.safePos().orElseThrow(),
+								"safety should resolve the same fabricated safe point");
+						tickTaskNanos += result.elapsedNanos();
+					}
+					remainingThisTick -= workerBatchSize;
+				}
+				long tickElapsed = System.nanoTime() - tickStart;
+				totalTickWallNanos += tickElapsed;
+				totalTaskNanos += tickTaskNanos;
+				if (ticks == 0) {
+					firstTickNanos = tickElapsed;
+				} else if (ticks == 1) {
+					secondTickNanos = tickElapsed;
+				} else if (ticks == 2) {
+					thirdTickNanos = tickElapsed;
+				}
+				if (ticks < firstTwentyTickNanos.length) {
+					firstTwentyTickNanos[ticks] = tickElapsed;
+				}
+				lastTickNanos = tickElapsed;
+				if (tickElapsed > maxTickNanos) {
+					maxTickNanos = tickElapsed;
+					maxTickIndex = ticks + 1;
+				}
+				processed += tickBatchSize;
+				ticks++;
+			}
+		} finally {
+			executor.shutdownNow();
+		}
+
+		long readsDuringBatch = world.blockStateReads() - readsBeforeBatch;
+		debug("DATA safety.concurrent", "requests=" + formatNumber(requests)
+				+ ", ticks=" + ticks
+				+ ", processed=" + formatNumber(processed)
+				+ ", workerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
+				+ ", safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE
+				+ ", blockStateReads=" + formatNumber(readsDuringBatch)
+				+ ", readsPerRequest=" + formatDecimal((double) readsDuringBatch / requests)
+				+ ", totalTickWallNanos=" + formatNumber(totalTickWallNanos)
+				+ ", totalTaskNanos=" + formatNumber(totalTaskNanos)
+				+ ", avgTickWallNanos=" + formatNumber(totalTickWallNanos / ticks)
+				+ ", avgRequestWallNanos=" + formatNumber(totalTickWallNanos / requests)
+				+ ", avgRequestTaskNanos=" + formatNumber(totalTaskNanos / requests)
+				+ ", maxTickNanos=" + formatNumber(maxTickNanos)
+				+ ", maxTickIndex=" + maxTickIndex
+				+ ", firstTickNanos=" + formatNumber(firstTickNanos)
+				+ ", secondTickNanos=" + formatNumber(secondTickNanos)
+				+ ", thirdTickNanos=" + formatNumber(thirdTickNanos)
+				+ ", lastTickNanos=" + formatNumber(lastTickNanos)
+				+ ", first20TickNanos=[" + formatLongArray(firstTwentyTickNanos) + "]");
+	}
+
+	private record SafetyTaskResult(Optional<BlockPos> safePos, long elapsedNanos) {
+	}
+
+	private static int simulatedReadyAdmissionLimit(int tickIndex) {
+		if (tickIndex == 1) {
+			return TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT;
+		}
+		return TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT;
+	}
+
+	private static void testRecordedLocationSnapshot() {
+		ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("minecraft:overworld"));
+		RecordedLocation location = new RecordedLocation(new BlockPos(1, 2, 3), dimension);
+		Optional<RecordedLocationView> snapshot = RecordedLocationSnapshot.optional(Optional.of(location));
+		require(snapshot.isPresent(), "snapshot should be present");
+
+		location.setBlockPos(new BlockPos(4, 5, 6));
+		requireEquals(new BlockPos(1, 2, 3), snapshot.get().getBlockPos(), "snapshot should keep original block position");
+		requireEquals("minecraft:overworld", snapshot.get().getDimensionId(), "dimension id should be derived from key");
+		debug("DATA record.snapshot", "sourcePos=" + location.getBlockPos()
+				+ ", snapshotPos=" + snapshot.get().getBlockPos()
+				+ ", dimensionId=" + snapshot.get().getDimensionId());
+	}
+
+	private static void testRecordedTargetEmpty() {
+		TeleportTargetResult result = RecordedLocationTeleportTargets.toTargetResult(Optional.empty(), null);
+		require(result instanceof TeleportTargetResult.Failed, "empty record target should fail");
+		TeleportTargetResult.Failed failed = (TeleportTargetResult.Failed) result;
+		requireEquals(TeleportStatus.TARGET_UNAVAILABLE, failed.reason(), "empty record target should map to target unavailable");
+		debug("DATA record.target.empty", "status=" + failed.reason());
+	}
+
+	private static TeleportRequest request() {
+		return new TeleportRequest(
+				CompletableFuture.completedFuture(TeleportTargetResult.failed(TeleportStatus.TARGET_UNAVAILABLE)),
+				new TeleportOptions(5, 10_000L, false, false));
+	}
+
+	private static TeleportBatchDispatcher.ExecutionEntry entry(int id) {
+		return new TeleportBatchDispatcher.ExecutionEntry(
+				new UUID(0L, id),
+				id,
+				DUMMY_TARGET,
+				TeleportOptions.DEFAULT,
+				new CompletableFuture<>());
+	}
+
+	private static TeleportTarget createDummyTarget() {
+		try {
+			Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+			unsafeField.setAccessible(true);
+			Unsafe unsafe = (Unsafe) unsafeField.get(null);
+			return (TeleportTarget) unsafe.allocateInstance(TeleportTarget.class);
+		} catch (ReflectiveOperationException exception) {
+			throw new ExceptionInInitializerError(exception);
+		}
+	}
+
+	private static void run(String name, String purpose, String params, ThrowingRunnable test) throws Exception {
+		long scenarioStart = System.nanoTime();
+		System.out.println();
+		System.out.println(SECTION_SEPARATOR);
+		System.out.println("SCENARIO START: " + name);
+		System.out.println("  PURPOSE: " + purpose);
+		System.out.println("  PARAMS: " + params);
+		try {
+			test.run();
+			long scenarioElapsed = System.nanoTime() - scenarioStart;
+			// In scenarios with warmup, the true elapsed time is the total minus the warmup time.
+			// This is a bit of a hack, but it makes the final number more representative.
+			if (name.contains("worker workload")) {
+				// We'll have to parse the log to get the warmup time, so let's just print the raw total.
+			}
+			System.out.println("SCENARIO PASS: " + name + " elapsedNanos=" + formatNumber(scenarioElapsed));
+		} catch (Throwable throwable) {
+			System.err.println("SCENARIO FAIL: " + name);
+			throw throwable;
+		}
+	}
+
+	private static void debug(String key, String value) {
+		System.out.println("  " + key + ": " + value);
+	}
+
+	private static String formatNumber(long value) {
+		return String.format("%,d", value);
+	}
+
+	private static String formatDecimal(double value) {
+		return String.format("%,.2f", value);
+	}
+
+	private static String formatLongArray(long[] values) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < values.length; i++) {
+			if (i > 0) {
+				builder.append(", ");
+			}
+			builder.append(formatNumber(values[i]));
+		}
+		return builder.toString();
+	}
+
+	private static String formatIntArray(int[] values) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < values.length; i++) {
+			if (i > 0) {
+				builder.append(", ");
+			}
+			builder.append(formatNumber(values[i]));
+		}
+		return builder.toString();
+	}
+
+	private static void require(boolean condition, String message) {
+		if (!condition) {
+			throw new AssertionError(message);
+		}
+	}
+
+	private static void requireEquals(Object expected, Object actual, String message) {
+		if (!expected.equals(actual)) {
+			throw new AssertionError(message + " expected=" + expected + " actual=" + actual);
+		}
+	}
+
+	@FunctionalInterface
+	private interface ThrowingRunnable {
+		void run() throws Exception;
+	}
+
+	private static final class TestTeleportSafety {
+		private static final int SEARCH_RADIUS = 3;
+		private static final int CACHE_X_SIZE = SEARCH_RADIUS * 2 + 1;
+		private static final int CACHE_Y_SIZE = SEARCH_RADIUS * 2 + 3;
+		private static final int CACHE_Z_SIZE = SEARCH_RADIUS * 2 + 1;
+		private static final int CACHE_Y_OFFSET = SEARCH_RADIUS + 1;
+		private static final byte CACHE_UNKNOWN = 0;
+		private static final byte MASK_SUPPORT = 1;
+		private static final byte MASK_BODY_CLEAR = 2;
+		private static final Offset[] CANDIDATE_OFFSETS = createCandidateOffsets();
+		private static final ThreadLocal<SearchContext> SEARCH_CONTEXT = ThreadLocal.withInitial(SearchContext::new);
+		private static final Set<Block> UNSAFE_COLLISION_FREE_BLOCKS = Set.of(
+				Blocks.LAVA,
+				Blocks.END_PORTAL,
+				Blocks.END_GATEWAY,
+				Blocks.FIRE,
+				Blocks.SOUL_FIRE,
+				Blocks.POWDER_SNOW,
+				Blocks.NETHER_PORTAL);
+
+		private static Optional<BlockPos> getSafeBlockPos(BlockPos blockPos, BlockGetter world) {
+			SearchContext context = SEARCH_CONTEXT.get();
+			context.reset(blockPos, world);
+			try {
+				for (Offset offset : CANDIDATE_OFFSETS) {
+					if (context.isSafe(offset)) {
+						return Optional.of(context.toBlockPos(offset));
+					}
+				}
+				return Optional.empty();
+			} finally {
+				context.clearWorld();
+			}
+		}
+/*
+		private static void warmup() {
+			//SearchContext context = SEARCH_CONTEXT.get();
+			BlockGetter dummyGetter = new BlockGetter() {
+				@Override
+				public net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(BlockPos pos) {
+					return null;
+				}
+
+				@Override
+				public BlockState getBlockState(BlockPos pos) {
+					return Blocks.AIR.defaultBlockState();
+				}
+
+				@Override
+				public net.minecraft.world.level.material.FluidState getFluidState(BlockPos pos) {
+					return net.minecraft.world.level.material.Fluids.EMPTY.defaultFluidState();
+				}
+
+				@Override
+				public int getHeight() {
+					return 256;
+				}
+
+				@Override
+				public int getMinY() {
+					return 0;
+				}
+			};
+			Blocks.AIR.defaultBlockState().getCollisionShape(dummyGetter, BlockPos.ZERO);
+			Blocks.STONE.defaultBlockState().getCollisionShape(dummyGetter, BlockPos.ZERO);
+		}
+*/
+		private static Offset[] createCandidateOffsets() {
+			List<Offset> offsets = new ArrayList<>();
+			for (int z = -SEARCH_RADIUS; z <= SEARCH_RADIUS; z++) {
+				for (int x = -SEARCH_RADIUS; x <= SEARCH_RADIUS; x++) {
+					for (int y = -SEARCH_RADIUS; y <= SEARCH_RADIUS; y++) {
+						if (x == 0 && y == 0 && z == 0) {
+							offsets.add(new Offset(x, y, z));
+							continue;
+						}
+						if (Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z)) <= SEARCH_RADIUS) {
+							offsets.add(new Offset(x, y, z));
+						}
+					}
+				}
+			}
+
+			offsets.sort(Comparator
+					.comparingInt((Offset offset) -> yPriority(offset.y()))
+					.thenComparingInt(Offset::horizontalDistanceSquared)
+					.thenComparingInt(Offset::distanceSquared)
+					.thenComparingInt(Offset::z)
+					.thenComparingInt(Offset::x));
+			return offsets.toArray(Offset[]::new);
+		}
+
+		private static int yPriority(int y) {
+			if (y == 0) {
+				return 0;
+			}
+			return Math.abs(y) * 2 - (y > 0 ? 1 : 0);
+		}
+
+		private static final class SearchContext {
+			private int baseX;
+			private int baseY;
+			private int baseZ;
+			private BlockGetter world;
+			private final byte[] maskCache = new byte[CACHE_X_SIZE * CACHE_Y_SIZE * CACHE_Z_SIZE];
+			private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+
+			private void reset(BlockPos blockPos, BlockGetter world) {
+				this.baseX = blockPos.getX();
+				this.baseY = blockPos.getY();
+				this.baseZ = blockPos.getZ();
+				this.world = world;
+				Arrays.fill(maskCache, CACHE_UNKNOWN);
+			}
+
+			private void clearWorld() {
+				this.world = null;
+			}
+
+			private boolean isSafe(Offset offset) {
+				if (!hasMask(offset.x(), offset.y() - 1, offset.z(), MASK_SUPPORT)) {
+					return false;
+				}
+				if (!hasMask(offset.x(), offset.y(), offset.z(), MASK_BODY_CLEAR)) {
+					return false;
+				}
+				return hasMask(offset.x(), offset.y() + 1, offset.z(), MASK_BODY_CLEAR);
+			}
+
+			private boolean hasMask(int relativeX, int relativeY, int relativeZ, byte requiredMask) {
+				return (getMask(relativeX, relativeY, relativeZ) & requiredMask) != 0;
+			}
+
+			private byte getMask(int relativeX, int relativeY, int relativeZ) {
+				int index = cacheIndex(relativeX, relativeY, relativeZ);
+				byte cached = maskCache[index];
+				if (cached != CACHE_UNKNOWN) {
+					return (byte) (cached - 1);
+				}
+
+				mutablePos.set(baseX + relativeX, baseY + relativeY, baseZ + relativeZ);
+				BlockState state = world.getBlockState(mutablePos);
+				byte mask = createMask(state);
+				maskCache[index] = (byte) (mask + 1);
+				return mask;
+			}
+
+			private byte createMask(BlockState state) {
+				boolean collisionEmpty = state.getCollisionShape(world, mutablePos).isEmpty();
+				byte mask = 0;
+
+				if (state.is(Blocks.WATER) || !collisionEmpty) {
+					mask |= MASK_SUPPORT;
+				}
+				if (collisionEmpty && !UNSAFE_COLLISION_FREE_BLOCKS.contains(state.getBlock())) {
+					mask |= MASK_BODY_CLEAR;
+				}
+
+				return mask;
+			}
+
+			private int cacheIndex(int relativeX, int relativeY, int relativeZ) {
+				int x = relativeX + SEARCH_RADIUS;
+				int y = relativeY + CACHE_Y_OFFSET;
+				int z = relativeZ + SEARCH_RADIUS;
+				return (y * CACHE_Z_SIZE + z) * CACHE_X_SIZE + x;
+			}
+
+			private BlockPos toBlockPos(Offset offset) {
+				return new BlockPos(baseX + offset.x(), baseY + offset.y(), baseZ + offset.z());
+			}
+		}
+
+		private record Offset(int x, int y, int z) {
+			private int horizontalDistanceSquared() {
+				return x * x + z * z;
+			}
+
+			private int distanceSquared() {
+				return x * x + y * y + z * z;
+			}
+		}
+	}
+
+	private static final class FakeSafetyWorld implements BlockGetter {
+		private final BlockState defaultBlockState;
+		private final Map<BlockPos, BlockState> states = new HashMap<>();
+		private final LongAdder blockStateReads = new LongAdder();
+
+		private FakeSafetyWorld(BlockState defaultBlockState) {
+			this.defaultBlockState = defaultBlockState;
+		}
+
+		private void setBlock(BlockPos pos, BlockState state) {
+			states.put(pos.immutable(), state);
+		}
+
+		private long blockStateReads() {
+			return blockStateReads.sum();
+		}
+
+		@Override
+		public BlockEntity getBlockEntity(BlockPos pos) {
+			return null;
+		}
+
+		@Override
+		public BlockState getBlockState(BlockPos pos) {
+			blockStateReads.increment();
+			return states.getOrDefault(pos, defaultBlockState);
+		}
+
+		@Override
+		public FluidState getFluidState(BlockPos pos) {
+			return getBlockState(pos).getFluidState();
+		}
+
+		@Override
+		public int getHeight() {
+			return 384;
+		}
+
+		@Override
+		public int getMinY() {
+			return -64;
+		}
+	}
+}
