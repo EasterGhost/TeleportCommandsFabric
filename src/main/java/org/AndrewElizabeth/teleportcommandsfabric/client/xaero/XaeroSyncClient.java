@@ -13,11 +13,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Util;
 
 @Environment(EnvType.CLIENT)
 public final class XaeroSyncClient {
 	private static final String WORLD_MAP_SCREEN_CLASS = "xaero.map.gui.GuiMap";
-	private static final long REQUEST_COOLDOWN_MS = ModConstants.SYNC_INTERVAL_MS;
+	private static final long REQUEST_COOLDOWN_MS = ModConstants.SYNC_INTERVAL.toMillis();
 	private static final int JOIN_REQUEST_DELAY_TICKS = 40;
 	private static boolean initialized;
 	private static boolean xaeroAvailable;
@@ -108,7 +109,7 @@ public final class XaeroSyncClient {
 	}
 
 	private static void sendSyncRequest() {
-		long now = System.currentTimeMillis();
+		long now = Util.getMillis();
 		if (now - lastRequestMs < REQUEST_COOLDOWN_MS) {
 			return;
 		}

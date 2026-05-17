@@ -2,7 +2,12 @@ package org.AndrewElizabeth.teleportcommandsfabric;
 
 import com.mojang.brigadier.CommandDispatcher;
 
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocationSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.record.PlayerRecordedLocationSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
@@ -11,22 +16,24 @@ import org.AndrewElizabeth.teleportcommandsfabric.modules.rtp.RtpCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.warp.WarpCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.worldspawn.WorldSpawnCommand;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.*;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedLocationManager;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 import java.util.UUID;
 
 public class TeleportCommands implements ModInitializer {
@@ -34,18 +41,28 @@ public class TeleportCommands implements ModInitializer {
 	public static Path SAVE_DIR;
 	public static Path CONFIG_DIR;
 	public static MinecraftServer SERVER;
+	public static PlayerProfileManager PLAYER_PROFILE_MANAGER;
+	public static GlobalProfileManager GLOBAL_PROFILE_MANAGER;
+	public static PlayerRecordedLocationManager RECORDED_LOCATION_MANAGER;
+	public static AsyncRecordedLocationSource RECORDED_LOCATION_SOURCE;
+	public static TeleportService TELEPORT_SERVICE;
+	public static TpaService TPA_SERVICE;
 
 	@Override
 	public void onInitialize() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> StorageManager.tick());
-
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			if (TELEPORT_SERVICE != null) {
+				TELEPORT_SERVICE.tick(server);
+			}
+			if (TPA_SERVICE != null) {
+				TPA_SERVICE.tick();
+			}
+		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-			StorageManager.forceSaveOnShutdown();
-			TeleportCommands.SERVER = null;
+			shutdownStorageManagers();
+			SERVER = null;
 		});
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-			registerCommands(dispatcher);
-		});
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
 		MOD_LOADER = "Fabric";
 	}
 
@@ -53,23 +70,14 @@ public class TeleportCommands implements ModInitializer {
 		ModConstants.LOGGER.info("Initializing Teleport Commands (V{})! Hello {}!", ModConstants.VERSION, MOD_LOADER);
 
 		SAVE_DIR = Path.of(String.valueOf(server.getWorldPath(LevelResource.ROOT)));
-		CONFIG_DIR = Paths.get(System.getProperty("user.dir")).resolve("config");
+		CONFIG_DIR = FabricLoader.getInstance().getConfigDir();
 		SERVER = server;
-		ConfigManager.ConfigInit();
-		StorageManager.StorageInit();
-		DeathLocationStorage.clearDeathLocations();
-		PreviousTeleportLocationStorage.clearPreviousTeleportLocations();
-		TeleportCooldownManager.clearAll();
+		runLegacyStorageMigration();
+		initializeStorageManagers();
+		ConfigManager.initialize();
+		loadStorageManagers();
 		XaeroSyncServer.initialize();
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
-			UUID playerUuid = handler.player.getUUID();
-			LogoutCacheManager.scheduleCleanup(playerUuid);
-		});
-
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
-			UUID playerUuid = handler.player.getUUID();
-			LogoutCacheManager.cancelCleanup(playerUuid);
-		});
+		registerPlayerConnectionEvents();
 	}
 
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -83,10 +91,105 @@ public class TeleportCommands implements ModInitializer {
 	}
 
 	public static void onPlayerDeath(ServerPlayer player) {
-		BlockPos pos = player.blockPosition();
-		String world = WorldResolver.getDimensionId(player.level().dimension());
-		String uuid = player.getStringUUID();
+		if (RECORDED_LOCATION_SOURCE != null) {
+			RECORDED_LOCATION_SOURCE.recordDeathLocation(player.getUUID(), player.blockPosition(), player.level().dimension())
+					.whenComplete((ignored, throwable) -> {
+						if (throwable != null) {
+							ModConstants.LOGGER.warn("Failed to record death location", throwable);
+						}
+					});
+		}
+		if (TELEPORT_SERVICE != null) {
+			TELEPORT_SERVICE.onPlayerDeath(player.getUUID());
+		}
+	}
 
-		DeathLocationStorage.setDeathLocation(uuid, pos, world);
+	private static void initializeStorageManagers() {
+		RECORDED_LOCATION_MANAGER = new PlayerRecordedLocationManager();
+		RECORDED_LOCATION_SOURCE = new PlayerRecordedLocationSource(RECORDED_LOCATION_MANAGER);
+		TELEPORT_SERVICE = new TeleportService(RECORDED_LOCATION_SOURCE);
+		TPA_SERVICE = new TpaService(RECORDED_LOCATION_SOURCE);
+		GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
+		PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
+	}
+
+	private static void runLegacyStorageMigration() {
+		try {
+			LegacyStorageMigrator.migrateIfPresent();
+		} catch (Exception exception) {
+			throw new IllegalStateException("Failed to migrate legacy storage.json", exception);
+		}
+	}
+
+	private static void loadStorageManagers() {
+		CompletableFuture<?> globalLoad = GLOBAL_PROFILE_MANAGER.load();
+		CompletableFuture<Void> recordLoad = CompletableFuture.runAsync(() -> RECORDED_LOCATION_MANAGER.loadRecords());
+		CompletableFuture.allOf(globalLoad, recordLoad).join();
+	}
+
+	private static void registerPlayerConnectionEvents() {
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
+			UUID playerUuid = handler.player.getUUID();
+			if (PLAYER_PROFILE_MANAGER != null) {
+				PLAYER_PROFILE_MANAGER.onPlayerQuit(playerUuid);
+			}
+			if (TELEPORT_SERVICE != null) {
+				TELEPORT_SERVICE.onPlayerQuit(playerUuid);
+			}
+			if (TPA_SERVICE != null) {
+				TPA_SERVICE.onPlayerQuit(playerUuid);
+			}
+		});
+
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
+			UUID playerUuid = handler.player.getUUID();
+			if (PLAYER_PROFILE_MANAGER != null) {
+				PLAYER_PROFILE_MANAGER.onPlayerJoin(playerUuid);
+			}
+			if (TELEPORT_SERVICE != null) {
+				TELEPORT_SERVICE.onPlayerJoin(playerUuid);
+			}
+		});
+	}
+
+	private static void shutdownStorageManagers() {
+		TeleportService teleportService = TELEPORT_SERVICE;
+		PlayerRecordedLocationManager recordedLocationManager = RECORDED_LOCATION_MANAGER;
+		GlobalProfileManager globalProfileManager = GLOBAL_PROFILE_MANAGER;
+		PlayerProfileManager playerProfileManager = PLAYER_PROFILE_MANAGER;
+
+		if (teleportService != null) {
+			teleportService.shutdown();
+		}
+		if (TPA_SERVICE != null) {
+			TPA_SERVICE.clear();
+		}
+		TELEPORT_SERVICE = null;
+		TPA_SERVICE = null;
+
+		CompletableFuture<Void> configShutdown = ConfigManager.shutdown();
+		CompletableFuture<Void> recordSave = recordedLocationManager == null
+				? CompletableFuture.completedFuture(null)
+				: CompletableFuture.runAsync(recordedLocationManager::saveRecords);
+		CompletableFuture<Void> globalShutdown = globalProfileManager == null
+				? CompletableFuture.completedFuture(null)
+				: globalProfileManager.shutdown();
+		CompletableFuture<Void> playerShutdown = playerProfileManager == null
+				? CompletableFuture.completedFuture(null)
+				: playerProfileManager.shutdown();
+
+		CompletableFuture.allOf(configShutdown, recordSave, globalShutdown, playerShutdown).join();
+
+		if (recordedLocationManager != null) {
+			recordedLocationManager.clear();
+			RECORDED_LOCATION_MANAGER = null;
+			RECORDED_LOCATION_SOURCE = null;
+		}
+		if (globalProfileManager != null) {
+			GLOBAL_PROFILE_MANAGER = null;
+		}
+		if (playerProfileManager != null) {
+			PLAYER_PROFILE_MANAGER = null;
+		}
 	}
 }
