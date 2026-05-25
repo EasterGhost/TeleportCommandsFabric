@@ -1,5 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.client.xaero;
 
+import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
+
 import xaero.common.minimap.waypoints.Waypoint;
 
 import java.util.Locale;
@@ -68,14 +70,11 @@ public final class XaeroWaypointCommandHelper {
 	}
 
 	private static String buildHideCommandLiteral(String command, String name) {
-		return command + " " + quoteCommandArgument(name) + " false";
+		return command + " " + CommandArgumentUtils.quote(name) + " false";
 	}
 
 	private static String normalizeSetName(String setName) {
 		return setName == null ? "" : setName.trim().toLowerCase(Locale.ROOT);
 	}
 
-	private static String quoteCommandArgument(String value) {
-		return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
-	}
 }

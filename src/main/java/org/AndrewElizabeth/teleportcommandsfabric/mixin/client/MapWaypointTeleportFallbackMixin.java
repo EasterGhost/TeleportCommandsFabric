@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
+import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -53,17 +54,13 @@ public class MapWaypointTeleportFallbackMixin {
 		}
 
 		if (name.startsWith(WARP_TAG_PREFIX)) {
-			return "warp " + tpc$quoteCommandArgument(normalizedName);
+			return "warp " + CommandArgumentUtils.quote(normalizedName);
 		}
 		if (name.startsWith(HOME_TAG_PREFIX)) {
-			return "home " + tpc$quoteCommandArgument(normalizedName);
+			return "home " + CommandArgumentUtils.quote(normalizedName);
 		}
 
 		return null;
-	}
-
-	private static String tpc$quoteCommandArgument(String value) {
-		return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
 	}
 
 	private static String tpc$stripTaggedPrefix(String name) {

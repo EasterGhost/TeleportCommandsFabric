@@ -5,7 +5,6 @@ import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNull;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -60,7 +59,7 @@ public final class TranslationHelper {
 
 	private static Map<String, String> loadLanguage(String language) {
 		String filePath = String.format("/assets/%s/lang/%s.json", ModConstants.ASSETS_ID, language);
-		try (InputStream stream = TeleportCommands.class.getResourceAsStream(filePath)) {
+		try (InputStream stream = TranslationHelper.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
 				ModConstants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling BackCommand to en_us.", language);
 				return "en_us".equals(language) ? new ConcurrentHashMap<>()
