@@ -1,3 +1,13 @@
+## Current Decisions
+
+- [ ] CLI 列表命令采用 Minecraft style command/subcommand，不使用 shell-style `--` 参数。
+
+  - `/warps`、`/homes` 等分页列表使用固定顺序子命令。
+  - 第一版不支持乱序输入；UI 生成的点击命令也统一输出规范顺序。
+  - 推荐语义：`/warps [page] filter <prefix|dimension> <value> sort <name|sequence> [asc|desc]`。
+  - `prefix` 明确限定为单字符首字母筛选；`dimension` 只作为筛选，不作为排序字段。
+  - `sequence` 表示添加顺序：新建位置初始为 `-1`，加入 profile 时分配 `max(sequence)+1`，更新时保留旧序号。
+
 ## 2.0 Release Scope
 
 ### Core targets
