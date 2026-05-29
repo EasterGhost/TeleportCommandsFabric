@@ -15,7 +15,10 @@ public final class Tpa {
 			UUID sender,
 			UUID target,
 			Type type,
-			long expiredTime) {
+			long expiredTime,
+			int delayTicks,
+			long cooldownMillis,
+			boolean recordPrevious) {
 
 		public boolean isExpired(long now) {
 			return now >= expiredTime;
