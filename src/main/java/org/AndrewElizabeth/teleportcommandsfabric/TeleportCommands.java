@@ -4,8 +4,12 @@ import com.mojang.brigadier.CommandDispatcher;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocationSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.PlayerRecordedLocationSource;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyThreadPool;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBatchDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
@@ -47,6 +51,7 @@ public class TeleportCommands implements ModInitializer {
 	public static AsyncRecordedLocationSource RECORDED_LOCATION_SOURCE;
 	public static TeleportService TELEPORT_SERVICE;
 	public static TpaService TPA_SERVICE;
+	public static RtpService RTP_SERVICE;
 
 	@Override
 	public void onInitialize() {
@@ -55,7 +60,10 @@ public class TeleportCommands implements ModInitializer {
 				TELEPORT_SERVICE.tick(server);
 			}
 			if (TPA_SERVICE != null) {
-				TPA_SERVICE.tick();
+				TPA_SERVICE.tick(server);
+			}
+			if (RTP_SERVICE != null) {
+				RTP_SERVICE.tick(server);
 			}
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
@@ -107,8 +115,12 @@ public class TeleportCommands implements ModInitializer {
 	private static void initializeStorageManagers() {
 		RECORDED_LOCATION_MANAGER = new PlayerRecordedLocationManager();
 		RECORDED_LOCATION_SOURCE = new PlayerRecordedLocationSource(RECORDED_LOCATION_MANAGER);
-		TELEPORT_SERVICE = new TeleportService(RECORDED_LOCATION_SOURCE);
-		TPA_SERVICE = new TpaService(RECORDED_LOCATION_SOURCE);
+		TeleportOperationManager teleportOperationManager = new TeleportOperationManager();
+		TeleportPreloadManager teleportPreloadManager = new TeleportPreloadManager();
+		TELEPORT_SERVICE = new TeleportService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager,
+				new TeleportBatchDispatcher(), new SafetyThreadPool());
+		TPA_SERVICE = new TpaService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager);
+		RTP_SERVICE = new RtpService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager);
 		GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
 		PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
 	}
@@ -139,6 +151,9 @@ public class TeleportCommands implements ModInitializer {
 			if (TPA_SERVICE != null) {
 				TPA_SERVICE.onPlayerQuit(playerUuid);
 			}
+			if (RTP_SERVICE != null) {
+				RTP_SERVICE.onPlayerQuit(playerUuid);
+			}
 		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
@@ -154,6 +169,7 @@ public class TeleportCommands implements ModInitializer {
 
 	private static void shutdownStorageManagers() {
 		TeleportService teleportService = TELEPORT_SERVICE;
+		RtpService rtpService = RTP_SERVICE;
 		PlayerRecordedLocationManager recordedLocationManager = RECORDED_LOCATION_MANAGER;
 		GlobalProfileManager globalProfileManager = GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerProfileManager = PLAYER_PROFILE_MANAGER;
@@ -164,8 +180,12 @@ public class TeleportCommands implements ModInitializer {
 		if (TPA_SERVICE != null) {
 			TPA_SERVICE.clear();
 		}
+		if (rtpService != null) {
+			rtpService.shutdown();
+		}
 		TELEPORT_SERVICE = null;
 		TPA_SERVICE = null;
+		RTP_SERVICE = null;
 
 		CompletableFuture<Void> configShutdown = ConfigManager.shutdown();
 		CompletableFuture<Void> recordSave = recordedLocationManager == null
