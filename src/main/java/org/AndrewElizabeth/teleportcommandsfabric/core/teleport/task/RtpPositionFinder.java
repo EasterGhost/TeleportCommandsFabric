@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.RtpTeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

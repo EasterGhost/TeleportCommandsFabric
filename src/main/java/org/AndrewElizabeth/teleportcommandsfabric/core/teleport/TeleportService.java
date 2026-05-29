@@ -7,9 +7,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyThreadPool;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExecutor;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TargetTeleportProcessor;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportExecution;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportPending;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportExecution;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTargetResult;

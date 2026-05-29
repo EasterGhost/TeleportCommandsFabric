@@ -1,9 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportPending;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 
 import net.minecraft.util.Util;

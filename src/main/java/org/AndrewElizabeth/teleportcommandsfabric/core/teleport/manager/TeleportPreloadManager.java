@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager;
  
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportExecution;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportExecution;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
  

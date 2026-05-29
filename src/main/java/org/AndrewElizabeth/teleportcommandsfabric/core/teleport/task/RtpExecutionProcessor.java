@@ -1,7 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.RtpTeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 

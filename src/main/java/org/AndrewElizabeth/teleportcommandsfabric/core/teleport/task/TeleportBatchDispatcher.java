@@ -1,7 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportExecution;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportExecution;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 
 import java.util.ArrayDeque;

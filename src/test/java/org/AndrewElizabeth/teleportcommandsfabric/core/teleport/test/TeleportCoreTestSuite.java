@@ -1,6 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.test;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceScenarioTests;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;

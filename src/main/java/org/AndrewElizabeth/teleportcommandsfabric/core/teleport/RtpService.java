@@ -5,8 +5,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.Teleport
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.RtpExecutionProcessor;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExecutor;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.RtpRequest;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.RtpTeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 

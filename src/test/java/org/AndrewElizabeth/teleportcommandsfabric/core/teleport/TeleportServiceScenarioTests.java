@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
 

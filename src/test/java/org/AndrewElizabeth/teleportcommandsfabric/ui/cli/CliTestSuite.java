@@ -1,18 +1,22 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpTopic;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminModuleStatus;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminStatusRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.AdminHelpRequest;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.AdminHelpTopic;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.AdminModuleStatus;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.PageView;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.SortDirection;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointFilter;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointListQuery;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointPageKind;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointPageRequest;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointSort;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointSortKey;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageAssembler;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPages;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointSort;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import net.minecraft.core.registries.Registries;
@@ -119,7 +123,7 @@ public final class CliTestSuite {
 		}
 		WaypointListQuery query = new WaypointListQuery(2,
 				WaypointFilter.dimension("minecraft:overworld"),
-				new WaypointSort(WaypointSortKey.SEQUENCE, SortDirection.DESC));
+				new WaypointSort(SortKey.SEQUENCE, SortDirection.DESC));
 		String text = renderPagePicker(new WaypointPageRequest(
 				WaypointPageKind.WARPS,
 				locations,
@@ -160,7 +164,7 @@ public final class CliTestSuite {
 				location("argon", 0, 64.0D, 0, END, true, 3));
 		WaypointListQuery query = new WaypointListQuery(1,
 				WaypointFilter.prefix("a"),
-				new WaypointSort(WaypointSortKey.NAME, SortDirection.DESC));
+				new WaypointSort(SortKey.NAME, SortDirection.DESC));
 		WaypointPageRequest request = new WaypointPageRequest(
 				WaypointPageKind.WARPS,
 				rows,
@@ -240,14 +244,14 @@ public final class CliTestSuite {
 	}
 
 	private static String render(WaypointPageRequest request) {
-		try (WaypointPages pages = new WaypointPages(new WarpListCache(), Runnable::run)) {
+		try (WaypointPages pages = new WaypointPages()) {
 			CompletableFuture<Component> future = pages.render(request);
 			return future.join().getString();
 		}
 	}
 
 	private static String renderPagePicker(WaypointPageRequest request) {
-		try (WaypointPages pages = new WaypointPages(new WarpListCache(), Runnable::run)) {
+		try (WaypointPages pages = new WaypointPages()) {
 			return pages.renderPagePicker(request).getString();
 		}
 	}

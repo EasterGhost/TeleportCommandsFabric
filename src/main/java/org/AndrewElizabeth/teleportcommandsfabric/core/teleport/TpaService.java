@@ -7,9 +7,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExe
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.Tpa;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TpaRequest;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TpaTeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaTeleportPending;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;

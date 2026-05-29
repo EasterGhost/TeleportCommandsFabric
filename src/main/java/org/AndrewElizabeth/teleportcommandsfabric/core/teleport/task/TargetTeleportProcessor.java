@@ -3,7 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportExecution;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportExecution;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 

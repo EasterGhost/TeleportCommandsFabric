@@ -1,9 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.WaypointRows;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointListCacheKey;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.model.WaypointListQuery;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointRows;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
