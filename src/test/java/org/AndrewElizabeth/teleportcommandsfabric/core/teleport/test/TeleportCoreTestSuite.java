@@ -63,11 +63,11 @@ public final class TeleportCoreTestSuite {
 				+ ", timeCheckInterval=" + TeleportServiceSettings.TIME_CHECK_INTERVAL
 				+ ", safetyWorkerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
 				+ ", safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE);
-		run("TeleportOptions values and effective cooldown",
+		run("TargetTeleportOptions values and effective cooldown",
 				"Verify current option constructor and effective cooldown values.",
 				"caseA delayTicks=0 cooldownMillis=0 safetyEnabled=true recordPrevious=true; caseB delayTicks=3 cooldownMillis=100",
-				TeleportCoreTestSuite::testTeleportOptions);
-		run("TeleportCooldownManager pending lifecycle",
+				TeleportCoreTestSuite::testTargetTeleportOptions);
+		run("TeleportOperationManager pending lifecycle",
 				"Verify create, replace, event cancel, success cooldown refresh, and quit cancel.",
 				"delayTicks=5 cooldownMillis=10000 createdAtTicks=[10,20,30,40] quitTick=50 eventCancelStatus=CANCELLED_BY_EVENT",
 				TeleportCoreTestSuite::testPendingLifecycle);
@@ -118,13 +118,13 @@ public final class TeleportCoreTestSuite {
 		System.out.println("Teleport core tests passed.");
 	}
 
-	private static void testTeleportOptions() {
-		TeleportOptions options = new TeleportOptions(0, 0L, true, true);
+	private static void testTargetTeleportOptions() {
+		TargetTeleportOptions options = new TargetTeleportOptions(0, 0L, true, true);
 		requireEquals(0, options.delayTicks(), "delay ticks should clamp");
 		requireEquals(0L, options.cooldownMillis(), "cooldown millis should match constructor value");
 		requireEquals(0L, options.effectiveCooldownMillis(), "effective cooldown should use configured millis");
 
-		TeleportOptions delayed = new TeleportOptions(3, 100L, false, false);
+		TargetTeleportOptions delayed = new TargetTeleportOptions(3, 100L, false, false);
 		requireEquals(3, delayed.delayTicks(), "delay should use configured value");
 		requireEquals(100L, delayed.effectiveCooldownMillis(), "cooldown should use configured millis");
 		debug("DATA options", "clampedDelay=" + options.delayTicks()
@@ -134,26 +134,26 @@ public final class TeleportCoreTestSuite {
 	}
 
 	private static void testPendingLifecycle() {
-		TeleportCooldownManager manager = new TeleportCooldownManager();
+		TeleportOperationManager manager = new TeleportOperationManager();
 		UUID playerUuid = UUID.randomUUID();
 		TeleportRequest firstRequest = request();
 		TeleportRequest secondRequest = request();
 
-		TeleportCooldownManager.PendingCreateResult first = manager.createPending(playerUuid, firstRequest, 10L);
+		TeleportOperationManager.PendingCreateResult first = manager.createPending(playerUuid, firstRequest, 10L);
 		require(manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should be current");
-		require(manager.hasCurrentPendings(), "first pending should make manager active");
+		require(manager.hasCurrentOperations(), "first pending should make manager active");
 		requireEquals(15L, first.pending().delayUntilTick(), "delay deadline should be based on current tick");
 		debug("DATA pending.first", "sequence=" + first.pending().pendingSequence()
 				+ ", createTick=" + first.pending().createTick()
 				+ ", delayUntilTick=" + first.pending().delayUntilTick());
 
-		TeleportCooldownManager.PendingCreateResult second = manager.createPending(playerUuid, secondRequest, 20L);
+		TeleportOperationManager.PendingCreateResult second = manager.createPending(playerUuid, secondRequest, 20L);
 		require(first.pending().resultFuture().isDone(), "replaced pending should complete");
 		requireEquals(TeleportStatus.CANCELLED, first.pending().resultFuture().join(), "replaced pending should cancel");
 		require(second.replaced().isPresent(), "replacement should be reported");
 		require(!manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should no longer be current");
 		require(manager.isCurrent(playerUuid, second.pending().pendingSequence()), "second pending should be current");
-		requireEquals(1, manager.visitCurrentPendings(ignored -> true), "replacement should leave one active pending");
+		requireEquals(1, manager.visitCurrentTargetPendings(ignored -> true), "replacement should leave one active pending");
 		debug("DATA pending.replace", "oldSequence=" + first.pending().pendingSequence()
 				+ ", newSequence=" + second.pending().pendingSequence()
 				+ ", oldStatus=" + first.pending().resultFuture().join());
@@ -161,27 +161,47 @@ public final class TeleportCoreTestSuite {
 		require(manager.cancelPending(playerUuid, second.pending().pendingSequence(), TeleportStatus.CANCELLED_BY_EVENT), "cancel should succeed");
 		requireEquals(TeleportStatus.CANCELLED_BY_EVENT, second.pending().resultFuture().join(), "cancel status should be preserved");
 		require(!manager.isCurrent(playerUuid, second.pending().pendingSequence()), "cancelled pending should not be current");
-		require(!manager.hasCurrentPendings(), "cancelled pending should leave no active pending");
+		require(!manager.hasCurrentOperations(), "cancelled pending should leave no active pending");
 		debug("DATA pending.cancel", "sequence=" + second.pending().pendingSequence()
 				+ ", status=" + second.pending().resultFuture().join());
 
-		TeleportCooldownManager.PendingCreateResult success = manager.createPending(playerUuid, request(), 30L);
+		TeleportOperationManager.PendingCreateResult success = manager.createPending(playerUuid, request(), 30L);
 		manager.markSuccess(playerUuid, success.pending().pendingSequence());
 		require(!manager.isCurrent(playerUuid, success.pending().pendingSequence()), "successful pending should be cleared");
-		require(!manager.hasCurrentPendings(), "successful pending should leave no active pending");
+		require(!manager.hasCurrentOperations(), "successful pending should leave no active pending");
 		long remainingCooldown = manager.getRemainingCooldownMillis(playerUuid, 10_000L);
 		require(remainingCooldown > 0L, "success should refresh cooldown");
 		debug("DATA pending.success", "sequence=" + success.pending().pendingSequence()
 				+ ", remainingCooldownMillis=" + formatNumber(remainingCooldown));
 
-		TeleportCooldownManager.PendingCreateResult quit = manager.createPending(playerUuid, request(), 40L);
-		Optional<TeleportPending> quitPending = manager.onPlayerQuit(playerUuid, 50L);
+		TeleportOperationManager.PendingCreateResult quit = manager.createPending(playerUuid, request(), 40L);
+		Optional<TeleportOperation> quitPending = manager.onPlayerQuit(playerUuid, 50L);
 		require(quitPending.isPresent(), "quit should return current pending");
 		requireEquals(quit.pending().pendingSequence(), quitPending.get().pendingSequence(), "quit should return matching pending");
 		requireEquals(TeleportStatus.CANCELLED, quit.pending().resultFuture().join(), "quit should cancel pending");
-		require(!manager.hasCurrentPendings(), "quit should leave no active pending");
+		require(!manager.hasCurrentOperations(), "quit should leave no active pending");
 		debug("DATA pending.quit", "sequence=" + quit.pending().pendingSequence()
 				+ ", status=" + quit.pending().resultFuture().join());
+
+		UUID targetUuid = UUID.randomUUID();
+		Tpa.Session session = new Tpa.Session(UUID.randomUUID(), playerUuid, targetUuid, Tpa.Type.TPA, Long.MAX_VALUE, 2, 3_000L, true);
+		TeleportOperationManager.OperationCreateResult<TpaTeleportPending> tpa = manager.createOperation(playerUuid, 60L,
+				(sequence, tick) -> TpaTeleportPending.fromSession(session, sequence, tick, 2, 3_000L, true));
+		require(manager.getCurrentOperation(playerUuid, TpaTeleportPending.class).isPresent(), "TPA operation should be current by type");
+		requireEquals(1, manager.currentOperations(TpaTeleportPending.class).size(), "TPA operation should be listed by type");
+
+		TeleportOperationManager.OperationCreateResult<RtpTeleportPending> rtp = manager.createOperation(playerUuid, 70L,
+				(sequence, tick) -> new RtpTeleportPending(playerUuid, sequence, tick, 0, 0L, true,
+						BlockPos.ZERO, Level.OVERWORLD, 4, 32, 4096));
+		require(tpa.pending().resultFuture().isDone(), "replaced TPA operation should complete");
+		requireEquals(TeleportStatus.CANCELLED, tpa.pending().resultFuture().join(), "replaced TPA operation should cancel");
+		require(rtp.replaced().isPresent(), "RTP replacement should report old operation");
+		require(manager.getCurrentOperation(playerUuid, RtpTeleportPending.class).isPresent(), "RTP operation should be current by type");
+		requireEquals(0, manager.currentOperations(TpaTeleportPending.class).size(), "TPA typed list should be empty after replacement");
+		requireEquals(1, manager.currentOperations(RtpTeleportPending.class).size(), "RTP typed list should contain current operation");
+		debug("DATA pending.generic", "tpaSequence=" + tpa.pending().pendingSequence()
+				+ ", rtpSequence=" + rtp.pending().pendingSequence()
+				+ ", replacedType=" + rtp.replaced().get().getClass().getSimpleName());
 	}
 
 	private static void testDispatcherFastPathThreshold() {
@@ -540,16 +560,14 @@ public final class TeleportCoreTestSuite {
 	private static TeleportRequest request() {
 		return new TeleportRequest(
 				CompletableFuture.completedFuture(TeleportTargetResult.failed(TeleportStatus.TARGET_UNAVAILABLE)),
-				new TeleportOptions(5, 10_000L, false, false));
+				new TargetTeleportOptions(5, 10_000L, false, false));
 	}
 
-	private static TeleportBatchDispatcher.ExecutionEntry entry(int id) {
-		return new TeleportBatchDispatcher.ExecutionEntry(
-				new UUID(0L, id),
-				id,
-				DUMMY_TARGET,
-				TeleportOptions.DEFAULT,
-				new CompletableFuture<>());
+	private static TargetTeleportExecution entry(int id) {
+		UUID playerUuid = new UUID(0L, id);
+		TargetTeleportPending pending = new TargetTeleportPending(playerUuid, id,
+				TeleportRequest.resolved(DUMMY_TARGET, TargetTeleportOptions.DEFAULT), 0L);
+		return new TargetTeleportExecution(pending, DUMMY_TARGET);
 	}
 
 	private static TeleportTarget createDummyTarget() {

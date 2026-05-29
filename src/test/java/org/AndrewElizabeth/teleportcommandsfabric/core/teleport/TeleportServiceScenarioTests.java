@@ -44,7 +44,7 @@ public final class TeleportServiceScenarioTests {
 	private static void testImmediateSuccessRecordsPreviousAndAppliesCooldown() {
 		Harness harness = Harness.create();
 		TeleportTarget target = harness.target(new Vec3(20.5D, 70.0D, 20.5D));
-		TeleportOptions options = new TeleportOptions(0, 20L, false, true);
+		TargetTeleportOptions options = new TargetTeleportOptions(0, 20L, false, true);
 		CompletableFuture<TeleportStatus> result = harness.service.request(
 				TeleportRequest.resolved(target, options));
 
@@ -64,7 +64,7 @@ public final class TeleportServiceScenarioTests {
 	private static void testDelayedTargetWaitsForResolverAndDelay() {
 		Harness harness = Harness.create();
 		CompletableFuture<TeleportTargetResult> targetFuture = new CompletableFuture<>();
-		TeleportOptions options = new TeleportOptions(2, 0L, false, false);
+		TargetTeleportOptions options = new TargetTeleportOptions(2, 0L, false, false);
 		CompletableFuture<TeleportStatus> result = harness.service.request(
 				TeleportRequest.of(targetFuture, options));
 
@@ -81,7 +81,7 @@ public final class TeleportServiceScenarioTests {
 
 	private static void testReplacementCancelsOldPendingAndExecutesLatest() {
 		Harness harness = Harness.create();
-		TeleportOptions options = new TeleportOptions(0, 0L, false, false);
+		TargetTeleportOptions options = new TargetTeleportOptions(0, 0L, false, false);
 		CompletableFuture<TeleportStatus> first = harness.service.request(TeleportRequest.resolved(
 				harness.target(new Vec3(10.5D, 64.0D, 10.5D)), options));
 		CompletableFuture<TeleportStatus> second = harness.service.request(TeleportRequest.resolved(
@@ -99,7 +99,7 @@ public final class TeleportServiceScenarioTests {
 	private static void testDelayedPreloadStartsOnlyInsideLeadWindow() {
 		Harness harness = Harness.create();
 		harness.preload.loaded = false;
-		TeleportOptions options = new TeleportOptions(6, 0L, false, false);
+		TargetTeleportOptions options = new TargetTeleportOptions(6, 0L, false, false);
 		CompletableFuture<TeleportStatus> result = harness.service.request(TeleportRequest.resolved(
 				harness.target(new Vec3(60.5D, 85.0D, 60.5D)), options));
 
@@ -122,7 +122,7 @@ public final class TeleportServiceScenarioTests {
 	private static void testPreloadPathWaitsUntilChunkReady() {
 		Harness harness = Harness.create();
 		harness.preload.loaded = false;
-		TeleportOptions options = new TeleportOptions(0, 0L, false, false);
+		TargetTeleportOptions options = new TargetTeleportOptions(0, 0L, false, false);
 		CompletableFuture<TeleportStatus> result = harness.service.request(TeleportRequest.resolved(
 				harness.target(new Vec3(80.5D, 90.0D, 80.5D)), options));
 
@@ -144,7 +144,7 @@ public final class TeleportServiceScenarioTests {
 
 	private static void testDeathCancelsPendingBeforeExecution() {
 		Harness harness = Harness.create();
-		TeleportOptions options = new TeleportOptions(5, 0L, false, false);
+		TargetTeleportOptions options = new TargetTeleportOptions(5, 0L, false, false);
 		CompletableFuture<TeleportStatus> result = harness.service.request(TeleportRequest.resolved(
 				harness.target(new Vec3(15.5D, 70.0D, 15.5D)), options));
 
@@ -192,7 +192,7 @@ public final class TeleportServiceScenarioTests {
 		private final FakePreload preload = new FakePreload();
 		private final FakeRuntime runtime = new FakeRuntime(playerUuid);
 		private final ScenarioTeleportService service = new ScenarioTeleportService(
-				playerUuid, runtime, recorded, new TeleportCooldownManager(), preload, new TeleportBatchDispatcher());
+				playerUuid, runtime, recorded, new TeleportOperationManager(), preload, new TeleportBatchDispatcher());
 
 		private static Harness create() {
 			return new Harness();
@@ -211,18 +211,18 @@ public final class TeleportServiceScenarioTests {
 		private final UUID playerUuid;
 		private final FakeRuntime runtime;
 		private final AsyncRecordedLocationSource recordedSource;
-		private final TeleportCooldownManager cooldownManager;
+		private final TeleportOperationManager operationManager;
 		private final FakePreload preload;
 		private final TeleportBatchDispatcher dispatcher;
 		private long currentTick;
 		private int admissionRampTick;
 
 		private ScenarioTeleportService(UUID playerUuid, FakeRuntime runtime, AsyncRecordedLocationSource recordedSource,
-				TeleportCooldownManager cooldownManager, FakePreload preload, TeleportBatchDispatcher dispatcher) {
+				TeleportOperationManager operationManager, FakePreload preload, TeleportBatchDispatcher dispatcher) {
 			this.playerUuid = playerUuid;
 			this.runtime = runtime;
 			this.recordedSource = recordedSource;
-			this.cooldownManager = cooldownManager;
+			this.operationManager = operationManager;
 			this.preload = preload;
 			this.dispatcher = dispatcher;
 		}
@@ -231,15 +231,15 @@ public final class TeleportServiceScenarioTests {
 			if (runtime.dead) {
 				return CompletableFuture.completedFuture(TeleportStatus.CANCELLED_BY_EVENT);
 			}
-			long remainingCooldown = cooldownManager.getRemainingCooldownMillis(playerUuid, request.options().effectiveCooldownMillis());
+			long remainingCooldown = operationManager.getRemainingCooldownMillis(playerUuid, request.options().effectiveCooldownMillis());
 			if (remainingCooldown > 0L) {
 				return CompletableFuture.completedFuture(TeleportStatus.COOLDOWN);
 			}
 
-			TeleportCooldownManager.PendingCreateResult createResult = cooldownManager.createPending(playerUuid, request, currentTick);
+			TeleportOperationManager.PendingCreateResult createResult = operationManager.createPending(playerUuid, request, currentTick);
 			createResult.replaced().ifPresent(replaced -> preload.release(replaced.playerUuid(), replaced.pendingSequence()));
 
-			TeleportPending pending = createResult.pending();
+			TargetTeleportPending pending = createResult.pending();
 			request.targetFuture().whenComplete((targetResult, throwable) -> {
 				if (throwable != null) {
 					pending.completeTarget(TeleportTargetResult.failed(TeleportStatus.FAILED));
@@ -260,24 +260,24 @@ public final class TeleportServiceScenarioTests {
 		}
 
 		private void onPlayerDeath() {
-			cooldownManager.getCurrentPending(playerUuid)
+			operationManager.getCurrentOperation(playerUuid)
 					.ifPresent(pending -> cancelPending(pending.pendingSequence(), TeleportStatus.CANCELLED_BY_EVENT));
 		}
 
 		private void cancelPending(long pendingSequence, TeleportStatus status) {
-			if (cooldownManager.cancelPending(playerUuid, pendingSequence, status)) {
+			if (operationManager.cancelPending(playerUuid, pendingSequence, status)) {
 				preload.release(playerUuid, pendingSequence);
 			}
 		}
 
 		private void handlePreloadTick() {
 			FakePreload.TickResult result = preload.tick();
-			for (TeleportBatchDispatcher.ExecutionEntry entry : result.ready()) {
-				if (cooldownManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
+			for (TargetTeleportExecution entry : result.ready()) {
+				if (operationManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
 					submitReadyExecution(entry);
 				}
 			}
-			for (TeleportBatchDispatcher.ExecutionEntry entry : result.timedOut()) {
+			for (TargetTeleportExecution entry : result.timedOut()) {
 				finishEntry(entry, TeleportStatus.FAILED);
 			}
 		}
@@ -285,7 +285,7 @@ public final class TeleportServiceScenarioTests {
 		private void advancePending() {
 			int admissionLimit = currentReadyAdmissionLimit();
 			int[] admitted = { 0 };
-			cooldownManager.visitCurrentPendings(pending -> {
+			operationManager.visitCurrentTargetPendings(pending -> {
 				if (admitted[0] >= admissionLimit) {
 					return false;
 				}
@@ -305,7 +305,7 @@ public final class TeleportServiceScenarioTests {
 					return true;
 				}
 
-				TeleportBatchDispatcher.ExecutionEntry entry = toExecutionEntry(pending, resolved.target());
+				TargetTeleportExecution entry = toExecutionEntry(pending, resolved.target());
 				if (!pending.isDelayDone(currentTick)) {
 					if (shouldStartPreloadDuringDelay(pending) && !pending.isPreloadStarted() && !preload.isChunkLoaded(resolved.target())) {
 						pending.markPreloadStarted();
@@ -335,23 +335,23 @@ public final class TeleportServiceScenarioTests {
 			return TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT;
 		}
 
-		private boolean shouldStartPreloadDuringDelay(TeleportPending pending) {
+		private boolean shouldStartPreloadDuringDelay(TargetTeleportPending pending) {
 			return currentTick >= pending.delayUntilTick() - TeleportServiceSettings.PRELOAD_LEAD_TICKS;
 		}
 
 		private void updateAdmissionRamp() {
-			if (cooldownManager.hasCurrentPendings() || dispatcher.queueSize() > 0 || preload.activeTicketCount() > 0) {
+			if (operationManager.hasCurrentOperations() || dispatcher.queueSize() > 0 || preload.activeTicketCount() > 0) {
 				admissionRampTick++;
 			} else {
 				admissionRampTick = 0;
 			}
 		}
 
-		private void submitReadyExecution(TeleportBatchDispatcher.ExecutionEntry entry) {
-			if (!cooldownManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
+		private void submitReadyExecution(TargetTeleportExecution entry) {
+			if (!operationManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
 				return;
 			}
-			if (!cooldownManager.markQueuedIfCurrentAndDelayDone(entry.playerUuid(), entry.pendingSequence(), currentTick)) {
+			if (!operationManager.markTargetQueuedIfCurrentAndDelayDone(entry.playerUuid(), entry.pendingSequence(), currentTick)) {
 				return;
 			}
 			if (dispatcher.canUseFastPath()) {
@@ -362,17 +362,12 @@ public final class TeleportServiceScenarioTests {
 			}
 		}
 
-		private TeleportBatchDispatcher.ExecutionEntry toExecutionEntry(TeleportPending pending, TeleportTarget target) {
-			return new TeleportBatchDispatcher.ExecutionEntry(
-					pending.playerUuid(),
-					pending.pendingSequence(),
-					target,
-					pending.request().options(),
-					pending.resultFuture());
+		private TargetTeleportExecution toExecutionEntry(TargetTeleportPending pending, TeleportTarget target) {
+			return new TargetTeleportExecution(pending, target);
 		}
 
-		private TeleportStatus executeOne(TeleportBatchDispatcher.ExecutionEntry entry) {
-			if (!cooldownManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
+		private TeleportStatus executeOne(TargetTeleportExecution entry) {
+			if (!operationManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
 				preload.release(entry.playerUuid(), entry.pendingSequence());
 				entry.resultFuture().complete(TeleportStatus.CANCELLED);
 				return TeleportStatus.CANCELLED;
@@ -409,18 +404,18 @@ public final class TeleportServiceScenarioTests {
 				return finishEntry(entry, TeleportStatus.FAILED);
 			}
 
-			cooldownManager.markSuccess(entry.playerUuid(), entry.pendingSequence());
+			operationManager.markSuccess(entry.playerUuid(), entry.pendingSequence());
 			entry.resultFuture().complete(TeleportStatus.SUCCESS);
 			preload.release(entry.playerUuid(), entry.pendingSequence());
 			return TeleportStatus.SUCCESS;
 		}
 
-		private TeleportStatus finishEntry(TeleportBatchDispatcher.ExecutionEntry entry, TeleportStatus status) {
+		private TeleportStatus finishEntry(TargetTeleportExecution entry, TeleportStatus status) {
 			if (status == TeleportStatus.SUCCESS) {
-				cooldownManager.markSuccess(entry.playerUuid(), entry.pendingSequence());
+				operationManager.markSuccess(entry.playerUuid(), entry.pendingSequence());
 				entry.resultFuture().complete(TeleportStatus.SUCCESS);
 			} else {
-				cooldownManager.cancelPending(entry.playerUuid(), entry.pendingSequence(), status);
+				operationManager.cancelPending(entry.playerUuid(), entry.pendingSequence(), status);
 				entry.resultFuture().complete(status);
 			}
 			preload.release(entry.playerUuid(), entry.pendingSequence());
@@ -456,7 +451,7 @@ public final class TeleportServiceScenarioTests {
 	}
 
 	private static final class FakePreload {
-		private final Map<String, TeleportBatchDispatcher.ExecutionEntry> active = new HashMap<>();
+		private final Map<String, TargetTeleportExecution> active = new HashMap<>();
 		private final Set<String> handedOff = new HashSet<>();
 		private boolean loaded = true;
 		private int preloadCalls;
@@ -466,7 +461,7 @@ public final class TeleportServiceScenarioTests {
 			return loaded;
 		}
 
-		private void preload(TeleportBatchDispatcher.ExecutionEntry entry) {
+		private void preload(TargetTeleportExecution entry) {
 			String key = key(entry.playerUuid(), entry.pendingSequence());
 			if (active.containsKey(key)) {
 				return;
@@ -476,9 +471,9 @@ public final class TeleportServiceScenarioTests {
 		}
 
 		private TickResult tick() {
-			List<TeleportBatchDispatcher.ExecutionEntry> ready = new ArrayList<>();
+			List<TargetTeleportExecution> ready = new ArrayList<>();
 			if (loaded) {
-				for (Map.Entry<String, TeleportBatchDispatcher.ExecutionEntry> entry : active.entrySet()) {
+				for (Map.Entry<String, TargetTeleportExecution> entry : active.entrySet()) {
 					if (handedOff.add(entry.getKey())) {
 						ready.add(entry.getValue());
 					}
@@ -504,8 +499,8 @@ public final class TeleportServiceScenarioTests {
 		}
 
 		private record TickResult(
-				List<TeleportBatchDispatcher.ExecutionEntry> ready,
-				List<TeleportBatchDispatcher.ExecutionEntry> timedOut) {
+				List<TargetTeleportExecution> ready,
+				List<TargetTeleportExecution> timedOut) {
 		}
 	}
 

@@ -2,15 +2,29 @@ sourceSets {
     teleportTest {
         java {
             srcDirs = ["src/main/java", "src/test/java"]
+            include "org/AndrewElizabeth/teleportcommandsfabric/ModConstants.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportStatus.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportTarget.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportTargetResult.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportOptions.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TargetTeleportOptions.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportOperation.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportRequest.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportPending.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TargetTeleportPending.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TargetTeleportExecution.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/Tpa.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TpaRequest.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TpaTeleportPending.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/RtpRequest.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/RtpTeleportPending.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TeleportServiceSettings.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/manager/TeleportCooldownManager.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TpaService.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/RtpService.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/manager/TeleportOperationManager.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/manager/TeleportPreloadManager.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/TeleportBatchDispatcher.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/TeleportExecutor.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/RtpExecutionProcessor.java"
+            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/RtpPositionFinder.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/record/AsyncRecordedLocationSource.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/core/record/RecordedLocationTeleportTargets.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocation.java"
@@ -26,7 +40,6 @@ sourceSets {
     cliTest {
         java {
             srcDirs = ["src/main/java", "src/test/java"]
-            include "org/AndrewElizabeth/teleportcommandsfabric/ModConstants.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/utils/CommandArgumentUtils.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/utils/TranslationHelper.java"
             include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/NamedLocationView.java"
