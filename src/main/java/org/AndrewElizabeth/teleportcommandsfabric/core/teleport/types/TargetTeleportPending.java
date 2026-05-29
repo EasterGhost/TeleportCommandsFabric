@@ -3,7 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public final class TeleportPending {
+public final class TargetTeleportPending implements TeleportOperation {
 	private final UUID playerUuid;
 	private final long pendingSequence;
 	private final TeleportRequest request;
@@ -13,18 +13,28 @@ public final class TeleportPending {
 	private boolean queued;
 	private boolean preloadStarted;
 
-	public TeleportPending(UUID playerUuid, long pendingSequence, TeleportRequest request, long createTick) {
+	public TargetTeleportPending(UUID playerUuid, long pendingSequence, TeleportRequest request, long createTick) {
 		this.playerUuid = playerUuid;
 		this.pendingSequence = pendingSequence;
 		this.request = request;
 		this.createTick = createTick;
 	}
 
+	@Override
 	public UUID playerUuid() { return playerUuid; }
+	@Override
 	public long pendingSequence() { return pendingSequence; }
 	public TeleportRequest request() { return request; }
+	@Override
 	public CompletableFuture<TeleportStatus> resultFuture() { return resultFuture; }
+	@Override
 	public long createTick() { return createTick; }
+	@Override
+	public int delayTicks() { return request.options().delayTicks(); }
+	@Override
+	public long cooldownMillis() { return request.options().cooldownMillis(); }
+	@Override
+	public boolean recordPrevious() { return request.options().recordPrevious(); }
 
 	public boolean isQueued() { return queued; }
 	public void markQueued() { this.queued = true; }
@@ -43,12 +53,5 @@ public final class TeleportPending {
 	public TeleportTargetResult targetResult() {
 		return targetFuture.join();
 	}
-
-	public long delayUntilTick() {
-		return createTick + request.options().delayTicks();
-	}
-
-	public boolean isDelayDone(long currentTick) {
-		return currentTick >= delayUntilTick();
-	}
 }
+

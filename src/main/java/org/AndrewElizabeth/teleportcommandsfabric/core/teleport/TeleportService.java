@@ -1,12 +1,14 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocationSource;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportCooldownManager;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBatchDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyThreadPool;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExecutor;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportPending;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TargetTeleportProcessor;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportExecution;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportPending;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
@@ -19,26 +21,27 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public final class TeleportService {
-	private final TeleportCooldownManager cooldownManager;
+	private final TeleportOperationManager operationManager;
 	private final TeleportPreloadManager preloadManager;
 	private final TeleportBatchDispatcher dispatcher;
 	private final SafetyThreadPool workerPool;
-	private final TeleportExecutor executor;
+	private final TargetTeleportProcessor targetProcessor;
 	private long currentTick;
 	private int admissionRampTick;
 	private boolean safetyWarmedUp;
 
 	public TeleportService(AsyncRecordedLocationSource recordedSource) {
-		this(recordedSource, new TeleportCooldownManager(), new TeleportPreloadManager(), new TeleportBatchDispatcher(), new SafetyThreadPool());
+		this(recordedSource, new TeleportOperationManager(), new TeleportPreloadManager(), new TeleportBatchDispatcher(), new SafetyThreadPool());
 	}
 
-	public TeleportService(AsyncRecordedLocationSource recordedSource, TeleportCooldownManager cooldownManager,
+	public TeleportService(AsyncRecordedLocationSource recordedSource, TeleportOperationManager operationManager,
 			TeleportPreloadManager preloadManager, TeleportBatchDispatcher dispatcher, SafetyThreadPool workerPool) {
-		this.cooldownManager = cooldownManager;
+		this.operationManager = operationManager;
 		this.preloadManager = preloadManager;
 		this.dispatcher = dispatcher;
 		this.workerPool = workerPool;
-		this.executor = new TeleportExecutor(recordedSource, cooldownManager, preloadManager, workerPool);
+		TeleportExecutor executor = new TeleportExecutor(recordedSource, operationManager);
+		this.targetProcessor = new TargetTeleportProcessor(operationManager, preloadManager, workerPool, executor);
 	}
 
 	public CompletableFuture<TeleportStatus> request(ServerPlayer player, TeleportRequest request) {
@@ -58,15 +61,15 @@ public final class TeleportService {
 		}
 
 		UUID playerUuid = player.getUUID();
-		long remainingCooldown = cooldownManager.getRemainingCooldownMillis(playerUuid, request.options().effectiveCooldownMillis());
+		long remainingCooldown = operationManager.getRemainingCooldownMillis(playerUuid, request.options().effectiveCooldownMillis());
 		if (remainingCooldown > 0L) {
 			return CompletableFuture.completedFuture(TeleportStatus.COOLDOWN);
 		}
 
-		TeleportCooldownManager.PendingCreateResult createResult = cooldownManager.createPending(playerUuid, request, currentTick);
+		TeleportOperationManager.PendingCreateResult createResult = operationManager.createPending(playerUuid, request, currentTick);
 		createResult.replaced().ifPresent(replaced -> preloadManager.release(replaced.playerUuid(), replaced.pendingSequence()));
 
-		TeleportPending pending = createResult.pending();
+		TargetTeleportPending pending = createResult.pending();
 		request.targetFuture().whenComplete((targetResult, throwable) -> {
 			if (throwable != null) {
 				pending.completeTarget(TeleportTargetResult.failed(TeleportStatus.FAILED));
@@ -90,40 +93,40 @@ public final class TeleportService {
 
 		currentTick++;
 		dispatcher.beginTick();
-		cooldownManager.cleanupExpiredOfflineStates();
+		operationManager.cleanupExpiredOfflineStates();
 		handlePreloadTick();
 		advancePending();
-		dispatcher.drainBatch(TeleportServiceSettings.SAFETY_BATCH_SIZE, entries -> executor.executeBatch(server, entries, currentTick));
+		dispatcher.drainBatch(TeleportServiceSettings.SAFETY_BATCH_SIZE, entries -> targetProcessor.executeBatch(server, entries, currentTick));
 		updateAdmissionRamp();
 	}
 
 	public void cancelPending(UUID playerUuid, long pendingSequence, TeleportStatus status) {
-		if (cooldownManager.cancelPending(playerUuid, pendingSequence, status)) {
+		if (operationManager.cancelPending(playerUuid, pendingSequence, status)) {
 			preloadManager.release(playerUuid, pendingSequence);
 		}
 	}
 
 	public void onPlayerDeath(UUID playerUuid) {
-		cooldownManager.getCurrentPending(playerUuid)
+		operationManager.getCurrentOperation(playerUuid)
 				.ifPresent(pending -> cancelPending(playerUuid, pending.pendingSequence(), TeleportStatus.CANCELLED_BY_EVENT));
 	}
 
 	public void onPlayerJoin(UUID playerUuid) {
-		cooldownManager.onPlayerJoin(playerUuid);
+		operationManager.onPlayerJoin(playerUuid);
 	}
 
 	public void onPlayerQuit(UUID playerUuid) {
-		cooldownManager.onPlayerQuit(playerUuid, currentTick)
+		operationManager.onPlayerQuit(playerUuid, currentTick)
 				.ifPresent(pending -> preloadManager.release(playerUuid, pending.pendingSequence()));
 	}
 
 	public void shutdown() {
-		for (TeleportPending pending : cooldownManager.currentPendings()) {
+		for (TargetTeleportPending pending : operationManager.currentTargetPendings()) {
 			cancelPending(pending.playerUuid(), pending.pendingSequence(), TeleportStatus.CANCELLED);
 		}
 		dispatcher.clear();
 		preloadManager.releaseAll();
-		cooldownManager.clear();
+		operationManager.clear();
 		workerPool.shutdown();
 	}
 
@@ -137,24 +140,24 @@ public final class TeleportService {
 
 	private void handlePreloadTick() {
 		TeleportPreloadManager.PreloadTickResult result = preloadManager.tick(currentTick);
-		for (TeleportBatchDispatcher.ExecutionEntry entry : result.ready()) {
-			if (cooldownManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
+		for (TargetTeleportExecution entry : result.ready()) {
+			if (operationManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
 				submitReadyExecution(entry);
 			}
 		}
-		for (TeleportBatchDispatcher.ExecutionEntry entry : result.timedOut()) {
-			executor.finishEntry(entry, TeleportStatus.FAILED);
+		for (TargetTeleportExecution entry : result.timedOut()) {
+			targetProcessor.finishEntry(entry, TeleportStatus.FAILED);
 		}
 	}
 
 	private void advancePending() {
 		int admissionLimit = currentReadyAdmissionLimit();
 		int[] admitted = { 0 };
-		cooldownManager.visitCurrentPendings(pending -> {
+		operationManager.visitCurrentTargetPendings(pending -> {
 			if (admitted[0] >= admissionLimit) {
 				return false;
 			}
-			if (!cooldownManager.isCurrent(pending.playerUuid(), pending.pendingSequence())) {
+			if (!operationManager.isCurrent(pending.playerUuid(), pending.pendingSequence())) {
 				return true;
 			}
 			if (pending.isQueued() || !pending.isTargetDone()) {
@@ -173,7 +176,7 @@ public final class TeleportService {
 				return true;
 			}
 
-			TeleportBatchDispatcher.ExecutionEntry entry = toExecutionEntry(pending, resolved.target());
+			TargetTeleportExecution entry = toExecutionEntry(pending, resolved.target());
 			if (!pending.isDelayDone(currentTick)) {
 				if (shouldStartPreloadDuringDelay(pending) && !pending.isPreloadStarted() && !preloadManager.isChunkLoaded(resolved.target())) {
 					pending.markPreloadStarted();
@@ -203,44 +206,39 @@ public final class TeleportService {
 		return TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT;
 	}
 
-	private boolean shouldStartPreloadDuringDelay(TeleportPending pending) {
+	private boolean shouldStartPreloadDuringDelay(TargetTeleportPending pending) {
 		return currentTick >= pending.delayUntilTick() - TeleportServiceSettings.PRELOAD_LEAD_TICKS;
 	}
 
 	private void updateAdmissionRamp() {
-		if (cooldownManager.hasCurrentPendings() || dispatcher.queueSize() > 0 || preloadManager.activeTicketCount() > 0) {
+		if (operationManager.hasCurrentOperations() || dispatcher.queueSize() > 0 || preloadManager.activeTicketCount() > 0) {
 			admissionRampTick++;
 		} else {
 			admissionRampTick = 0;
 		}
 	}
 
-	private void submitReadyExecution(TeleportBatchDispatcher.ExecutionEntry entry) {
-		if (!cooldownManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
+	private void submitReadyExecution(TargetTeleportExecution entry) {
+		if (!operationManager.isCurrent(entry.playerUuid(), entry.pendingSequence())) {
 			return;
 		}
 
-		if (!cooldownManager.markQueuedIfCurrentAndDelayDone(entry.playerUuid(), entry.pendingSequence(), currentTick)) {
+		if (!operationManager.markTargetQueuedIfCurrentAndDelayDone(entry.playerUuid(), entry.pendingSequence(), currentTick)) {
 			return;
 		}
 		if (dispatcher.canUseFastPath()) {
 			dispatcher.noteFastPathUse();
-			executor.executeOne(entry.target().world().getServer(), entry, currentTick);
+			targetProcessor.executeOne(entry.target().world().getServer(), entry, currentTick);
 		} else {
 			dispatcher.enqueue(entry);
 		}
 	}
 
-	private TeleportBatchDispatcher.ExecutionEntry toExecutionEntry(TeleportPending pending, TeleportTarget target) {
-		return new TeleportBatchDispatcher.ExecutionEntry(
-				pending.playerUuid(),
-				pending.pendingSequence(),
-				target,
-				pending.request().options(),
-				pending.resultFuture());
+	private TargetTeleportExecution toExecutionEntry(TargetTeleportPending pending, TeleportTarget target) {
+		return new TargetTeleportExecution(pending, target);
 	}
 
-	private void finishPending(TeleportPending pending, TeleportStatus status) {
+	private void finishPending(TargetTeleportPending pending, TeleportStatus status) {
 		cancelPending(pending.playerUuid(), pending.pendingSequence(), status);
 	}
 }

@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager;
  
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBatchDispatcher;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TargetTeleportExecution;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
  
@@ -27,7 +27,7 @@ public final class TeleportPreloadManager {
 		return target.world().isLoaded(BlockPos.containing(position));
 	}
  
-	public void preload(TeleportBatchDispatcher.ExecutionEntry entry, long currentTick) {
+	public void preload(TargetTeleportExecution entry, long currentTick) {
 		Key key = Key.from(entry);
 		PreloadHandle existing = handles.get(key);
 		if (existing != null) {
@@ -41,7 +41,7 @@ public final class TeleportPreloadManager {
 		handles.put(key, new PreloadHandle(entry, chunkPos, currentTick + TeleportServiceSettings.PRELOAD_TIMEOUT_TICKS));
 	}
  
-	public boolean isReady(TeleportBatchDispatcher.ExecutionEntry entry) {
+	public boolean isReady(TargetTeleportExecution entry) {
 		return isChunkLoaded(entry.target());
 	}
  
@@ -50,8 +50,8 @@ public final class TeleportPreloadManager {
 			return EMPTY_TICK_RESULT;
 		}
  
-		List<TeleportBatchDispatcher.ExecutionEntry> ready = null;
-		List<TeleportBatchDispatcher.ExecutionEntry> timedOut = null;
+		List<TargetTeleportExecution> ready = null;
+		List<TargetTeleportExecution> timedOut = null;
  
 		for (PreloadHandle handle : handles.values()) {
 			if (!handle.handedOff && isChunkLoaded(handle.entry.target())) {
@@ -96,23 +96,23 @@ public final class TeleportPreloadManager {
 	}
  
 	public record PreloadTickResult(
-			List<TeleportBatchDispatcher.ExecutionEntry> ready,
-			List<TeleportBatchDispatcher.ExecutionEntry> timedOut) {
+			List<TargetTeleportExecution> ready,
+			List<TargetTeleportExecution> timedOut) {
 	}
  
 	private record Key(UUID playerUuid, long pendingSequence) {
-		private static Key from(TeleportBatchDispatcher.ExecutionEntry entry) {
+		private static Key from(TargetTeleportExecution entry) {
 			return new Key(entry.playerUuid(), entry.pendingSequence());
 		}
 	}
  
 	private static final class PreloadHandle {
-		private final TeleportBatchDispatcher.ExecutionEntry entry;
+		private final TargetTeleportExecution entry;
 		private final ChunkPos chunkPos;
 		private final long timeoutTick;
 		private boolean handedOff;
  
-		private PreloadHandle(TeleportBatchDispatcher.ExecutionEntry entry, ChunkPos chunkPos, long timeoutTick) {
+		private PreloadHandle(TargetTeleportExecution entry, ChunkPos chunkPos, long timeoutTick) {
 			this.entry = entry;
 			this.chunkPos = chunkPos;
 			this.timeoutTick = timeoutTick;
