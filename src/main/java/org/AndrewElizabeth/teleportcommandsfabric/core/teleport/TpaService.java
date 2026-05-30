@@ -4,11 +4,13 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExecutor;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TpaRequestExpiryScheduler;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaSessionRegistry;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaTeleportPending;
 
 import net.minecraft.server.MinecraftServer;
@@ -18,22 +20,20 @@ import net.minecraft.util.Util;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 public final class TpaService {
 	private final TeleportOperationManager operationManager;
 	private final TeleportPreloadManager preloadManager;
 	private final TeleportExecutor executor;
-	private final Map<UUID, Tpa.Session> sessions = new LinkedHashMap<>(1280);
-	private final Map<UUID, LinkedHashSet<UUID>> targetIncoming = new HashMap<>(128);
+	private final TpaRequestExpiryScheduler expiryScheduler;
+	private final BiConsumer<MinecraftServer, Tpa.Session> expirationListener;
+	private final TpaSessionRegistry sessions = new TpaSessionRegistry();
 	private final ArrayDeque<PendingRef> acceptedQueue = new ArrayDeque<>();
 	private long currentTick;
 
@@ -41,9 +41,23 @@ public final class TpaService {
 
 	public TpaService(AsyncRecordedLocationSource recordedSource, TeleportOperationManager operationManager,
 			TeleportPreloadManager preloadManager) {
+		this(recordedSource, operationManager, preloadManager, new TpaRequestExpiryScheduler(), (server, session) -> {
+		});
+	}
+
+	public TpaService(AsyncRecordedLocationSource recordedSource, TeleportOperationManager operationManager,
+			TeleportPreloadManager preloadManager, BiConsumer<MinecraftServer, Tpa.Session> expirationListener) {
+		this(recordedSource, operationManager, preloadManager, new TpaRequestExpiryScheduler(), expirationListener);
+	}
+
+	TpaService(AsyncRecordedLocationSource recordedSource, TeleportOperationManager operationManager,
+			TeleportPreloadManager preloadManager, TpaRequestExpiryScheduler expiryScheduler,
+			BiConsumer<MinecraftServer, Tpa.Session> expirationListener) {
 		this.operationManager = Objects.requireNonNull(operationManager, "operationManager");
 		this.preloadManager = Objects.requireNonNull(preloadManager, "preloadManager");
 		this.executor = new TeleportExecutor(recordedSource, this.operationManager);
+		this.expiryScheduler = Objects.requireNonNull(expiryScheduler, "expiryScheduler");
+		this.expirationListener = Objects.requireNonNull(expirationListener, "expirationListener");
 	}
 
 	public Tpa.Session createRequest(TpaRequest request) {
@@ -53,8 +67,8 @@ public final class TpaService {
 		Tpa.Session session = new Tpa.Session(sessionId, request.senderUuid(), request.targetUuid(), request.type(), expiredTime,
 				request.delayTicks(), request.cooldownMillis(), request.recordPrevious());
 
-		sessions.put(sessionId, session);
-		targetIncoming.computeIfAbsent(request.targetUuid(), ignored -> new LinkedHashSet<>()).add(sessionId);
+		sessions.add(session);
+		expiryScheduler.schedule(sessionId, request.expiry());
 		return session;
 	}
 
@@ -63,23 +77,28 @@ public final class TpaService {
 	}
 
 	public Optional<Tpa.Session> getSession(UUID sessionId) {
-		if (sessionId == null) {
-			return Optional.empty();
-		}
-		return Optional.ofNullable(sessions.get(sessionId));
+		return sessions.get(sessionId);
 	}
 
 	public Optional<Tpa.Session> getLatestIncoming(UUID targetUuid) {
-		LinkedHashSet<UUID> incoming = targetIncoming.get(targetUuid);
-		if (incoming == null || incoming.isEmpty()) {
-			return Optional.empty();
-		}
+		return sessions.getLatestIncoming(targetUuid);
+	}
 
-		UUID lastId = null;
-		for (UUID id : incoming) {
-			lastId = id;
+	public List<Tpa.Session> getIncoming(UUID targetUuid) {
+		return sessions.getIncoming(targetUuid, Util.getMillis());
+	}
+
+	public Optional<Tpa.Session> findIncoming(UUID targetUuid, UUID senderUuid, UUID sessionId) {
+		long now = Util.getMillis();
+		Optional<Tpa.Session> session = sessions.findIncoming(targetUuid, senderUuid, sessionId, now);
+		if (session.isEmpty() && sessionId != null) {
+			removeExpiredIfPresent(sessionId, now);
 		}
-		return getSession(lastId);
+		return session;
+	}
+
+	public boolean hasOutgoing(UUID senderUuid, UUID targetUuid) {
+		return sessions.hasOutgoing(senderUuid, targetUuid, Util.getMillis());
 	}
 
 	public CompletableFuture<TeleportStatus> acceptRequest(MinecraftServer server, UUID sessionId) {
@@ -90,10 +109,11 @@ public final class TpaService {
 			return CompletableFuture.completedFuture(TeleportStatus.TARGET_UNAVAILABLE);
 		}
 
-		Tpa.Session session = sessions.get(sessionId);
-		if (session == null) {
+		Optional<Tpa.Session> sessionOpt = sessions.get(sessionId);
+		if (sessionOpt.isEmpty()) {
 			return CompletableFuture.completedFuture(TeleportStatus.TARGET_UNAVAILABLE);
 		}
+		Tpa.Session session = sessionOpt.get();
 		if (session.isExpired(Util.getMillis())) {
 			remove(sessionId);
 			return CompletableFuture.completedFuture(TeleportStatus.TARGET_UNAVAILABLE);
@@ -129,16 +149,8 @@ public final class TpaService {
 		if (sessionId == null) {
 			return;
 		}
-		Tpa.Session session = sessions.remove(sessionId);
-		if (session != null) {
-			LinkedHashSet<UUID> incoming = targetIncoming.get(session.target());
-			if (incoming != null) {
-				incoming.remove(sessionId);
-				if (incoming.isEmpty()) {
-					targetIncoming.remove(session.target());
-				}
-			}
-		}
+		expiryScheduler.cancel(sessionId);
+		sessions.remove(sessionId);
 	}
 
 	public void tick(MinecraftServer server) {
@@ -147,7 +159,7 @@ public final class TpaService {
 		}
 		currentTick++;
 		advancePending(server);
-		cleanupExpiredSessions();
+		expiryScheduler.drainExpired(sessionId -> expireSession(server, sessionId));
 	}
 
 	public void onPlayerQuit(UUID playerUuid) {
@@ -155,26 +167,8 @@ public final class TpaService {
 			return;
 		}
 
-		LinkedHashSet<UUID> incoming = targetIncoming.remove(playerUuid);
-		if (incoming != null) {
-			for (UUID id : incoming) {
-				sessions.remove(id);
-			}
-		}
-
-		Iterator<Tpa.Session> iterator = sessions.values().iterator();
-		while (iterator.hasNext()) {
-			Tpa.Session session = iterator.next();
-			if (session.sender().equals(playerUuid)) {
-				LinkedHashSet<UUID> targetSet = targetIncoming.get(session.target());
-				if (targetSet != null) {
-					targetSet.remove(session.sessionId());
-					if (targetSet.isEmpty()) {
-						targetIncoming.remove(session.target());
-					}
-				}
-				iterator.remove();
-			}
+		for (Tpa.Session session : sessions.removeForPlayer(playerUuid)) {
+			expiryScheduler.cancel(session.sessionId());
 		}
 
 		for (TpaTeleportPending pending : operationManager.currentOperations(TpaTeleportPending.class)) {
@@ -186,12 +180,17 @@ public final class TpaService {
 	}
 
 	public void clear() {
+		expiryScheduler.cancelAll();
 		sessions.clear();
-		targetIncoming.clear();
 		acceptedQueue.clear();
 		for (TpaTeleportPending pending : operationManager.currentOperations(TpaTeleportPending.class)) {
 			executor.finishOperation(pending, TeleportStatus.CANCELLED);
 		}
+	}
+
+	public void shutdown() {
+		clear();
+		expiryScheduler.shutdown();
 	}
 
 	private void advancePending(MinecraftServer server) {
@@ -234,23 +233,20 @@ public final class TpaService {
 		executor.executeResolved(server, pending, target);
 	}
 
-	private void cleanupExpiredSessions() {
+	private void expireSession(MinecraftServer server, UUID sessionId) {
 		long now = Util.getMillis();
-		Iterator<Map.Entry<UUID, Tpa.Session>> iterator = sessions.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Map.Entry<UUID, Tpa.Session> entry = iterator.next();
-			Tpa.Session session = entry.getValue();
-			if (session.isExpired(now)) {
-				LinkedHashSet<UUID> targetSet = targetIncoming.get(session.target());
-				if (targetSet != null) {
-					targetSet.remove(session.sessionId());
-					if (targetSet.isEmpty()) {
-						targetIncoming.remove(session.target());
-					}
-				}
-				iterator.remove();
-			}
+		Optional<Tpa.Session> session = sessions.get(sessionId);
+		if (session.isEmpty() || !session.get().isExpired(now)) {
+			return;
 		}
+		remove(sessionId);
+		expirationListener.accept(server, session.get());
+	}
+
+	private void removeExpiredIfPresent(UUID sessionId, long now) {
+		sessions.get(sessionId)
+				.filter(session -> session.isExpired(now))
+				.ifPresent(session -> remove(sessionId));
 	}
 
 	private record PendingRef(UUID playerUuid, long pendingSequence) {

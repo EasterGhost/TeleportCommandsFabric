@@ -1,18 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-
-import java.util.Objects;
-import java.util.UUID;
-
-public record RtpRequest(UUID playerUuid, BlockPos center, ResourceKey<Level> dimension, int minRadius,
-		int maxRadius, int maxAttempts, int delayTicks, long cooldownMillis, boolean recordPrevious) {
+public record RtpRequest(int minRadius, int maxRadius, int maxAttempts, int delayTicks, long cooldownMillis,
+		boolean recordPrevious) {
 	public RtpRequest {
-		Objects.requireNonNull(playerUuid, "playerUuid");
-		center = Objects.requireNonNull(center, "center").immutable();
-		Objects.requireNonNull(dimension, "dimension");
 		if (minRadius < 0) {
 			throw new IllegalArgumentException("minRadius must be non-negative");
 		}

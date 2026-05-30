@@ -119,7 +119,8 @@ public class TeleportCommands implements ModInitializer {
 		TeleportPreloadManager teleportPreloadManager = new TeleportPreloadManager();
 		TELEPORT_SERVICE = new TeleportService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager,
 				new TeleportBatchDispatcher(), new SafetyThreadPool());
-		TPA_SERVICE = new TpaService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager);
+		TPA_SERVICE = new TpaService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager,
+				TpaCommand::sendExpired);
 		RTP_SERVICE = new RtpService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager);
 		GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
 		PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
@@ -178,7 +179,7 @@ public class TeleportCommands implements ModInitializer {
 			teleportService.shutdown();
 		}
 		if (TPA_SERVICE != null) {
-			TPA_SERVICE.clear();
+			TPA_SERVICE.shutdown();
 		}
 		if (rtpService != null) {
 			rtpService.shutdown();

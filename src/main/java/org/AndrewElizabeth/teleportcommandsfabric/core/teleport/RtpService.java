@@ -10,8 +10,11 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTel
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayDeque;
 import java.util.Objects;
@@ -45,55 +48,48 @@ public final class RtpService {
 				Objects.requireNonNull(parallelExecutor, "parallelExecutor"));
 	}
 
-	public CompletableFuture<TeleportStatus> request(ServerPlayer player, int minRadius, int maxRadius,
-			int delayTicks, long cooldownMillis, boolean recordPrevious) {
-		return request(player, minRadius, maxRadius, DEFAULT_MAX_ATTEMPTS, delayTicks, cooldownMillis, recordPrevious);
-	}
-
-	public CompletableFuture<TeleportStatus> request(ServerPlayer player, int minRadius, int maxRadius,
-			int maxAttempts, int delayTicks, long cooldownMillis, boolean recordPrevious) {
+	public CompletableFuture<TeleportStatus> request(ServerPlayer player, RtpRequest request) {
+		if (request == null) {
+			return CompletableFuture.completedFuture(TeleportStatus.FAILED);
+		}
 		if (player == null) {
 			return CompletableFuture.completedFuture(TeleportStatus.PLAYER_DISCONNECTED);
 		}
-		RtpRequest request = new RtpRequest(player.getUUID(), player.blockPosition(), player.level().dimension(),
-				minRadius, maxRadius, maxAttempts, delayTicks, cooldownMillis, recordPrevious);
-		return request(player.level().getServer(), request);
-	}
-
-	public CompletableFuture<TeleportStatus> request(MinecraftServer server, RtpRequest request) {
+		MinecraftServer server = player.level().getServer();
 		if (server == null) {
 			return CompletableFuture.completedFuture(TeleportStatus.SERVER_UNAVAILABLE);
-		}
-		if (request == null) {
-			return CompletableFuture.completedFuture(TeleportStatus.FAILED);
 		}
 		if (!server.isSameThread()) {
 			return CompletableFuture.failedFuture(new IllegalStateException("RtpService.request must be called on the server thread"));
 		}
 
-		ServerPlayer player = server.getPlayerList().getPlayer(request.playerUuid());
+		return request(server, snapshot(player, request));
+	}
+
+	private CompletableFuture<TeleportStatus> request(MinecraftServer server, RtpOperationSnapshot snapshot) {
+		ServerPlayer player = server.getPlayerList().getPlayer(snapshot.playerUuid());
 		if (player == null) {
 			return CompletableFuture.completedFuture(TeleportStatus.PLAYER_DISCONNECTED);
 		}
 		if (player.isDeadOrDying()) {
 			return CompletableFuture.completedFuture(TeleportStatus.CANCELLED_BY_EVENT);
 		}
-		if (!player.level().dimension().equals(request.dimension())) {
+		if (!player.level().dimension().equals(snapshot.dimension())) {
 			return CompletableFuture.completedFuture(TeleportStatus.TARGET_UNAVAILABLE);
 		}
 
-		long remainingCooldown = operationManager.getRemainingCooldownMillis(request.playerUuid(), request.cooldownMillis());
+		long remainingCooldown = operationManager.getRemainingCooldownMillis(snapshot.playerUuid(), snapshot.cooldownMillis());
 		if (remainingCooldown > 0L) {
 			return CompletableFuture.completedFuture(TeleportStatus.COOLDOWN);
 		}
 
 		TeleportOperationManager.OperationCreateResult<RtpTeleportPending> createResult = operationManager.createOperation(
-				request.playerUuid(), currentTick,
-				(sequence, tick) -> new RtpTeleportPending(request.playerUuid(), sequence, tick, request.delayTicks(),
-						request.cooldownMillis(), request.recordPrevious(), request.center(), request.dimension(),
-						request.minRadius(), request.maxRadius(), request.maxAttempts()));
+				snapshot.playerUuid(), currentTick,
+				(sequence, tick) -> new RtpTeleportPending(snapshot.playerUuid(), sequence, tick, snapshot.delayTicks(),
+						snapshot.cooldownMillis(), snapshot.recordPrevious(), snapshot.center(), snapshot.dimension(),
+						snapshot.minRadius(), snapshot.maxRadius(), snapshot.maxAttempts()));
 		createResult.replaced().ifPresent(this::releaseReplacedTargetPreload);
-		pendingQueue.addLast(new PendingRef(request.playerUuid(), createResult.pending().pendingSequence()));
+		pendingQueue.addLast(new PendingRef(snapshot.playerUuid(), createResult.pending().pendingSequence()));
 		return createResult.pending().resultFuture();
 	}
 
@@ -166,6 +162,21 @@ public final class RtpService {
 		return Executors.newThreadPerTaskExecutor(factory);
 	}
 
+	private RtpOperationSnapshot snapshot(ServerPlayer player, RtpRequest request) {
+		return new RtpOperationSnapshot(player.getUUID(), player.blockPosition(), player.level().dimension(),
+				request.minRadius(), request.maxRadius(), request.maxAttempts(), request.delayTicks(),
+				request.cooldownMillis(), request.recordPrevious());
+	}
+
 	private record PendingRef(UUID playerUuid, long pendingSequence) {
+	}
+
+	private record RtpOperationSnapshot(UUID playerUuid, BlockPos center, ResourceKey<Level> dimension, int minRadius,
+			int maxRadius, int maxAttempts, int delayTicks, long cooldownMillis, boolean recordPrevious) {
+		private RtpOperationSnapshot {
+			Objects.requireNonNull(playerUuid, "playerUuid");
+			center = Objects.requireNonNull(center, "center").immutable();
+			Objects.requireNonNull(dimension, "dimension");
+		}
 	}
 }
