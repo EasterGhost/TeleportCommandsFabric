@@ -24,6 +24,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedLocationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPages;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -52,6 +53,7 @@ public class TeleportCommands implements ModInitializer {
 	public static TeleportService TELEPORT_SERVICE;
 	public static TpaService TPA_SERVICE;
 	public static RtpService RTP_SERVICE;
+	public static WaypointPages WAYPOINT_PAGES;
 
 	@Override
 	public void onInitialize() {
@@ -124,6 +126,7 @@ public class TeleportCommands implements ModInitializer {
 		RTP_SERVICE = new RtpService(RECORDED_LOCATION_SOURCE, teleportOperationManager, teleportPreloadManager);
 		GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
 		PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
+		WAYPOINT_PAGES = new WaypointPages();
 	}
 
 	private static void runLegacyStorageMigration() {
@@ -171,6 +174,7 @@ public class TeleportCommands implements ModInitializer {
 	private static void shutdownStorageManagers() {
 		TeleportService teleportService = TELEPORT_SERVICE;
 		RtpService rtpService = RTP_SERVICE;
+		WaypointPages waypointPages = WAYPOINT_PAGES;
 		PlayerRecordedLocationManager recordedLocationManager = RECORDED_LOCATION_MANAGER;
 		GlobalProfileManager globalProfileManager = GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerProfileManager = PLAYER_PROFILE_MANAGER;
@@ -184,9 +188,13 @@ public class TeleportCommands implements ModInitializer {
 		if (rtpService != null) {
 			rtpService.shutdown();
 		}
+		if (waypointPages != null) {
+			waypointPages.close();
+		}
 		TELEPORT_SERVICE = null;
 		TPA_SERVICE = null;
 		RTP_SERVICE = null;
+		WAYPOINT_PAGES = null;
 
 		CompletableFuture<Void> configShutdown = ConfigManager.shutdown();
 		CompletableFuture<Void> recordSave = recordedLocationManager == null

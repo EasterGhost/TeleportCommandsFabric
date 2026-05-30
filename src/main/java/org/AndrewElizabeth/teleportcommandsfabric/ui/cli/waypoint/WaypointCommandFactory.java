@@ -22,8 +22,10 @@ public final class WaypointCommandFactory {
 		return visibilityCommand(request.kind()) + " " + quotedName + " " + visible + " " + listArgs;
 	}
 
-	public String globalWarpVisibilityCommand(String quotedName, boolean visible) {
-		return "gwarpmap " + quotedName + " " + visible;
+	public String globalWarpVisibilityCommand(WaypointPageRequest request, String quotedName, boolean visible, int currentPage) {
+		String listCommand = listCommand(request.kind(), request.query(), currentPage);
+		String listArgs = listCommand.substring(listCommand(request.kind()).length()).trim();
+		return "teleportcommandsfabric:gmapwarp " + quotedName + " " + visible + " " + listArgs;
 	}
 
 	public String teleportCommand(WaypointPageKind kind, String quotedName) {

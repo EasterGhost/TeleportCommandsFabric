@@ -40,18 +40,19 @@ public final class WaypointPageRenderer {
 
 	private void appendEntry(MutableComponent message, WaypointPageRequest request, NamedLocationView location, int currentPage) {
 		String quotedName = CommandArgumentUtils.quote(location.getName());
-		boolean mapVisible = isMapVisible(request, location);
+		boolean actualMapVisible = isMapVisible(request, location);
+		boolean personalMapVisible = isPersonalMapVisible(request, location);
 
 		message.append("\n");
 		message.append(Component.literal("  - " + location.getName()).withStyle(ChatFormatting.AQUA));
-		appendMarkers(message, request, location, quotedName, mapVisible);
+		appendMarkers(message, request, location, quotedName, actualMapVisible, currentPage);
 		appendLocationLine(message, request.language(), location);
-		appendActionLine(message, request, location, quotedName, mapVisible, currentPage);
+		appendActionLine(message, request, location, quotedName, personalMapVisible, currentPage);
 		message.append("\n");
 	}
 
 	private void appendMarkers(MutableComponent message, WaypointPageRequest request, NamedLocationView location,
-			String quotedName, boolean mapVisible) {
+			String quotedName, boolean mapVisible, int currentPage) {
 		if (request.kind() == WaypointPageKind.HOMES && Objects.equals(request.defaultLocationUuid(), location.getUuid())) {
 			appendMarker(message, request.language(), "commands.teleport_commands.common.default",
 					ChatFormatting.AQUA, ChatFormatting.BOLD);
@@ -63,12 +64,19 @@ public final class WaypointPageRenderer {
 		appendMarker(message, request.language(), mapVisible
 				? "commands.teleport_commands.common.mapVisible"
 				: "commands.teleport_commands.common.mapHidden", mapVisible ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY);
-		if (request.kind() == WaypointPageKind.WARPS && request.canModify()) {
-			appendClickableMarker(message, request.language(), location.isVisible()
-					? "commands.teleport_commands.gwarpmap.globalVisible"
-					: "commands.teleport_commands.gwarpmap.globalHidden",
-					location.isVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY, ChatFormatting.UNDERLINE,
-					new ClickEvent.RunCommand(commands.globalWarpVisibilityCommand(quotedName, !location.isVisible())));
+		if (request.kind() == WaypointPageKind.WARPS) {
+			if (request.canModify()) {
+				appendClickableMarker(message, request.language(), location.isVisible()
+						? "commands.teleport_commands.gwarpmap.globalVisible"
+						: "commands.teleport_commands.gwarpmap.globalHidden",
+						location.isVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY, ChatFormatting.UNDERLINE,
+						new ClickEvent.RunCommand(commands.globalWarpVisibilityCommand(request, quotedName, !location.isVisible(), currentPage)));
+			} else {
+				appendMarker(message, request.language(), location.isVisible()
+						? "commands.teleport_commands.gwarpmap.globalVisible"
+						: "commands.teleport_commands.gwarpmap.globalHidden",
+						location.isVisible() ? ChatFormatting.DARK_GREEN : ChatFormatting.GRAY);
+			}
 		}
 	}
 
@@ -182,6 +190,13 @@ public final class WaypointPageRenderer {
 	}
 
 	private boolean isMapVisible(WaypointPageRequest request, NamedLocationView location) {
+		if (request.kind() == WaypointPageKind.WARPS) {
+			return location.isVisible() && isPersonalMapVisible(request, location);
+		}
+		return location.isVisible();
+	}
+
+	private boolean isPersonalMapVisible(WaypointPageRequest request, NamedLocationView location) {
 		if (request.kind() == WaypointPageKind.WARPS) {
 			return !request.hiddenWarpUuids().contains(location.getUuid());
 		}
