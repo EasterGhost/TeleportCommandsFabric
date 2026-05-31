@@ -9,6 +9,9 @@ import xaero.map.gui.GuiMap;
 import xaero.map.gui.dropdown.rightclick.RightClickOption;
 import xaero.map.mods.gui.Waypoint;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+
 import java.util.ArrayList;
 
 @Mixin(GuiMap.class)
@@ -41,24 +44,21 @@ public class GuiMapMixin {
 				continue;
 			}
 
-			/*
-			 * LEGACY(kept): RightClickOption replacement path.
-			 *
-			 * RightClickOption replacement = new RightClickOption( * TELEPORT_OPTION_KEY, * optionAccessor.tpc$getIndex(),
-			 * optionAccessor.tpc$getTarget()) { * @Override
-			 * public void onAction(Screen parent) { * Minecraft mc = Minecraft.getInstance();
-			 * if (mc.player == null || mc.player.connection == null) { * return;
-			 * }
-			 * mc.player.connection.sendCommand(command);
-			 * }
-			 * };
-			 * replacement.setActive(option.isActive());
-			 * options.set(i, replacement);
-			 */
-
-			// TEMPORARY FALLBACK:
-			// Xaero callback signature currently drifts across mappings (class_437 vs Screen).
-			// Keep GUI replacement disabled and let MapWaypointTeleportFallbackMixin handle teleport command dispatch.
+			RightClickOption replacement = new RightClickOption(
+					TELEPORT_OPTION_KEY,
+					optionAccessor.tpc$getIndex(),
+					optionAccessor.tpc$getTarget()) {
+				@Override
+				public void onAction(Screen parent) {
+					Minecraft mc = Minecraft.getInstance();
+					if (mc.player == null || mc.player.connection == null) {
+						return;
+					}
+					mc.player.connection.sendCommand(command);
+				}
+			};
+			replacement.setActive(option.isActive());
+			options.set(i, replacement);
 			return;
 		}
 	}
