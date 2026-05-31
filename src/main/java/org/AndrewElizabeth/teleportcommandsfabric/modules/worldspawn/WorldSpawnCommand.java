@@ -117,9 +117,7 @@ public final class WorldSpawnCommand {
 	}
 
 	private static ServerLevel resolveWorld(MinecraftServer server, String worldId) {
-		ServerLevel world = WorldResolver.getDimensionById(worldId)
-				.map(server::getLevel)
-				.orElse(null);
+		ServerLevel world = WorldResolver.getLevelById(server, worldId).orElse(null);
 		if (world != null) {
 			return world;
 		}

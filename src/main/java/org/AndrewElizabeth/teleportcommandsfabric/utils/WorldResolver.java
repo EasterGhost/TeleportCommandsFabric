@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
@@ -37,8 +38,16 @@ public final class WorldResolver {
 			return Optional.empty();
 		}
 
+		return getLevelById(TeleportCommands.SERVER, worldId);
+	}
+
+	public static Optional<ServerLevel> getLevelById(MinecraftServer server, String worldId) {
+		if (server == null) {
+			return Optional.empty();
+		}
+
 		return getDimensionById(worldId)
-				.map(TeleportCommands.SERVER::getLevel);
+				.map(server::getLevel);
 	}
 
 	public static Optional<ServerLevel> getLevel(ResourceKey<Level> dimensionKey) {
@@ -46,6 +55,14 @@ public final class WorldResolver {
 			return Optional.empty();
 		}
 
-		return Optional.ofNullable(TeleportCommands.SERVER.getLevel(dimensionKey));
+		return getLevel(TeleportCommands.SERVER, dimensionKey);
+	}
+
+	public static Optional<ServerLevel> getLevel(MinecraftServer server, ResourceKey<Level> dimensionKey) {
+		if (server == null || dimensionKey == null) {
+			return Optional.empty();
+		}
+
+		return Optional.ofNullable(server.getLevel(dimensionKey));
 	}
 }
