@@ -1,74 +1,12 @@
-sourceSets {
-    teleportTest {
-        java {
-            srcDirs = ["src/main/java", "src/test/java"]
-            include "org/AndrewElizabeth/teleportcommandsfabric/ModConstants.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportStatus.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportTarget.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportTargetResult.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/target/TargetTeleportOptions.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/TeleportOperation.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/target/TeleportRequest.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/target/TargetTeleportPending.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/target/TargetTeleportExecution.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/tpa/Tpa.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/tpa/TpaRequest.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/tpa/TpaTeleportPending.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/rtp/RtpRequest.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/types/rtp/RtpTeleportPending.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TeleportServiceSettings.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TpaService.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/RtpService.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/manager/TeleportOperationManager.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/manager/TeleportPreloadManager.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/TeleportBatchDispatcher.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/TeleportExecutor.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/RtpExecutionProcessor.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/task/RtpPositionFinder.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/record/AsyncRecordedLocationSource.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/record/RecordedLocationTeleportTargets.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocation.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocationView.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/RecordedLocationSnapshot.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/TeleportServiceScenarioTests.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/core/teleport/test/**"
-        }
-        compileClasspath += sourceSets.main.compileClasspath
-        runtimeClasspath += output + compileClasspath
-    }
-
-    cliTest {
-        java {
-            srcDirs = ["src/main/java", "src/test/java"]
-            include "org/AndrewElizabeth/teleportcommandsfabric/ModConstants.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/utils/CommandArgumentUtils.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/utils/TranslationHelper.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/storage/schema/NamedLocationView.java"
-            include "org/AndrewElizabeth/teleportcommandsfabric/ui/cli/**"
-            include "org/AndrewElizabeth/teleportcommandsfabric/ui/cli/test/**"
-        }
-        resources {
-            srcDirs = ["src/main/resources"]
-            include "assets/teleport_commands_fabric/lang/*.json"
-        }
-        compileClasspath += sourceSets.main.compileClasspath
-        runtimeClasspath += output + compileClasspath
-    }
+dependencies {
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
-tasks.register("teleportCoreTest", JavaExec) {
-    group = "verification"
-    description = "Runs standalone core.teleport tests without compiling unfinished modules."
-    dependsOn tasks.named("compileTeleportTestJava")
-    classpath = sourceSets.teleportTest.runtimeClasspath
-    mainClass = "org.AndrewElizabeth.teleportcommandsfabric.core.teleport.test.TeleportCoreTestSuite"
-}
-
-tasks.register("cliTest", JavaExec) {
-    group = "verification"
-    description = "Runs standalone ui.cli tests without compiling unfinished modules."
-    dependsOn tasks.named("compileCliTestJava")
-    dependsOn tasks.named("processCliTestResources")
-    classpath = sourceSets.cliTest.runtimeClasspath
-    mainClass = "org.AndrewElizabeth.teleportcommandsfabric.ui.cli.CliTestSuite"
+tasks.named("test", Test) {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }

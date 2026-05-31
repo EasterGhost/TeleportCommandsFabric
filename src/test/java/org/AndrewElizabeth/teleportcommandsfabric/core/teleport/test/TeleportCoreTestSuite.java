@@ -4,7 +4,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.*;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceScenarioTests;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
@@ -28,6 +27,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -46,18 +49,21 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Stream;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.ScenarioTestSupport.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public final class TeleportCoreTestSuite {
 	private static final TeleportTarget DUMMY_TARGET = createDummyTarget();
-	private static final String SECTION_SEPARATOR = "================================================================================";
 
-	private TeleportCoreTestSuite() {
+	TeleportCoreTestSuite() {
 	}
 
-	public static void main(String[] args) throws Exception {
+	@BeforeAll
+	static void bootstrapMinecraft() {
 		SharedConstants.tryDetectVersion();
 		Bootstrap.bootStrap();
-		System.out.println("Teleport core debug run");
 		debug("GLOBAL PARAMS", "fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD
 				+ ", maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK
 				+ ", admissionRamp=[" + TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT
@@ -66,70 +72,70 @@ public final class TeleportCoreTestSuite {
 				+ ", timeCheckInterval=" + TeleportServiceSettings.TIME_CHECK_INTERVAL
 				+ ", safetyWorkerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
 				+ ", safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE);
-		run("TargetTeleportOptions values and effective cooldown",
-				"Verify current option constructor and effective cooldown values.",
-				"caseA delayTicks=0 cooldownMillis=0 safetyEnabled=true recordPrevious=true; caseB delayTicks=3 cooldownMillis=100",
-				TeleportCoreTestSuite::testTargetTeleportOptions);
-		run("TeleportOperationManager pending lifecycle",
-				"Verify create, replace, event cancel, success cooldown refresh, and quit cancel.",
-				"delayTicks=5 cooldownMillis=10000 createdAtTicks=[10,20,30,40] quitTick=50 eventCancelStatus=CANCELLED_BY_EVENT",
-				TeleportCoreTestSuite::testPendingLifecycle);
-		run("TeleportBatchDispatcher fast path threshold",
-				"Verify same-tick fast path stops after the configured threshold.",
-				"fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD,
-				TeleportCoreTestSuite::testDispatcherFastPathThreshold);
-		run("Ready admission ramp limits",
-				"Verify the configured ready admission ramp used to avoid first-tick burst spikes.",
-				"tick1=16 ticks2+=" + TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT,
-				TeleportCoreTestSuite::testReadyAdmissionRamp);
-		run("TeleportBatchDispatcher hard limit",
-				"Verify one drain cannot process more than the per-tick hard limit.",
-				"queued=" + (TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK + 20)
-						+ " maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK,
-				TeleportCoreTestSuite::testDispatcherHardLimit);
-		run("TeleportBatchDispatcher budget hit",
-				"Verify a slow executor stops drain when the time budget is exceeded.",
-				"queued=32 executorSleepMillis=1 maxBudgetNanos=" + formatNumber(TeleportServiceSettings.MAX_TELEPORT_BUDGET_NANOS)
-						+ " timeCheckInterval=" + TeleportServiceSettings.TIME_CHECK_INTERVAL,
-				TeleportCoreTestSuite::testDispatcherBudgetHit);
-		run("TeleportBatchDispatcher queue convergence",
-				"Verify a large queue drains across ticks and eventually reaches zero.",
-				"queued=" + formatNumber(10_000) + " maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK,
-				TeleportCoreTestSuite::testDispatcherQueueConvergence);
-		run("TeleportSafety fabricated main-thread workload",
-				"Estimate main-thread safety cost with real BlockState collision checks on a fake BlockGetter.",
-				"requests=10,000 admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3) defaultBlock=AIR",
-				TeleportCoreTestSuite::testFabricatedSafetyMainThreadWorkload);
-		run("TeleportSafety fabricated worker workload",
-				"Estimate batch safety cost when worker threads perform collision checks concurrently.",
-				"requests=10,000 workerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
-						+ " safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE
-						+ " admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3)",
-				TeleportCoreTestSuite::testFabricatedSafetyWorkerWorkload);
-		run("RecordedLocationSnapshot is detached",
-				"Verify recorded location snapshots do not expose mutable storage objects.",
-				"initialPos=(1,2,3) mutatedSourcePos=(4,5,6) dimension=minecraft:overworld",
-				TeleportCoreTestSuite::testRecordedLocationSnapshot);
-		run("Recorded target resolver maps empty target",
-				"Verify missing death/previous records map to a failed target result.",
-				"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
-				TeleportCoreTestSuite::testRecordedTargetEmpty);
-		run("TeleportService runtime scenarios",
-				"Verify request-to-tick orchestration for success, delay, replacement, preload, and event cancellation.",
-				"fakeServerThread=true fakePlayerOnline=true fakePreload toggles loaded/unloaded",
-				TeleportServiceScenarioTests::runAll);
-		System.out.println("Teleport core tests passed.");
+	}
+
+	@TestFactory
+	Stream<DynamicTest> scenarios() {
+		return Stream.of(
+				scenario("TargetTeleportOptions values and effective cooldown",
+						"Verify current option constructor and effective cooldown values.",
+						"caseA delayTicks=0 cooldownMillis=0 safetyEnabled=true recordPrevious=true; caseB delayTicks=3 cooldownMillis=100",
+						TeleportCoreTestSuite::testTargetTeleportOptions),
+				scenario("TeleportOperationManager pending lifecycle",
+						"Verify create, replace, event cancel, success cooldown refresh, and quit cancel.",
+						"delayTicks=5 cooldownMillis=10000 createdAtTicks=[10,20,30,40] quitTick=50 eventCancelStatus=CANCELLED_BY_EVENT",
+						TeleportCoreTestSuite::testPendingLifecycle),
+				scenario("TeleportBatchDispatcher fast path threshold",
+						"Verify same-tick fast path stops after the configured threshold.",
+						"fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD,
+						TeleportCoreTestSuite::testDispatcherFastPathThreshold),
+				scenario("Ready admission ramp limits",
+						"Verify the configured ready admission ramp used to avoid first-tick burst spikes.",
+						"tick1=16 ticks2+=" + TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT,
+						TeleportCoreTestSuite::testReadyAdmissionRamp),
+				scenario("TeleportBatchDispatcher hard limit",
+						"Verify one drain cannot process more than the per-tick hard limit.",
+						"queued=" + (TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK + 20)
+								+ " maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK,
+						TeleportCoreTestSuite::testDispatcherHardLimit),
+				scenario("TeleportBatchDispatcher budget hit",
+						"Verify a slow executor stops drain when the time budget is exceeded.",
+						"queued=32 executorSleepMillis=1 maxBudgetNanos=" + formatNumber(TeleportServiceSettings.MAX_TELEPORT_BUDGET_NANOS)
+								+ " timeCheckInterval=" + TeleportServiceSettings.TIME_CHECK_INTERVAL,
+						TeleportCoreTestSuite::testDispatcherBudgetHit),
+				scenario("TeleportBatchDispatcher queue convergence",
+						"Verify a large queue drains across ticks and eventually reaches zero.",
+						"queued=" + formatNumber(10_000) + " maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK,
+						TeleportCoreTestSuite::testDispatcherQueueConvergence),
+				scenario("TeleportSafety fabricated main-thread workload",
+						"Estimate main-thread safety cost with real BlockState collision checks on a fake BlockGetter.",
+						"requests=10,000 admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3) defaultBlock=AIR",
+						TeleportCoreTestSuite::testFabricatedSafetyMainThreadWorkload),
+				scenario("TeleportSafety fabricated worker workload",
+						"Estimate batch safety cost when worker threads perform collision checks concurrently.",
+						"requests=10,000 workerThreads=" + TeleportServiceSettings.SAFETY_WORKER_THREADS
+								+ " safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE
+								+ " admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3)",
+						TeleportCoreTestSuite::testFabricatedSafetyWorkerWorkload),
+				scenario("RecordedLocationSnapshot is detached",
+						"Verify recorded location snapshots do not expose mutable storage objects.",
+						"initialPos=(1,2,3) mutatedSourcePos=(4,5,6) dimension=minecraft:overworld",
+						TeleportCoreTestSuite::testRecordedLocationSnapshot),
+				scenario("Recorded target resolver maps empty target",
+						"Verify missing death/previous records map to a failed target result.",
+						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
+						TeleportCoreTestSuite::testRecordedTargetEmpty));
 	}
 
 	private static void testTargetTeleportOptions() {
 		TargetTeleportOptions options = new TargetTeleportOptions(0, 0L, true, true);
-		requireEquals(0, options.delayTicks(), "delay ticks should clamp");
-		requireEquals(0L, options.cooldownMillis(), "cooldown millis should match constructor value");
-		requireEquals(0L, options.effectiveCooldownMillis(), "effective cooldown should use configured millis");
+		assertEquals(0, options.delayTicks(), "delay ticks should clamp");
+		assertEquals(0L, options.cooldownMillis(), "cooldown millis should match constructor value");
+		assertEquals(0L, options.effectiveCooldownMillis(), "effective cooldown should use configured millis");
 
 		TargetTeleportOptions delayed = new TargetTeleportOptions(3, 100L, false, false);
-		requireEquals(3, delayed.delayTicks(), "delay should use configured value");
-		requireEquals(100L, delayed.effectiveCooldownMillis(), "cooldown should use configured millis");
+		assertEquals(3, delayed.delayTicks(), "delay should use configured value");
+		assertEquals(100L, delayed.effectiveCooldownMillis(), "cooldown should use configured millis");
 		debug("DATA options", "clampedDelay=" + options.delayTicks()
 				+ ", cooldownMillis=" + options.cooldownMillis()
 				+ ", delayedDelay=" + delayed.delayTicks()
@@ -143,46 +149,46 @@ public final class TeleportCoreTestSuite {
 		TeleportRequest secondRequest = request();
 
 		TeleportOperationManager.PendingCreateResult first = manager.createPending(playerUuid, firstRequest, 10L);
-		require(manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should be current");
-		require(manager.hasCurrentOperations(), "first pending should make manager active");
-		requireEquals(15L, first.pending().delayUntilTick(), "delay deadline should be based on current tick");
+		assertTrue(manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should be current");
+		assertTrue(manager.hasCurrentOperations(), "first pending should make manager active");
+		assertEquals(15L, first.pending().delayUntilTick(), "delay deadline should be based on current tick");
 		debug("DATA pending.first", "sequence=" + first.pending().pendingSequence()
 				+ ", createTick=" + first.pending().createTick()
 				+ ", delayUntilTick=" + first.pending().delayUntilTick());
 
 		TeleportOperationManager.PendingCreateResult second = manager.createPending(playerUuid, secondRequest, 20L);
-		require(first.pending().resultFuture().isDone(), "replaced pending should complete");
-		requireEquals(TeleportStatus.CANCELLED, first.pending().resultFuture().join(), "replaced pending should cancel");
-		require(second.replaced().isPresent(), "replacement should be reported");
-		require(!manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should no longer be current");
-		require(manager.isCurrent(playerUuid, second.pending().pendingSequence()), "second pending should be current");
-		requireEquals(1, manager.visitCurrentTargetPendings(ignored -> true), "replacement should leave one active pending");
+		assertTrue(first.pending().resultFuture().isDone(), "replaced pending should complete");
+		assertEquals(TeleportStatus.CANCELLED, first.pending().resultFuture().join(), "replaced pending should cancel");
+		assertTrue(second.replaced().isPresent(), "replacement should be reported");
+		assertFalse(manager.isCurrent(playerUuid, first.pending().pendingSequence()), "first pending should no longer be current");
+		assertTrue(manager.isCurrent(playerUuid, second.pending().pendingSequence()), "second pending should be current");
+		assertEquals(1, manager.visitCurrentTargetPendings(ignored -> true), "replacement should leave one active pending");
 		debug("DATA pending.replace", "oldSequence=" + first.pending().pendingSequence()
 				+ ", newSequence=" + second.pending().pendingSequence()
 				+ ", oldStatus=" + first.pending().resultFuture().join());
 
-		require(manager.cancelPending(playerUuid, second.pending().pendingSequence(), TeleportStatus.CANCELLED_BY_EVENT), "cancel should succeed");
-		requireEquals(TeleportStatus.CANCELLED_BY_EVENT, second.pending().resultFuture().join(), "cancel status should be preserved");
-		require(!manager.isCurrent(playerUuid, second.pending().pendingSequence()), "cancelled pending should not be current");
-		require(!manager.hasCurrentOperations(), "cancelled pending should leave no active pending");
+		assertTrue(manager.cancelPending(playerUuid, second.pending().pendingSequence(), TeleportStatus.CANCELLED_BY_EVENT), "cancel should succeed");
+		assertEquals(TeleportStatus.CANCELLED_BY_EVENT, second.pending().resultFuture().join(), "cancel status should be preserved");
+		assertFalse(manager.isCurrent(playerUuid, second.pending().pendingSequence()), "cancelled pending should not be current");
+		assertFalse(manager.hasCurrentOperations(), "cancelled pending should leave no active pending");
 		debug("DATA pending.cancel", "sequence=" + second.pending().pendingSequence()
 				+ ", status=" + second.pending().resultFuture().join());
 
 		TeleportOperationManager.PendingCreateResult success = manager.createPending(playerUuid, request(), 30L);
 		manager.markSuccess(playerUuid, success.pending().pendingSequence());
-		require(!manager.isCurrent(playerUuid, success.pending().pendingSequence()), "successful pending should be cleared");
-		require(!manager.hasCurrentOperations(), "successful pending should leave no active pending");
+		assertFalse(manager.isCurrent(playerUuid, success.pending().pendingSequence()), "successful pending should be cleared");
+		assertFalse(manager.hasCurrentOperations(), "successful pending should leave no active pending");
 		long remainingCooldown = manager.getRemainingCooldownMillis(playerUuid, 10_000L);
-		require(remainingCooldown > 0L, "success should refresh cooldown");
+		assertTrue(remainingCooldown > 0L, "success should refresh cooldown");
 		debug("DATA pending.success", "sequence=" + success.pending().pendingSequence()
 				+ ", remainingCooldownMillis=" + formatNumber(remainingCooldown));
 
 		TeleportOperationManager.PendingCreateResult quit = manager.createPending(playerUuid, request(), 40L);
 		Optional<TeleportOperation> quitPending = manager.onPlayerQuit(playerUuid, 50L);
-		require(quitPending.isPresent(), "quit should return current pending");
-		requireEquals(quit.pending().pendingSequence(), quitPending.get().pendingSequence(), "quit should return matching pending");
-		requireEquals(TeleportStatus.CANCELLED, quit.pending().resultFuture().join(), "quit should cancel pending");
-		require(!manager.hasCurrentOperations(), "quit should leave no active pending");
+		assertTrue(quitPending.isPresent(), "quit should return current pending");
+		assertEquals(quit.pending().pendingSequence(), quitPending.get().pendingSequence(), "quit should return matching pending");
+		assertEquals(TeleportStatus.CANCELLED, quit.pending().resultFuture().join(), "quit should cancel pending");
+		assertFalse(manager.hasCurrentOperations(), "quit should leave no active pending");
 		debug("DATA pending.quit", "sequence=" + quit.pending().pendingSequence()
 				+ ", status=" + quit.pending().resultFuture().join());
 
@@ -190,18 +196,18 @@ public final class TeleportCoreTestSuite {
 		Tpa.Session session = new Tpa.Session(UUID.randomUUID(), playerUuid, targetUuid, Tpa.Type.TPA, Long.MAX_VALUE, 2, 3_000L, true);
 		TeleportOperationManager.OperationCreateResult<TpaTeleportPending> tpa = manager.createOperation(playerUuid, 60L,
 				(sequence, tick) -> TpaTeleportPending.fromSession(session, sequence, tick, 2, 3_000L, true));
-		require(manager.getCurrentOperation(playerUuid, TpaTeleportPending.class).isPresent(), "TPA operation should be current by type");
-		requireEquals(1, manager.currentOperations(TpaTeleportPending.class).size(), "TPA operation should be listed by type");
+		assertTrue(manager.getCurrentOperation(playerUuid, TpaTeleportPending.class).isPresent(), "TPA operation should be current by type");
+		assertEquals(1, manager.currentOperations(TpaTeleportPending.class).size(), "TPA operation should be listed by type");
 
 		TeleportOperationManager.OperationCreateResult<RtpTeleportPending> rtp = manager.createOperation(playerUuid, 70L,
 				(sequence, tick) -> new RtpTeleportPending(playerUuid, sequence, tick, 0, 0L, true,
 						BlockPos.ZERO, Level.OVERWORLD, 4, 32, 4096));
-		require(tpa.pending().resultFuture().isDone(), "replaced TPA operation should complete");
-		requireEquals(TeleportStatus.CANCELLED, tpa.pending().resultFuture().join(), "replaced TPA operation should cancel");
-		require(rtp.replaced().isPresent(), "RTP replacement should report old operation");
-		require(manager.getCurrentOperation(playerUuid, RtpTeleportPending.class).isPresent(), "RTP operation should be current by type");
-		requireEquals(0, manager.currentOperations(TpaTeleportPending.class).size(), "TPA typed list should be empty after replacement");
-		requireEquals(1, manager.currentOperations(RtpTeleportPending.class).size(), "RTP typed list should contain current operation");
+		assertTrue(tpa.pending().resultFuture().isDone(), "replaced TPA operation should complete");
+		assertEquals(TeleportStatus.CANCELLED, tpa.pending().resultFuture().join(), "replaced TPA operation should cancel");
+		assertTrue(rtp.replaced().isPresent(), "RTP replacement should report old operation");
+		assertTrue(manager.getCurrentOperation(playerUuid, RtpTeleportPending.class).isPresent(), "RTP operation should be current by type");
+		assertEquals(0, manager.currentOperations(TpaTeleportPending.class).size(), "TPA typed list should be empty after replacement");
+		assertEquals(1, manager.currentOperations(RtpTeleportPending.class).size(), "RTP typed list should contain current operation");
 		debug("DATA pending.generic", "tpaSequence=" + tpa.pending().pendingSequence()
 				+ ", rtpSequence=" + rtp.pending().pendingSequence()
 				+ ", replacedType=" + rtp.replaced().get().getClass().getSimpleName());
@@ -210,12 +216,12 @@ public final class TeleportCoreTestSuite {
 	private static void testDispatcherFastPathThreshold() {
 		TeleportBatchDispatcher dispatcher = new TeleportBatchDispatcher();
 		dispatcher.beginTick();
-		require(dispatcher.canUseFastPath(), "empty dispatcher should allow fast path");
+		assertTrue(dispatcher.canUseFastPath(), "empty dispatcher should allow fast path");
 		for (int i = 0; i < TeleportServiceSettings.FAST_PATH_THRESHOLD; i++) {
-			require(dispatcher.canUseFastPath(), "fast path should be allowed before threshold is exhausted");
+			assertTrue(dispatcher.canUseFastPath(), "fast path should be allowed before threshold is exhausted");
 			dispatcher.noteFastPathUse();
 		}
-		require(!dispatcher.canUseFastPath(), "fast path should stop after threshold");
+		assertFalse(dispatcher.canUseFastPath(), "fast path should stop after threshold");
 		debug("DATA dispatcher.fastPath", "threshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD
 				+ ", queueSize=" + dispatcher.queueSize()
 				+ ", canUseFastPathAfterThreshold=" + dispatcher.canUseFastPath());
@@ -226,17 +232,17 @@ public final class TeleportCoreTestSuite {
 		for (int i = 0; i < firstTwentyOneLimits.length; i++) {
 			firstTwentyOneLimits[i] = simulatedReadyAdmissionLimit(i + 1);
 		}
-		requireEquals(TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT, firstTwentyOneLimits[0], "tick 1 admission should be first-tick limit");
+		assertEquals(TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT, firstTwentyOneLimits[0], "tick 1 admission should be first-tick limit");
 		int steadyLimit = TeleportServiceSettings.READY_ADMISSION_STEADY_TICK_LIMIT;
-		requireEquals(steadyLimit, firstTwentyOneLimits[1], "tick 2 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[4], "tick 5 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[5], "tick 6 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[9], "tick 10 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[10], "tick 11 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[14], "tick 15 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[15], "tick 16 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[19], "tick 20 admission should be steady limit");
-		requireEquals(steadyLimit, firstTwentyOneLimits[20], "tick 21 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[1], "tick 2 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[4], "tick 5 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[5], "tick 6 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[9], "tick 10 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[10], "tick 11 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[14], "tick 15 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[15], "tick 16 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[19], "tick 20 admission should be steady limit");
+		assertEquals(steadyLimit, firstTwentyOneLimits[20], "tick 21 admission should be steady limit");
 		debug("DATA admission.ramp", "first21Limits=[" + formatIntArray(firstTwentyOneLimits) + "]");
 	}
 
@@ -248,8 +254,8 @@ public final class TeleportCoreTestSuite {
 		}
 
 		TeleportBatchDispatcher.DrainResult result = dispatcher.drain(entry -> TeleportStatus.SUCCESS);
-		requireEquals(TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK, result.processed(), "dispatcher should honor hard limit");
-		requireEquals(20, dispatcher.queueSize(), "remaining entries should stay queued");
+		assertEquals(TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK, result.processed(), "dispatcher should honor hard limit");
+		assertEquals(20, dispatcher.queueSize(), "remaining entries should stay queued");
 		debug("DATA dispatcher.hardLimit", "queued=" + queued
 				+ ", processed=" + result.processed()
 				+ ", remaining=" + dispatcher.queueSize()
@@ -273,8 +279,8 @@ public final class TeleportCoreTestSuite {
 			return TeleportStatus.SUCCESS;
 		});
 
-		require(result.budgetHit(), "slow executor should hit budget");
-		require(result.processed() < 32, "budget hit should leave entries queued");
+		assertTrue(result.budgetHit(), "slow executor should hit budget");
+		assertTrue(result.processed() < 32, "budget hit should leave entries queued");
 		debug("DATA dispatcher.budget", "queued=32"
 				+ ", processed=" + result.processed()
 				+ ", remaining=" + dispatcher.queueSize()
@@ -301,11 +307,11 @@ public final class TeleportCoreTestSuite {
 			if (result.budgetHit()) {
 				budgetHits++;
 			}
-			require(result.processed() <= TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK, "drain should honor hard limit on every tick");
-			require(result.processed() > 0, "dispatcher should make progress while queue is non-empty");
+			assertTrue(result.processed() <= TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK, "drain should honor hard limit on every tick");
+			assertTrue(result.processed() > 0, "dispatcher should make progress while queue is non-empty");
 		}
 
-		requireEquals(queued, totalProcessed, "dispatcher should process all queued entries");
+		assertEquals(queued, totalProcessed, "dispatcher should process all queued entries");
 		debug("DATA dispatcher.convergence", "queued=" + formatNumber(queued)
 				+ ", ticks=" + ticks
 				+ ", totalProcessed=" + formatNumber(totalProcessed)
@@ -321,7 +327,7 @@ public final class TeleportCoreTestSuite {
 		world.setBlock(expectedSafePos.below(), Blocks.STONE.defaultBlockState());
 
 		Optional<BlockPos> singleResult = TestTeleportSafety.getSafeBlockPos(base, world);
-		requireEquals(expectedSafePos, singleResult.orElseThrow(), "fabricated world should resolve the late safe offset");
+		assertEquals(expectedSafePos, singleResult.orElseThrow(), "fabricated world should resolve the late safe offset");
 
 		long warmupStart = System.nanoTime();
 		int warmupIterations = 5_000;
@@ -351,7 +357,7 @@ public final class TeleportCoreTestSuite {
 			long tickStart = System.nanoTime();
 			for (int i = 0; i < batchSize; i++) {
 				Optional<BlockPos> safePos = TestTeleportSafety.getSafeBlockPos(base, world);
-				requireEquals(expectedSafePos, safePos.orElseThrow(), "safety should resolve the same fabricated safe point");
+				assertEquals(expectedSafePos, safePos.orElseThrow(), "safety should resolve the same fabricated safe point");
 			}
 			long tickElapsed = System.nanoTime() - tickStart;
 			totalSafetyElapsedNanos += tickElapsed;
@@ -399,7 +405,7 @@ public final class TeleportCoreTestSuite {
 		world.setBlock(expectedSafePos.below(), Blocks.STONE.defaultBlockState());
 
 		Optional<BlockPos> singleResult = TestTeleportSafety.getSafeBlockPos(base, world);
-		requireEquals(expectedSafePos, singleResult.orElseThrow(), "fabricated world should resolve the late safe offset");
+		assertEquals(expectedSafePos, singleResult.orElseThrow(), "fabricated world should resolve the late safe offset");
 
 		int requests = 10_000;
 		int processed = 0;
@@ -475,7 +481,7 @@ public final class TeleportCoreTestSuite {
 
 					for (CompletableFuture<SafetyTaskResult> future : futures) {
 						SafetyTaskResult result = future.join();
-						requireEquals(expectedSafePos, result.safePos().orElseThrow(),
+						assertEquals(expectedSafePos, result.safePos().orElseThrow(),
 								"safety should resolve the same fabricated safe point");
 						tickTaskNanos += result.elapsedNanos();
 					}
@@ -542,11 +548,11 @@ public final class TeleportCoreTestSuite {
 		ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("minecraft:overworld"));
 		RecordedLocation location = new RecordedLocation(new BlockPos(1, 2, 3), dimension);
 		Optional<RecordedLocationView> snapshot = RecordedLocationSnapshot.optional(Optional.of(location));
-		require(snapshot.isPresent(), "snapshot should be present");
+		assertTrue(snapshot.isPresent(), "snapshot should be present");
 
 		location.setBlockPos(new BlockPos(4, 5, 6));
-		requireEquals(new BlockPos(1, 2, 3), snapshot.get().getBlockPos(), "snapshot should keep original block position");
-		requireEquals("minecraft:overworld", snapshot.get().getDimensionId(), "dimension id should be derived from key");
+		assertEquals(new BlockPos(1, 2, 3), snapshot.get().getBlockPos(), "snapshot should keep original block position");
+		assertEquals("minecraft:overworld", snapshot.get().getDimensionId(), "dimension id should be derived from key");
 		debug("DATA record.snapshot", "sourcePos=" + location.getBlockPos()
 				+ ", snapshotPos=" + snapshot.get().getBlockPos()
 				+ ", dimensionId=" + snapshot.get().getDimensionId());
@@ -554,9 +560,9 @@ public final class TeleportCoreTestSuite {
 
 	private static void testRecordedTargetEmpty() {
 		TeleportTargetResult result = RecordedLocationTeleportTargets.toTargetResult(Optional.empty(), null);
-		require(result instanceof TeleportTargetResult.Failed, "empty record target should fail");
+		assertTrue(result instanceof TeleportTargetResult.Failed, "empty record target should fail");
 		TeleportTargetResult.Failed failed = (TeleportTargetResult.Failed) result;
-		requireEquals(TeleportStatus.TARGET_UNAVAILABLE, failed.reason(), "empty record target should map to target unavailable");
+		assertEquals(TeleportStatus.TARGET_UNAVAILABLE, failed.reason(), "empty record target should map to target unavailable");
 		debug("DATA record.target.empty", "status=" + failed.reason());
 	}
 
@@ -582,79 +588,6 @@ public final class TeleportCoreTestSuite {
 		} catch (ReflectiveOperationException exception) {
 			throw new ExceptionInInitializerError(exception);
 		}
-	}
-
-	private static void run(String name, String purpose, String params, ThrowingRunnable test) throws Exception {
-		long scenarioStart = System.nanoTime();
-		System.out.println();
-		System.out.println(SECTION_SEPARATOR);
-		System.out.println("SCENARIO START: " + name);
-		System.out.println("  PURPOSE: " + purpose);
-		System.out.println("  PARAMS: " + params);
-		try {
-			test.run();
-			long scenarioElapsed = System.nanoTime() - scenarioStart;
-			// In scenarios with warmup, the true elapsed time is the total minus the warmup time.
-			// This is a bit of a hack, but it makes the final number more representative.
-			if (name.contains("worker workload")) {
-				// We'll have to parse the log to get the warmup time, so let's just print the raw total.
-			}
-			System.out.println("SCENARIO PASS: " + name + " elapsedNanos=" + formatNumber(scenarioElapsed));
-		} catch (Throwable throwable) {
-			System.err.println("SCENARIO FAIL: " + name);
-			throw throwable;
-		}
-	}
-
-	private static void debug(String key, String value) {
-		System.out.println("  " + key + ": " + value);
-	}
-
-	private static String formatNumber(long value) {
-		return String.format("%,d", value);
-	}
-
-	private static String formatDecimal(double value) {
-		return String.format("%,.2f", value);
-	}
-
-	private static String formatLongArray(long[] values) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < values.length; i++) {
-			if (i > 0) {
-				builder.append(", ");
-			}
-			builder.append(formatNumber(values[i]));
-		}
-		return builder.toString();
-	}
-
-	private static String formatIntArray(int[] values) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < values.length; i++) {
-			if (i > 0) {
-				builder.append(", ");
-			}
-			builder.append(formatNumber(values[i]));
-		}
-		return builder.toString();
-	}
-
-	private static void require(boolean condition, String message) {
-		if (!condition) {
-			throw new AssertionError(message);
-		}
-	}
-
-	private static void requireEquals(Object expected, Object actual, String message) {
-		if (!expected.equals(actual)) {
-			throw new AssertionError(message + " expected=" + expected + " actual=" + actual);
-		}
-	}
-
-	@FunctionalInterface
-	private interface ThrowingRunnable {
-		void run() throws Exception;
 	}
 
 	private static final class TestTeleportSafety {

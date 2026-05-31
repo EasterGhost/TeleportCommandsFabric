@@ -14,6 +14,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import net.minecraft.SharedConstants;
+import net.minecraft.server.Bootstrap;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -26,20 +32,44 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
+
+import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.ScenarioTestSupport.scenario;
+import static org.junit.jupiter.api.Assertions.*;
 
 public final class TeleportServiceScenarioTests {
 	private static final Unsafe UNSAFE = unsafe();
 
-	private TeleportServiceScenarioTests() {
+	TeleportServiceScenarioTests() {
 	}
 
-	public static void runAll() {
-		testImmediateSuccessRecordsPreviousAndAppliesCooldown();
-		testDelayedTargetWaitsForResolverAndDelay();
-		testDelayedPreloadStartsOnlyInsideLeadWindow();
-		testReplacementCancelsOldPendingAndExecutesLatest();
-		testPreloadPathWaitsUntilChunkReady();
-		testDeathCancelsPendingBeforeExecution();
+	@BeforeAll
+	static void bootstrapMinecraft() {
+		SharedConstants.tryDetectVersion();
+		Bootstrap.bootStrap();
+	}
+
+	@TestFactory
+	Stream<DynamicTest> scenarios() {
+		return Stream.of(
+				scenario("Immediate success records previous and applies cooldown",
+						"Verify immediate target execution, previous-location recording, and cooldown refresh.",
+						TeleportServiceScenarioTests::testImmediateSuccessRecordsPreviousAndAppliesCooldown),
+				scenario("Delayed target waits for resolver and delay",
+						"Verify unresolved target futures block execution until resolved and delay-ready.",
+						TeleportServiceScenarioTests::testDelayedTargetWaitsForResolverAndDelay),
+				scenario("Delayed preload starts only inside lead window",
+						"Verify delayed requests do not preload too early and execute at the delay deadline.",
+						TeleportServiceScenarioTests::testDelayedPreloadStartsOnlyInsideLeadWindow),
+				scenario("Replacement cancels old pending and executes latest",
+						"Verify a newer request cancels an older pending request for the same player.",
+						TeleportServiceScenarioTests::testReplacementCancelsOldPendingAndExecutesLatest),
+				scenario("Preload path waits until chunk ready",
+						"Verify unloaded targets create a preload ticket and execute once ready.",
+						TeleportServiceScenarioTests::testPreloadPathWaitsUntilChunkReady),
+				scenario("Death cancels pending before execution",
+						"Verify death events cancel pending teleport execution.",
+						TeleportServiceScenarioTests::testDeathCancelsPendingBeforeExecution));
 	}
 
 	private static void testImmediateSuccessRecordsPreviousAndAppliesCooldown() {
@@ -51,15 +81,15 @@ public final class TeleportServiceScenarioTests {
 
 		harness.service.tick();
 
-		requireEquals(TeleportStatus.SUCCESS, result.join(), "immediate target should teleport successfully");
-		requireEquals(1, harness.runtime.teleportCalls, "teleport should be executed exactly once");
-		requireEquals(new Vec3(20.5D, 70.0D, 20.5D), harness.runtime.lastDestination, "destination should preserve resolved position");
-		requireEquals(1, harness.recorded.previousRecords.size(), "previous location should be recorded before teleport");
-		requireEquals(harness.runtime.playerBlockPos, harness.recorded.previousRecords.get(0).pos(), "previous record should use player position");
+		assertEquals(TeleportStatus.SUCCESS, result.join(), "immediate target should teleport successfully");
+		assertEquals(1, harness.runtime.teleportCalls, "teleport should be executed exactly once");
+		assertEquals(new Vec3(20.5D, 70.0D, 20.5D), harness.runtime.lastDestination, "destination should preserve resolved position");
+		assertEquals(1, harness.recorded.previousRecords.size(), "previous location should be recorded before teleport");
+		assertEquals(harness.runtime.playerBlockPos, harness.recorded.previousRecords.get(0).pos(), "previous record should use player position");
 
 		CompletableFuture<TeleportStatus> cooldown = harness.service.request(
 				TeleportRequest.resolved(target, options));
-		requireEquals(TeleportStatus.COOLDOWN, cooldown.join(), "successful teleport should start cooldown");
+		assertEquals(TeleportStatus.COOLDOWN, cooldown.join(), "successful teleport should start cooldown");
 	}
 
 	private static void testDelayedTargetWaitsForResolverAndDelay() {
@@ -70,14 +100,14 @@ public final class TeleportServiceScenarioTests {
 				TeleportRequest.of(targetFuture, options));
 
 		harness.service.tick();
-		require(!result.isDone(), "pending should wait while target future is unresolved");
-		requireEquals(0, harness.runtime.teleportCalls, "unresolved target should not teleport");
+		assertFalse(result.isDone(), "pending should wait while target future is unresolved");
+		assertEquals(0, harness.runtime.teleportCalls, "unresolved target should not teleport");
 
 		targetFuture.complete(TeleportTargetResult.resolved(harness.target(new Vec3(30.5D, 75.0D, 30.5D))));
 		harness.service.tick();
 
-		requireEquals(TeleportStatus.SUCCESS, result.join(), "target should execute once resolver and delay are ready");
-		requireEquals(1, harness.runtime.teleportCalls, "delayed request should teleport once");
+		assertEquals(TeleportStatus.SUCCESS, result.join(), "target should execute once resolver and delay are ready");
+		assertEquals(1, harness.runtime.teleportCalls, "delayed request should teleport once");
 	}
 
 	private static void testReplacementCancelsOldPendingAndExecutesLatest() {
@@ -88,13 +118,13 @@ public final class TeleportServiceScenarioTests {
 		CompletableFuture<TeleportStatus> second = harness.service.request(TeleportRequest.resolved(
 				harness.target(new Vec3(40.5D, 80.0D, 40.5D)), options));
 
-		requireEquals(TeleportStatus.CANCELLED, first.join(), "new request should cancel replaced pending");
+		assertEquals(TeleportStatus.CANCELLED, first.join(), "new request should cancel replaced pending");
 
 		harness.service.tick();
 
-		requireEquals(TeleportStatus.SUCCESS, second.join(), "latest pending should execute");
-		requireEquals(1, harness.runtime.teleportCalls, "only latest pending should teleport");
-		requireEquals(new Vec3(40.5D, 80.0D, 40.5D), harness.runtime.lastDestination, "latest target should win replacement");
+		assertEquals(TeleportStatus.SUCCESS, second.join(), "latest pending should execute");
+		assertEquals(1, harness.runtime.teleportCalls, "only latest pending should teleport");
+		assertEquals(new Vec3(40.5D, 80.0D, 40.5D), harness.runtime.lastDestination, "latest target should win replacement");
 	}
 
 	private static void testDelayedPreloadStartsOnlyInsideLeadWindow() {
@@ -107,17 +137,17 @@ public final class TeleportServiceScenarioTests {
 		for (int i = 0; i < 3; i++) {
 			harness.service.tick();
 		}
-		require(!result.isDone(), "delayed request should still be pending before lead window");
-		requireEquals(0, harness.preload.preloadCalls, "preload should not start before lead window");
+		assertFalse(result.isDone(), "delayed request should still be pending before lead window");
+		assertEquals(0, harness.preload.preloadCalls, "preload should not start before lead window");
 
 		harness.service.tick();
-		requireEquals(1, harness.preload.preloadCalls, "preload should start inside lead window");
+		assertEquals(1, harness.preload.preloadCalls, "preload should start inside lead window");
 
 		harness.preload.loaded = true;
 		harness.service.tick();
-		require(!result.isDone(), "preload ready before delay deadline should not execute early");
+		assertFalse(result.isDone(), "preload ready before delay deadline should not execute early");
 		harness.service.tick();
-		requireEquals(TeleportStatus.SUCCESS, result.join(), "delayed preload should execute at delay deadline");
+		assertEquals(TeleportStatus.SUCCESS, result.join(), "delayed preload should execute at delay deadline");
 	}
 
 	private static void testPreloadPathWaitsUntilChunkReady() {
@@ -129,18 +159,18 @@ public final class TeleportServiceScenarioTests {
 
 		harness.service.tick();
 
-		require(!result.isDone(), "unloaded chunk should keep result pending");
-		requireEquals(1, harness.preload.preloadCalls, "unloaded target should start preload");
-		requireEquals(1, harness.preload.activeTicketCount(), "preload ticket should remain active while waiting");
-		requireEquals(0, harness.runtime.teleportCalls, "preload wait should not teleport early");
+		assertFalse(result.isDone(), "unloaded chunk should keep result pending");
+		assertEquals(1, harness.preload.preloadCalls, "unloaded target should start preload");
+		assertEquals(1, harness.preload.activeTicketCount(), "preload ticket should remain active while waiting");
+		assertEquals(0, harness.runtime.teleportCalls, "preload wait should not teleport early");
 
 		harness.preload.loaded = true;
 		harness.service.tick();
 
-		requireEquals(TeleportStatus.SUCCESS, result.join(), "ready preload should execute teleport");
-		requireEquals(1, harness.runtime.teleportCalls, "ready preload should teleport once");
-		requireEquals(0, harness.preload.activeTicketCount(), "successful teleport should release preload ticket");
-		requireEquals(1, harness.preload.releaseCalls, "successful teleport should release exactly once");
+		assertEquals(TeleportStatus.SUCCESS, result.join(), "ready preload should execute teleport");
+		assertEquals(1, harness.runtime.teleportCalls, "ready preload should teleport once");
+		assertEquals(0, harness.preload.activeTicketCount(), "successful teleport should release preload ticket");
+		assertEquals(1, harness.preload.releaseCalls, "successful teleport should release exactly once");
 	}
 
 	private static void testDeathCancelsPendingBeforeExecution() {
@@ -152,20 +182,8 @@ public final class TeleportServiceScenarioTests {
 		harness.service.onPlayerDeath();
 		harness.service.tick();
 
-		requireEquals(TeleportStatus.CANCELLED_BY_EVENT, result.join(), "death should cancel pending teleport");
-		requireEquals(0, harness.runtime.teleportCalls, "cancelled pending should not execute");
-	}
-
-	private static void require(boolean condition, String message) {
-		if (!condition) {
-			throw new AssertionError(message);
-		}
-	}
-
-	private static void requireEquals(Object expected, Object actual, String message) {
-		if (!expected.equals(actual)) {
-			throw new AssertionError(message + " expected=" + expected + " actual=" + actual);
-		}
+		assertEquals(TeleportStatus.CANCELLED_BY_EVENT, result.join(), "death should cancel pending teleport");
+		assertEquals(0, harness.runtime.teleportCalls, "cancelled pending should not execute");
 	}
 
 	private static Unsafe unsafe() {
