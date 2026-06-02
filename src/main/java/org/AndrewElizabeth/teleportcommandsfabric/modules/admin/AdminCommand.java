@@ -104,7 +104,11 @@ public final class AdminCommand {
 				.then(AdminConfigNodeFactory.boolNode("deleteInvalid",
 						config -> config.getHome().isDeleteInvalid(),
 						(config, value) -> config.getHome().setDeleteInvalid(value),
-						"commands.teleport_commands.admin.config.home.deleteInvalid"));
+						"commands.teleport_commands.admin.config.home.deleteInvalid"))
+				.then(AdminConfigNodeFactory.intNode("temporaryHomeTtl", "seconds", HomeConfig.MIN_TEMPORARY_HOME_TTL_SECONDS,
+						config -> config.getHome().getTemporaryHomeTtlSeconds(),
+						(config, value) -> config.getHome().setTemporaryHomeTtlSeconds(value),
+						"commands.teleport_commands.admin.config.home.temporaryHomeTtl"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildTpaConfigNode() {

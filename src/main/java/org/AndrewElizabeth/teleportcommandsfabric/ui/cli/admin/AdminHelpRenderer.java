@@ -35,7 +35,10 @@ public final class AdminHelpRenderer {
 					config("max", "/tpc config home max <count>", "/tpc config home max ",
 							"commands.teleport_commands.admin.help.desc.config.home.max"),
 					config("deleteInvalid", "/tpc config home deleteInvalid <true|false>", "/tpc config home deleteInvalid ",
-							"commands.teleport_commands.admin.help.desc.config.home.deleteInvalid"))),
+							"commands.teleport_commands.admin.help.desc.config.home.deleteInvalid"),
+					config("temporaryHomeTtl", "/tpc config home temporaryHomeTtl <seconds>",
+							"/tpc config home temporaryHomeTtl ",
+							"commands.teleport_commands.admin.help.desc.config.home.temporaryHomeTtl"))),
 			new ConfigGroup("tpa", List.of(
 					config("expireTime", "/tpc config tpa expireTime <seconds>", "/tpc config tpa expireTime ",
 							"commands.teleport_commands.admin.help.desc.config.tpa.expireTime"))),

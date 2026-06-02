@@ -21,8 +21,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.concurrent.CompletableFuture;
 
 final class HomeMutationHandler {
-	private static final long TEMP_HOME_TTL_MS = 7L * 24L * 60L * 60L * 1000L;
-
 	private HomeMutationHandler() {
 	}
 
@@ -37,7 +35,7 @@ final class HomeMutationHandler {
 		}
 
 		CompletableFuture<WaypointOperationResult> result = temporary
-				? WaypointCrudService.addTemporary(player, name, System.currentTimeMillis() + TEMP_HOME_TTL_MS, source)
+				? WaypointCrudService.addTemporary(player, name, temporaryHomeExpiredTime(), source)
 				: WaypointCrudService.add(player, name, source);
 		handleMutationResult(player, result, temporary ? "commands.teleport_commands.home.tempSet" : "commands.teleport_commands.home.set",
 				temporary ? "Error while setting a temporary home." : "Error while setting a home.");
@@ -203,5 +201,10 @@ final class HomeMutationHandler {
 			return null;
 		}
 		return new PlayerHomeSource(player.getUUID(), manager, () -> ConfigManager.query(config -> config.getHome().getPlayerMaximum()));
+	}
+
+	private static long temporaryHomeExpiredTime() {
+		int ttlSeconds = ConfigManager.query(config -> config.getHome().getTemporaryHomeTtlSeconds());
+		return System.currentTimeMillis() + ttlSeconds * 1000L;
 	}
 }
