@@ -30,8 +30,7 @@ public final class RtpExecutionProcessor {
 	private final ArrayDeque<PendingRef> readyBacklog = new ArrayDeque<>();
 	private final ArrayDeque<PendingRef> activeExecutions = new ArrayDeque<>();
 
-	public RtpExecutionProcessor(TeleportOperationManager operationManager, TeleportExecutor executor,
-			ExecutorService parallelExecutor) {
+	public RtpExecutionProcessor(TeleportOperationManager operationManager, TeleportExecutor executor, ExecutorService parallelExecutor) {
 		this.operationManager = Objects.requireNonNull(operationManager, "operationManager");
 		this.executor = Objects.requireNonNull(executor, "executor");
 		this.parallelExecutor = Objects.requireNonNull(parallelExecutor, "parallelExecutor");
