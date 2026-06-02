@@ -1,9 +1,10 @@
-package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint;
-
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.ComponentSupport;
+package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.ComponentSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import net.minecraft.ChatFormatting;
@@ -15,12 +16,12 @@ import net.minecraft.network.chat.MutableComponent;
 import java.util.Locale;
 import java.util.Objects;
 
-public final class WaypointPageRenderer {
+public final class PageRenderer {
 	private static final int NAVIGATION_PAGE_RADIUS = 2;
 
-	private final WaypointCommandFactory commands;
+	private final CommandLinkBuilder commands;
 
-	public WaypointPageRenderer(WaypointCommandFactory commands) {
+	public PageRenderer(CommandLinkBuilder commands) {
 		this.commands = Objects.requireNonNull(commands, "commands");
 	}
 

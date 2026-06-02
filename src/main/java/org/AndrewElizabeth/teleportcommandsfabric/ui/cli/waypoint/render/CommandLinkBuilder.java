@@ -1,31 +1,31 @@
-package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint;
+package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render;
 
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.*;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointSort;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
-public final class WaypointCommandFactory {
+public final class CommandLinkBuilder {
 	public String listCommand(WaypointPageKind kind, WaypointListQuery query, int page) {
-		StringBuilder command = new StringBuilder(listCommand(kind)).append(' ').append(Math.max(1, page));
-		appendQuery(command, query);
-		return command.toString();
+		return listCommand(kind) + " " + pageQueryArgs(query, page);
 	}
 
 	public String pagePickerCommand(WaypointPageKind kind, WaypointListQuery query, int page) {
-		StringBuilder command = new StringBuilder(pagePickerCommand(kind)).append(' ').append(Math.max(1, page));
-		appendQuery(command, query);
-		return command.toString();
+		return pagePickerCommand(kind) + " " + pageQueryArgs(query, page);
 	}
 
 	public String visibilityCommand(WaypointPageRequest request, String quotedName, boolean visible, int currentPage) {
-		String listCommand = listCommand(request.kind(), request.query(), currentPage);
-		String listArgs = listCommand.substring(listCommand(request.kind()).length()).trim();
-		return visibilityCommand(request.kind()) + " " + quotedName + " " + visible + " " + listArgs;
+		return visibilityCommand(request.kind()) + " " + quotedName + " " + visible + " "
+				+ pageQueryArgs(request.query(), currentPage);
 	}
 
 	public String globalWarpVisibilityCommand(WaypointPageRequest request, String quotedName, boolean visible, int currentPage) {
-		String listCommand = listCommand(request.kind(), request.query(), currentPage);
-		String listArgs = listCommand.substring(listCommand(request.kind()).length()).trim();
-		return "teleportcommandsfabric:gmapwarp " + quotedName + " " + visible + " " + listArgs;
+		return "teleportcommandsfabric:gmapwarp " + quotedName + " " + visible + " "
+				+ pageQueryArgs(request.query(), currentPage);
 	}
 
 	public String teleportCommand(WaypointPageKind kind, String quotedName) {
@@ -42,6 +42,12 @@ public final class WaypointCommandFactory {
 
 	public String deleteCommand(WaypointPageKind kind) {
 		return kind == WaypointPageKind.HOMES ? "delhome" : "delwarp";
+	}
+
+	private String pageQueryArgs(WaypointListQuery query, int page) {
+		StringBuilder args = new StringBuilder().append(Math.max(1, page));
+		appendQuery(args, query);
+		return args.toString();
 	}
 
 	private void appendQuery(StringBuilder command, WaypointListQuery query) {

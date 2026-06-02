@@ -3,6 +3,9 @@ package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.CommandLinkBuilder;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.PagePickerRenderer;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.PageRenderer;
 
 import net.minecraft.network.chat.Component;
 
@@ -15,8 +18,8 @@ import java.util.concurrent.Executors;
 
 public final class WaypointPages implements AutoCloseable {
 	private final WaypointPageAssembler assembler;
-	private final WaypointPageRenderer renderer;
-	private final WaypointPagePickerRenderer pagePickerRenderer;
+	private final PageRenderer renderer;
+	private final PagePickerRenderer pagePickerRenderer;
 	private final Executor renderExecutor;
 	private final ExecutorService ownedExecutor;
 
@@ -30,14 +33,14 @@ public final class WaypointPages implements AutoCloseable {
 
 	private WaypointPages(WarpListCache warpListCache, Executor renderExecutor, boolean ownsExecutor) {
 		this(new WaypointPageAssembler(warpListCache),
-				new WaypointPageRenderer(new WaypointCommandFactory()),
-				new WaypointPagePickerRenderer(new WaypointCommandFactory()),
+				new PageRenderer(new CommandLinkBuilder()),
+				new PagePickerRenderer(new CommandLinkBuilder()),
 				renderExecutor,
 				ownsExecutor);
 	}
 
-	private WaypointPages(WaypointPageAssembler assembler, WaypointPageRenderer renderer,
-			WaypointPagePickerRenderer pagePickerRenderer, Executor renderExecutor, boolean ownsExecutor) {
+	private WaypointPages(WaypointPageAssembler assembler, PageRenderer renderer,
+			PagePickerRenderer pagePickerRenderer, Executor renderExecutor, boolean ownsExecutor) {
 		this.assembler = Objects.requireNonNull(assembler, "assembler");
 		this.renderer = Objects.requireNonNull(renderer, "renderer");
 		this.pagePickerRenderer = Objects.requireNonNull(pagePickerRenderer, "pagePickerRenderer");

@@ -1,6 +1,7 @@
-package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint;
+package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.ComponentSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
 import net.minecraft.ChatFormatting;
@@ -9,12 +10,12 @@ import net.minecraft.network.chat.MutableComponent;
 
 import java.util.Objects;
 
-public final class WaypointPagePickerRenderer {
+public final class PagePickerRenderer {
 	private static final int PAGE_PICKER_COLUMNS = 8;
 
-	private final WaypointCommandFactory commands;
+	private final CommandLinkBuilder commands;
 
-	public WaypointPagePickerRenderer(WaypointCommandFactory commands) {
+	public PagePickerRenderer(CommandLinkBuilder commands) {
 		this.commands = Objects.requireNonNull(commands, "commands");
 	}
 
