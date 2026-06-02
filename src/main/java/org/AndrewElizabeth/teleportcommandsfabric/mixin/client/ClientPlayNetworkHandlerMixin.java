@@ -60,7 +60,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.startsWith("gwarpmap ")
 				|| normalized.equals("back")
 				|| normalized.startsWith("back ")
-				|| normalized.equals("worldspawn true")
+				|| normalized.startsWith("worldspawn ")
 				|| normalized.startsWith("tpc ")
 				|| normalized.startsWith("teleportcommandsfabric:");
 	}
