@@ -24,7 +24,9 @@ public final class AdminHelpRenderer {
 					config("delay", "/tpc config teleporting delay <seconds>", "/tpc config teleporting delay ",
 							"commands.teleport_commands.admin.help.desc.config.teleporting.delay"),
 					config("cooldown", "/tpc config teleporting cooldown <seconds>", "/tpc config teleporting cooldown ",
-							"commands.teleport_commands.admin.help.desc.config.teleporting.cooldown"))),
+							"commands.teleport_commands.admin.help.desc.config.teleporting.cooldown"),
+					config("effects", "/tpc config teleporting effects <true|false>", "/tpc config teleporting effects ",
+							"commands.teleport_commands.admin.help.desc.config.teleporting.effects"))),
 			new ConfigGroup("back", List.of(
 					config("deleteAfterTeleport", "/tpc config back deleteAfterTeleport <true|false>",
 							"/tpc config back deleteAfterTeleport ",

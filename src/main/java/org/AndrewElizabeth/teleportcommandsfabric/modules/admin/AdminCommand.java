@@ -80,7 +80,11 @@ public final class AdminCommand {
 				.then(AdminConfigNodeFactory.intNode("cooldown", "seconds", 0,
 						config -> config.getTeleporting().getCooldown(),
 						(config, value) -> config.getTeleporting().setCooldown(value),
-						"commands.teleport_commands.admin.config.teleporting.cooldown"));
+						"commands.teleport_commands.admin.config.teleporting.cooldown"))
+				.then(AdminConfigNodeFactory.boolNode("effects",
+						config -> config.getTeleporting().isTeleportEffects(),
+						(config, value) -> config.getTeleporting().setTeleportEffects(value),
+						"commands.teleport_commands.admin.config.teleporting.effects"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildBackConfigNode() {

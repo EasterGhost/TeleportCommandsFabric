@@ -49,10 +49,17 @@ public final class TeleportExecutor {
 		}
 
 		boolean flying = player.getAbilities().flying;
+		boolean effectsEnabled = TeleportEffects.isEnabled();
+		if (effectsEnabled) {
+			TeleportEffects.playBefore(player);
+		}
 		boolean teleported = player.teleportTo(target.world(), target.position().x(), target.position().y(), target.position().z(),
 				Set.of(), target.effectiveYRot(player), target.effectiveXRot(player), false);
 		if (!teleported) {
 			return finishOperation(operation, TeleportStatus.FAILED);
+		}
+		if (effectsEnabled) {
+			TeleportEffects.playAfter(player);
 		}
 		if (flying) {
 			player.getAbilities().flying = true;
