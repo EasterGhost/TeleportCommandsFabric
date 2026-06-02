@@ -49,21 +49,27 @@ public final class TranslationHelper {
 	}
 
 	private static String getTranslation(String language, String key) {
-		Map<String, String> translations = TRANSLATION_CACHE.computeIfAbsent(language, TranslationHelper::loadLanguage);
-		String translation = translations.get(key);
-		if (translation == null) {
-			throw new IllegalArgumentException("Missing translation key: " + key);
+		String safeLanguage = language == null || language.isBlank() ? "en_us" : language;
+		String translation = getLanguage(safeLanguage).get(key);
+		if (translation == null && !"en_us".equals(safeLanguage)) {
+			translation = getLanguage("en_us").get(key);
 		}
-		return translation;
+		if (translation != null) {
+			return translation;
+		}
+		throw new IllegalArgumentException("Missing translation key: " + key);
+	}
+
+	private static Map<String, String> getLanguage(String language) {
+		return TRANSLATION_CACHE.computeIfAbsent(language, TranslationHelper::loadLanguage);
 	}
 
 	private static Map<String, String> loadLanguage(String language) {
 		String filePath = String.format("/assets/%s/lang/%s.json", ModConstants.ASSETS_ID, language);
 		try (InputStream stream = TranslationHelper.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
-				ModConstants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling BackCommand to en_us.", language);
-				return "en_us".equals(language) ? new ConcurrentHashMap<>()
-						: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
+				ModConstants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.", language);
+				return Map.of();
 			}
 			Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 			JsonElement json = JsonParser.parseReader(reader);
@@ -72,9 +78,8 @@ public final class TranslationHelper {
 					.forEach(entry -> translations.put(entry.getKey(), entry.getValue().getAsString()));
 			return translations;
 		} catch (Exception e) {
-			ModConstants.LOGGER.warn("Failed to load language file: {}, falling BackCommand to en_us.", language, e);
-			return "en_us".equals(language) ? new ConcurrentHashMap<>()
-					: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
+			ModConstants.LOGGER.warn("Failed to load language file: {}, falling back to en_us.", language, e);
+			return Map.of();
 		}
 	}
 
