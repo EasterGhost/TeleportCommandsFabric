@@ -34,4 +34,4 @@ Things to know:
 - Traditional Chinese - Hong Kong (zh_hk): [Dicecan](https://github.com/Dicecan)
 - Simplified Chinese (zh_cn): [Dicecan](https://github.com/Dicecan)
 - Bulgarian (bg_bg): Anonymous
-- **All New Translations**: GPT-5.3-Codex
+- **All New Translations**: GPT-5.3-Codex / GPT-5.5
