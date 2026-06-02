@@ -3,13 +3,11 @@ package org.AndrewElizabeth.teleportcommandsfabric.client.xaero;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import xaero.common.minimap.waypoints.Waypoint;
+import xaero.hud.minimap.waypoint.WaypointPurpose;
 
 import java.util.Locale;
 
 public final class XaeroWaypointCommandHelper {
-	private static final String WARP_TAG_PREFIX = "TPC-W ";
-	private static final String HOME_TAG_PREFIX = "TPC-H ";
-
 	private XaeroWaypointCommandHelper() {
 	}
 
@@ -34,18 +32,35 @@ public final class XaeroWaypointCommandHelper {
 		return buildHideCommand(name, symbol, setName);
 	}
 
+	public static String buildTeleportCommand(Waypoint waypoint) {
+		if (waypoint == null) {
+			return null;
+		}
+		if (waypoint.getPurpose() == WaypointPurpose.DEATH) {
+			return "back death";
+		}
+		return buildTaggedTeleportCommand(waypoint.getName());
+	}
+
+	public static String buildTeleportCommand(xaero.map.mods.gui.Waypoint waypoint) {
+		if (waypoint == null) {
+			return null;
+		}
+		return buildTaggedTeleportCommand(waypoint.getName());
+	}
+
 	private static String buildHideCommand(String name, String symbol, String setName) {
 		if (name == null) {
 			return null;
 		}
 
-		if (name.startsWith(WARP_TAG_PREFIX)) {
+		if (name.startsWith(XaeroWaypointTags.WARP_PREFIX)) {
 			return buildHideCommandLiteral("teleportcommandsfabric:mapwarp",
-					name.substring(WARP_TAG_PREFIX.length()).trim());
+					name.substring(XaeroWaypointTags.WARP_PREFIX.length()).trim());
 		}
-		if (name.startsWith(HOME_TAG_PREFIX)) {
+		if (name.startsWith(XaeroWaypointTags.HOME_PREFIX)) {
 			return buildHideCommandLiteral("teleportcommandsfabric:maphome",
-					name.substring(HOME_TAG_PREFIX.length()).trim());
+					name.substring(XaeroWaypointTags.HOME_PREFIX.length()).trim());
 		}
 
 		String normalizedSetName = normalizeSetName(setName);
@@ -71,6 +86,25 @@ public final class XaeroWaypointCommandHelper {
 
 	private static String buildHideCommandLiteral(String command, String name) {
 		return command + " " + CommandArgumentUtils.quote(name) + " false";
+	}
+
+	private static String buildTaggedTeleportCommand(String name) {
+		if (name == null) {
+			return null;
+		}
+
+		String normalizedName = XaeroWaypointTags.stripPrefix(name);
+		if (normalizedName.isBlank()) {
+			return null;
+		}
+
+		if (name.startsWith(XaeroWaypointTags.WARP_PREFIX)) {
+			return "warp " + CommandArgumentUtils.quote(normalizedName);
+		}
+		if (name.startsWith(XaeroWaypointTags.HOME_PREFIX)) {
+			return "home " + CommandArgumentUtils.quote(normalizedName);
+		}
+		return null;
 	}
 
 	private static String normalizeSetName(String setName) {

@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
-import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
+import org.AndrewElizabeth.teleportcommandsfabric.client.xaero.XaeroWaypointCommandHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,8 +17,6 @@ import java.util.ArrayList;
 @Mixin(GuiMap.class)
 public class GuiMapMixin {
 	private static final String TELEPORT_OPTION_KEY = "gui.xaero_right_click_map_teleport";
-	private static final String WARP_TAG_PREFIX = "TPC-W ";
-	private static final String HOME_TAG_PREFIX = "TPC-H ";
 
 	@Inject(method = "getRightClickOptions", at = @At("RETURN"))
 	private void tpc$replaceWaypointTeleportOption(CallbackInfoReturnable<ArrayList<RightClickOption>> cir) {
@@ -39,7 +37,7 @@ public class GuiMapMixin {
 				continue;
 			}
 
-			String command = tpc$buildTeleportCommand(waypoint);
+			String command = XaeroWaypointCommandHelper.buildTeleportCommand(waypoint);
 			if (command == null) {
 				continue;
 			}
@@ -61,35 +59,5 @@ public class GuiMapMixin {
 			options.set(i, replacement);
 			return;
 		}
-	}
-
-	private static String tpc$buildTeleportCommand(Waypoint waypoint) {
-		String name = waypoint.getName();
-		if (name == null) {
-			return null;
-		}
-
-		String normalizedName = tpc$stripTaggedPrefix(name);
-		if (normalizedName.isBlank()) {
-			return null;
-		}
-
-		if (name.startsWith(WARP_TAG_PREFIX)) {
-			return "warp " + CommandArgumentUtils.quote(normalizedName);
-		}
-		if (name.startsWith(HOME_TAG_PREFIX)) {
-			return "home " + CommandArgumentUtils.quote(normalizedName);
-		}
-		return null;
-	}
-
-	private static String tpc$stripTaggedPrefix(String name) {
-		if (name.startsWith(WARP_TAG_PREFIX)) {
-			return name.substring(WARP_TAG_PREFIX.length()).trim();
-		}
-		if (name.startsWith(HOME_TAG_PREFIX)) {
-			return name.substring(HOME_TAG_PREFIX.length()).trim();
-		}
-		return name.trim();
 	}
 }

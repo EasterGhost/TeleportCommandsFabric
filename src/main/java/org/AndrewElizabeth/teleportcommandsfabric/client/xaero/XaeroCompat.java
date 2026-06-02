@@ -26,8 +26,6 @@ public final class XaeroCompat {
 	private static final String CURRENT_SET_SENTINEL = "current";
 	private static final String LEGACY_WARP_SET_SENTINEL = "teleportcommands warps";
 	private static final String LEGACY_HOME_SET_SENTINEL = "teleportcommands homes";
-	private static final String PERSIST_WARP_PREFIX = "TPC-W ";
-	private static final String PERSIST_HOME_PREFIX = "TPC-H ";
 	private static final Set<String> WARP_SYNCED_WORLDS = new HashSet<>();
 	private static final Set<String> HOME_SYNCED_WORLDS = new HashSet<>();
 	private static String currentWarpSetName = DEFAULT_SET_SENTINEL;
@@ -143,7 +141,7 @@ public final class XaeroCompat {
 		List<Waypoint> waypoints = new ArrayList<>(entries.size());
 		WaypointColor color = type == EntryType.WARP ? WaypointColor.BLUE : WaypointColor.GREEN;
 		String symbol = type == EntryType.WARP ? "W" : "H";
-		String prefix = tagged ? (type == EntryType.WARP ? PERSIST_WARP_PREFIX : PERSIST_HOME_PREFIX) : "";
+		String prefix = tagged ? XaeroWaypointTags.prefix(type == EntryType.WARP) : "";
 
 		for (XaeroSyncEntry entry : entries) {
 			Waypoint waypoint = new Waypoint(entry.x(), entry.y(), entry.z(),
@@ -190,7 +188,7 @@ public final class XaeroCompat {
 	}
 
 	private static void removeTaggedWaypoints(WaypointSet set, EntryType type) {
-		String prefix = type == EntryType.WARP ? PERSIST_WARP_PREFIX : PERSIST_HOME_PREFIX;
+		String prefix = XaeroWaypointTags.prefix(type == EntryType.WARP);
 		List<Waypoint> toRemove = new ArrayList<>();
 		for (Waypoint waypoint : set.getWaypoints()) {
 			String name = waypoint.getName();
