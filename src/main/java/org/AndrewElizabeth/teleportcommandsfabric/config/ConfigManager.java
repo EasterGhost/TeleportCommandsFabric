@@ -67,7 +67,7 @@ public class ConfigManager {
 			try {
 				loadConfig();
 				saveConfigSync();
-				ConfigApplier.applyStorage();
+				ConfigApplier.applyRuntime();
 			} catch (Exception exception) {
 				throw new CompletionException(exception);
 			}
@@ -151,7 +151,7 @@ public class ConfigManager {
 			config.normalize();
 		}
 		saveConfigAsync();
-		ConfigApplier.applyStorage();
+		ConfigApplier.applyRuntime();
 	}
 
 	private static void setConfig(Config config) {

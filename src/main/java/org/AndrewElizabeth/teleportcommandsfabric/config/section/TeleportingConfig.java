@@ -8,6 +8,7 @@ public final class TeleportingConfig {
 	private int cooldown = 3;
 	private boolean preloadEnabled = false;
 	private int preloadRadiusChunks = 1;
+	private boolean teleportEffects = true;
 
 	public int getDelay() {
 		return delay;
@@ -39,6 +40,14 @@ public final class TeleportingConfig {
 
 	public void setPreloadRadiusChunks(int preloadRadiusChunks) {
 		this.preloadRadiusChunks = Math.max(MIN_PRELOAD_RADIUS_CHUNKS, preloadRadiusChunks);
+	}
+
+	public boolean isTeleportEffects() {
+		return teleportEffects;
+	}
+
+	public void setTeleportEffects(boolean teleportEffects) {
+		this.teleportEffects = teleportEffects;
 	}
 
 	public void normalize() {

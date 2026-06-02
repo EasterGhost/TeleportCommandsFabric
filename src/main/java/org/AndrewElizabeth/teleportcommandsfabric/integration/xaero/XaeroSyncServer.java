@@ -2,8 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
-import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
-import org.AndrewElizabeth.teleportcommandsfabric.config.section.XaeroConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.network.core.XaeroSyncPackets;
 import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSyncDataPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSyncEntry;
@@ -31,9 +29,16 @@ public final class XaeroSyncServer {
 	private static final Set<UUID> XAERO_CLIENTS = ConcurrentHashMap.newKeySet();
 	private static final ConcurrentMap<UUID, Long> LAST_SYNC = new ConcurrentHashMap<>();
 	private static final ConcurrentMap<UUID, Long> LAST_REQUEST = new ConcurrentHashMap<>();
+	private static volatile XaeroRuntimeConfig runtimeConfig = XaeroRuntimeConfig.defaults();
 	private static boolean initialized;
 
 	private XaeroSyncServer() {
+	}
+
+	public static void applyConfig(boolean enabled, int syncIntervalSeconds, boolean persistWaypointSets,
+			String warpSetName, String homeSetName) {
+		runtimeConfig = new XaeroRuntimeConfig(enabled, syncIntervalSeconds, syncIntervalSeconds * 1000L,
+				persistWaypointSets, warpSetName, homeSetName);
 	}
 
 	public static synchronized void initialize() {
@@ -187,45 +192,31 @@ public final class XaeroSyncServer {
 	}
 
 	private static boolean isEnabled() {
-		try {
-			return ConfigManager.query(config -> config.getXaero().isEnabled());
-		} catch (Exception exception) {
-			ModConstants.LOGGER.error("Xaero sync config error", exception);
-			return false;
-		}
+		return runtimeConfig.enabled();
 	}
 
 	private static int getSyncIntervalSeconds() {
-		try {
-			return ConfigManager.query(config -> config.getXaero().getSyncIntervalSeconds());
-		} catch (Exception exception) {
-			ModConstants.LOGGER.error("Xaero sync interval read error", exception);
-			return (int) ModConstants.SYNC_INTERVAL.toSeconds();
-		}
+		return runtimeConfig.syncIntervalSeconds();
 	}
 
 	private static long getRequestIntervalMs() {
-		int configured = getSyncIntervalSeconds();
-		if (configured > 0) {
-			return configured * 1000L;
-		}
-		return ModConstants.SYNC_INTERVAL.toMillis();
+		return runtimeConfig.requestIntervalMs();
 	}
 
 	private static XaeroSnapshotConfig readSnapshotConfig() {
-		try {
-			return ConfigManager.query(config -> {
-				XaeroConfig xaero = config.getXaero();
-				return new XaeroSnapshotConfig(xaero.isPersistWaypointSets(), xaero.getWarpSetName(),
-						xaero.getHomeSetName());
-			});
-		} catch (Exception exception) {
-			ModConstants.LOGGER.error("Xaero sync config read error", exception);
-			return new XaeroSnapshotConfig(true, "Default", "Default");
-		}
+		XaeroRuntimeConfig config = runtimeConfig;
+		return new XaeroSnapshotConfig(config.persistWaypointSets(), config.warpSetName(), config.homeSetName());
 	}
 
 	private record PlayerXaeroData(List<NamedLocationView> homes, Set<UUID> hiddenWarpUuids) {
+	}
+
+	private record XaeroRuntimeConfig(boolean enabled, int syncIntervalSeconds, long requestIntervalMs,
+			boolean persistWaypointSets, String warpSetName, String homeSetName) {
+		private static XaeroRuntimeConfig defaults() {
+			return new XaeroRuntimeConfig(true, (int) ModConstants.SYNC_INTERVAL.toSeconds(),
+					ModConstants.SYNC_INTERVAL.toMillis(), true, "Default", "Default");
+		}
 	}
 
 	private record XaeroSnapshotConfig(boolean persistWaypointSets, String warpSetName, String homeSetName) {
