@@ -15,6 +15,7 @@ import java.util.function.Function;
 
 final class HomeNodeFactory {
 	private static final int CONTEXT_PAGE = Integer.MIN_VALUE;
+	private static final String ARG_DISABLE_SAFETY = "disableSafety";
 	private static final HomeSuggestionProvider HOME_SUGGESTIONS = new HomeSuggestionProvider();
 	private static final HomeSuggestionProvider DEFAULT_HOME_SUGGESTIONS = new HomeSuggestionProvider(home -> !home.isTemporary());
 
@@ -47,10 +48,10 @@ final class HomeNodeFactory {
 						.suggests(HOME_SUGGESTIONS)
 						.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "name"), false))
-						.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
+						.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 								.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(),
 										StringArgumentType.getString(context, "name"),
-										BoolArgumentType.getBool(context, "Disable Safety")))));
+										BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY)))));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildDeleteNode() {

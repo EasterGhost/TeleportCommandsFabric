@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 public final class WorldSpawnCommand {
 	private static final int TICKS_PER_SECOND = 20;
 	private static final long MILLIS_PER_SECOND = 1000L;
+	private static final String ARG_DISABLE_SAFETY = "disableSafety";
 
 	private WorldSpawnCommand() {
 	}
@@ -41,10 +42,10 @@ public final class WorldSpawnCommand {
 		return Commands.literal("worldspawn")
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> handleWorldSpawn(context.getSource().getPlayerOrException(), false))
-				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
+				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> handleWorldSpawn(context.getSource().getPlayerOrException(),
-								BoolArgumentType.getBool(context, "Disable Safety"))));
+								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))));
 	}
 
 	private static int handleWorldSpawn(ServerPlayer player, boolean safetyDisabled) {

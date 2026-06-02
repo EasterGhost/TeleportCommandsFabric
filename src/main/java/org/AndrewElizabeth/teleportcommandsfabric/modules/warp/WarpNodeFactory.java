@@ -16,6 +16,7 @@ import java.util.function.Function;
 
 final class WarpNodeFactory {
 	private static final int CONTEXT_PAGE = Integer.MIN_VALUE;
+	private static final String ARG_DISABLE_SAFETY = "disableSafety";
 	private static final WarpSuggestionProvider WARP_SUGGESTIONS = new WarpSuggestionProvider();
 
 	private WarpNodeFactory() {
@@ -46,10 +47,10 @@ final class WarpNodeFactory {
 						.suggests(WARP_SUGGESTIONS)
 						.executes(context -> WarpTeleportHandler.teleportWarp(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "name"), false))
-						.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
+						.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 								.executes(context -> WarpTeleportHandler.teleportWarp(context.getSource().getPlayerOrException(),
 										StringArgumentType.getString(context, "name"),
-										BoolArgumentType.getBool(context, "Disable Safety")))));
+										BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY)))));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildDeleteNode() {

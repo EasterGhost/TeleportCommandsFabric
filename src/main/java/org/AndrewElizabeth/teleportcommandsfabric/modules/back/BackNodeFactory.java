@@ -11,6 +11,7 @@ final class BackNodeFactory {
 	private static final String COMMAND_BACK = "back";
 	private static final String MODE_DEATH = "death";
 	private static final String MODE_TP = "tp";
+	private static final String ARG_DISABLE_SAFETY = "disableSafety";
 
 	private BackNodeFactory() {
 	}
@@ -19,10 +20,10 @@ final class BackNodeFactory {
 		return Commands.literal(COMMAND_BACK)
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(), false))
-				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
+				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(),
-								BoolArgumentType.getBool(context, "Disable Safety"))))
+								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))))
 				.then(buildBackModeNode(MODE_DEATH, BackTeleportHandler::handleBackDeath))
 				.then(buildBackModeNode(MODE_TP, BackTeleportHandler::handleBackTp));
 	}
@@ -31,10 +32,10 @@ final class BackNodeFactory {
 		return Commands.literal(mode)
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> handler.run(context.getSource().getPlayerOrException(), false))
-				.then(Commands.argument("Disable Safety", BoolArgumentType.bool())
+				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> handler.run(context.getSource().getPlayerOrException(),
-								BoolArgumentType.getBool(context, "Disable Safety"))));
+								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))));
 	}
 
 	@FunctionalInterface
