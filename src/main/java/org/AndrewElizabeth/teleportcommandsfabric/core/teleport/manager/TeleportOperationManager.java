@@ -240,7 +240,6 @@ public final class TeleportOperationManager {
 		}
 		states.clear();
 		activePendingPlayers.clear();
-		pendingSequence = 0L;
 	}
 
 	@FunctionalInterface

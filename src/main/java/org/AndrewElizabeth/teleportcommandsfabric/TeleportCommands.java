@@ -66,16 +66,20 @@ public class TeleportCommands implements ModInitializer {
 	}
 
 	public static void onPlayerDeath(ServerPlayer player) {
-		if (RECORDED_LOCATION_SOURCE != null) {
-			RECORDED_LOCATION_SOURCE.recordDeathLocation(player.getUUID(), player.blockPosition(), player.level().dimension())
-					.whenComplete((ignored, throwable) -> {
-						if (throwable != null) {
-							ModConstants.LOGGER.warn("Failed to record death location", throwable);
-						}
-					});
-		}
-		if (TELEPORT_SERVICE != null) {
-			TELEPORT_SERVICE.onPlayerDeath(player.getUUID());
+		try {
+			if (RECORDED_LOCATION_SOURCE != null) {
+				RECORDED_LOCATION_SOURCE.recordDeathLocation(player.getUUID(), player.blockPosition(), player.level().dimension())
+						.whenComplete((ignored, throwable) -> {
+							if (throwable != null) {
+								ModConstants.LOGGER.warn("Failed to record death location", throwable);
+							}
+						});
+			}
+			if (TELEPORT_SERVICE != null) {
+				TELEPORT_SERVICE.onPlayerDeath(player.getUUID());
+			}
+		} catch (Exception exception) {
+			ModConstants.LOGGER.warn("Failed to process player death teleport hooks", exception);
 		}
 	}
 }

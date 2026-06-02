@@ -41,6 +41,9 @@ public sealed interface WaypointFilter permits WaypointFilter.None, WaypointFilt
 	record Prefix(String value) implements WaypointFilter {
 		public Prefix {
 			value = normalize(value);
+			if (value.isEmpty()) {
+				throw new IllegalArgumentException("prefix filter value cannot be empty");
+			}
 			if (value.length() > 1) {
 				value = value.substring(0, 1);
 			}
@@ -55,6 +58,9 @@ public sealed interface WaypointFilter permits WaypointFilter.None, WaypointFilt
 	record Dimension(String dimensionId) implements WaypointFilter {
 		public Dimension {
 			dimensionId = normalize(dimensionId);
+			if (dimensionId.isEmpty()) {
+				throw new IllegalArgumentException("dimension filter value cannot be empty");
+			}
 		}
 
 		@Override

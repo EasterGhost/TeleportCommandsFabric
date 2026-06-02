@@ -63,6 +63,16 @@ public class PlayerProfileManager {
 		}, true);
 	}
 
+	public CompletableFuture<Boolean> mutateIfChanged(UUID uuid, Function<PlayerProfile, Boolean> action) {
+		return submitInternal(uuid, entry -> {
+			boolean changed = Boolean.TRUE.equals(action.apply(loadIfNeeded(entry)));
+			if (changed) {
+				entry.dirty = true;
+			}
+			return changed;
+		}, false);
+	}
+
 	public CompletableFuture<Void> save(UUID uuid) {
 		return submitInternal(uuid, PlayerProfileEntry::captureSaveSnapshot, false)
 				.thenCompose(pendingSave -> {
@@ -321,5 +331,4 @@ public class PlayerProfileManager {
 	private boolean isCurrentEntry(UUID uuid, PlayerProfileEntry expectedEntry) {
 		return expectedEntry != null && profiles.get(uuid) == expectedEntry;
 	}
-
 }

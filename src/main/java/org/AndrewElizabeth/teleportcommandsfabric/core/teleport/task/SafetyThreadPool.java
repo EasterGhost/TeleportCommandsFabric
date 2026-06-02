@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
+import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,8 @@ public final class SafetyThreadPool {
 	}
 
 	public void warmupSafety(MinecraftServer server) {
-		ServerLevel level = server.getAllLevels().iterator().hasNext() ? server.getAllLevels().iterator().next() : null;
+		Iterator<ServerLevel> levels = server.getAllLevels().iterator();
+		ServerLevel level = levels.hasNext() ? levels.next() : null;
 		if (level == null) {
 			return;
 		}
