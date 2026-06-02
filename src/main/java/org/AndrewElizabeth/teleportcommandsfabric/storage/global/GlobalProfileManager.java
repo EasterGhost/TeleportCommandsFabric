@@ -50,9 +50,7 @@ public class GlobalProfileManager {
 
 	public CompletableFuture<GlobalProfile> load() {
 		synchronized (monitor) {
-			CompletableFuture<GlobalProfile> nextTask = tail
-					.handle((ignored, throwable) -> null)
-					.thenApplyAsync(ignored -> loadProfile(), ioExecutor);
+			CompletableFuture<GlobalProfile> nextTask = tail.handle((ignored, throwable) -> null).thenApplyAsync(ignored -> loadProfile(), ioExecutor);
 			tail = nextTask.handle((ignored, throwable) -> null);
 			return nextTask;
 		}
@@ -83,8 +81,7 @@ public class GlobalProfileManager {
 					if (pendingSave == null) {
 						return CompletableFuture.completedFuture(null);
 					}
-					return CompletableFuture.runAsync(() -> saveSnapshot(pendingSave.snapshot()), ioExecutor)
-							.handle((ignored, throwable) -> throwable)
+					return CompletableFuture.runAsync(() -> saveSnapshot(pendingSave.snapshot()), ioExecutor).handle((ignored, throwable) -> throwable)
 							.thenCompose(throwable -> finishSnapshotSave(pendingSave, throwable));
 				});
 	}
@@ -200,8 +197,8 @@ public class GlobalProfileManager {
 
 		cancelAutoSaveTask();
 		this.saveInterval = saveInterval;
-		this.autoSaveTask = scheduler.scheduleAtFixedRate(this::flushDirtyProfileSafely,
-				this.saveInterval.toMillis(), this.saveInterval.toMillis(), TimeUnit.MILLISECONDS);
+		this.autoSaveTask = scheduler.scheduleAtFixedRate(this::flushDirtyProfileSafely, this.saveInterval.toMillis(), this.saveInterval.toMillis(),
+				TimeUnit.MILLISECONDS);
 	}
 
 	private synchronized void cancelAutoSaveTask() {
@@ -213,9 +210,7 @@ public class GlobalProfileManager {
 
 	private <T> CompletableFuture<T> submitInternal(GlobalTask<T> task, boolean markDirty) {
 		synchronized (monitor) {
-			CompletableFuture<T> nextTask = tail
-					.handle((ignored, throwable) -> null)
-					.thenApplyAsync(ignored -> executeTask(task, markDirty), ioExecutor);
+			CompletableFuture<T> nextTask = tail.handle((ignored, throwable) -> null).thenApplyAsync(ignored -> executeTask(task, markDirty), ioExecutor);
 			tail = nextTask.handle((ignored, throwable) -> null);
 			return nextTask;
 		}

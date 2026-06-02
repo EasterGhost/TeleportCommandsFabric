@@ -74,15 +74,13 @@ public class PlayerProfileManager {
 	}
 
 	public CompletableFuture<Void> save(UUID uuid) {
-		return submitInternal(uuid, PlayerProfileEntry::captureSaveSnapshot, false)
-				.thenCompose(pendingSave -> {
-					if (pendingSave == null) {
-						return CompletableFuture.completedFuture(null);
-					}
-					return CompletableFuture.runAsync(() -> saveSnapshot(pendingSave.snapshot()), ioExecutor)
-							.handle((ignored, throwable) -> throwable)
-							.thenCompose(throwable -> finishSnapshotSave(uuid, pendingSave, throwable));
-				});
+		return submitInternal(uuid, PlayerProfileEntry::captureSaveSnapshot, false).thenCompose(pendingSave -> {
+			if (pendingSave == null) {
+				return CompletableFuture.completedFuture(null);
+			}
+			return CompletableFuture.runAsync(() -> saveSnapshot(pendingSave.snapshot()), ioExecutor).handle((ignored, throwable) -> throwable)
+					.thenCompose(throwable -> finishSnapshotSave(uuid, pendingSave, throwable));
+		});
 	}
 
 	public CompletableFuture<Void> unload(UUID uuid) {
@@ -114,9 +112,7 @@ public class PlayerProfileManager {
 			if (saveCompletion == null) {
 				return CompletableFuture.completedFuture(null);
 			}
-			return saveCompletion
-					.handle((ignored, throwable) -> null)
-					.thenCompose(ignored -> unload(uuid));
+			return saveCompletion.handle((ignored, throwable) -> null).thenCompose(ignored -> unload(uuid));
 		});
 	}
 
@@ -147,9 +143,7 @@ public class PlayerProfileManager {
 	}
 
 	public CompletableFuture<Void> shutdown() {
-		CompletableFuture<?>[] saves = profiles.keySet().stream()
-				.map(this::flushProfile)
-				.toArray(CompletableFuture[]::new);
+		CompletableFuture<?>[] saves = profiles.keySet().stream().map(this::flushProfile).toArray(CompletableFuture[]::new);
 
 		return CompletableFuture.allOf(saves)
 				.handle((ignored, throwable) -> {
@@ -202,9 +196,7 @@ public class PlayerProfileManager {
 			if (saveCompletion == null) {
 				return CompletableFuture.completedFuture(null);
 			}
-			return saveCompletion
-					.handle((ignored, throwable) -> null)
-					.thenCompose(ignored -> flushProfile(uuid));
+			return saveCompletion.handle((ignored, throwable) -> null).thenCompose(ignored -> flushProfile(uuid));
 		});
 	}
 
@@ -258,8 +250,8 @@ public class PlayerProfileManager {
 
 		cancelAutoSaveTask();
 		this.saveInterval = saveInterval;
-		this.autoSaveTask = scheduler.scheduleAtFixedRate(this::flushDirtyProfilesSafely,
-				this.saveInterval.toMillis(), this.saveInterval.toMillis(), TimeUnit.MILLISECONDS);
+		this.autoSaveTask = scheduler.scheduleAtFixedRate(this::flushDirtyProfilesSafely, this.saveInterval.toMillis(), this.saveInterval.toMillis(),
+				TimeUnit.MILLISECONDS);
 	}
 
 	private synchronized void cancelAutoSaveTask() {
