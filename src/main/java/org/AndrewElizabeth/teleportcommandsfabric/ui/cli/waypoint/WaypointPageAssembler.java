@@ -24,7 +24,8 @@ public final class WaypointPageAssembler {
 		warpListCache.invalidateAll();
 	}
 
-	private List<NamedLocationView> filteredRows(WaypointPageRequest request) {
+	public List<NamedLocationView> filteredRows(WaypointPageRequest request) {
+		Objects.requireNonNull(request, "request");
 		if (request.kind() == WaypointPageKind.WARPS) {
 			return warpListCache.rows(request.locations(), request.query());
 		}

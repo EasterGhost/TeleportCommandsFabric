@@ -8,7 +8,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileMa
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointRows;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
@@ -50,7 +49,9 @@ final class WarpListHandler {
 								ChatFormatting.BOLD);
 						return;
 					}
-					List<NamedLocationView> filtered = WaypointRows.filterAndSort(data.warps(), query);
+					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.WARPS, data.warps(), data.hiddenWarpUuids(),
+							null, isAdmin(source), query, language(currentPlayer));
+					List<NamedLocationView> filtered = TeleportCommands.WAYPOINT_PAGES.filteredRows(request);
 					if (filtered.isEmpty()) {
 						if (query.filter() instanceof WaypointFilter.Dimension dimension) {
 							WarpMessages.sendNoWarpsInDimension(currentPlayer, dimension.dimensionId());
@@ -59,8 +60,6 @@ final class WarpListHandler {
 						}
 						return;
 					}
-					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.WARPS, data.warps(), data.hiddenWarpUuids(),
-							null, isAdmin(source), query, language(currentPlayer));
 					if (pagePicker) {
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderPagePicker(request), false);
 						return;

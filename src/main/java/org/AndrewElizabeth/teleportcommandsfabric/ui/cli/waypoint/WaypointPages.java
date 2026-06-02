@@ -6,6 +6,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 
 import net.minecraft.network.chat.Component;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -56,6 +57,11 @@ public final class WaypointPages implements AutoCloseable {
 		Objects.requireNonNull(request, "request");
 		PageView<NamedLocationView> page = assembler.page(request);
 		return pagePickerRenderer.render(request.kind(), request.query(), page.currentPage(), page.totalPages(), request.language());
+	}
+
+	public List<NamedLocationView> filteredRows(WaypointPageRequest request) {
+		Objects.requireNonNull(request, "request");
+		return assembler.filteredRows(request);
 	}
 
 	public void invalidateWarpCache() {
