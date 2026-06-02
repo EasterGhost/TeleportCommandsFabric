@@ -1,10 +1,9 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.rtp;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.MessageSupport;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class RtpMessages {
@@ -12,16 +11,11 @@ public final class RtpMessages {
 	}
 
 	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		if (player != null) {
-			player.sendSystemMessage(TranslationHelper.getTranslatedText(key, player).withStyle(formatting), true);
-		}
+		MessageSupport.send(player, key, formatting);
 	}
 
 	public static void sendDelayStart(ServerPlayer player, int delaySeconds) {
-		if (player != null) {
-			player.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.common.delayStart",
-					player, Component.literal(String.valueOf(delaySeconds))).withStyle(ChatFormatting.AQUA), true);
-		}
+		MessageSupport.sendDelayStart(player, delaySeconds);
 	}
 
 	public static void sendStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds) {
@@ -29,9 +23,7 @@ public final class RtpMessages {
 			return;
 		}
 		switch (status) {
-		case COOLDOWN -> player.sendSystemMessage(TranslationHelper.getTranslatedText(
-				"commands.teleport_commands.common.cooldown", player,
-				Component.literal(String.valueOf(cooldownSeconds))).withStyle(ChatFormatting.YELLOW), true);
+		case COOLDOWN -> MessageSupport.sendCooldown(player, cooldownSeconds);
 		case NO_SAFE_POSITION -> send(player, "commands.teleport_commands.common.noSafeLocation", ChatFormatting.RED);
 		case PLAYER_DISCONNECTED -> {
 		}

@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.modules.tpa;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.MessageSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper;
 
 import net.minecraft.ChatFormatting;
@@ -17,9 +18,7 @@ final class TpaMessages {
 	}
 
 	static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		if (player != null) {
-			player.sendSystemMessage(TranslationHelper.getTranslatedText(key, player).withStyle(formatting), true);
-		}
+		MessageSupport.send(player, key, formatting);
 	}
 
 	static void sendRequestSent(ServerPlayer sender, ServerPlayer target, Tpa.Type type) {
@@ -78,9 +77,7 @@ final class TpaMessages {
 			return;
 		}
 		switch (status) {
-		case COOLDOWN -> player.sendSystemMessage(TranslationHelper.getTranslatedText(
-				"commands.teleport_commands.common.cooldown", player,
-				Component.literal(String.valueOf(cooldownSeconds))).withStyle(ChatFormatting.YELLOW), true);
+		case COOLDOWN -> MessageSupport.sendCooldown(player, cooldownSeconds);
 		case TARGET_UNAVAILABLE, PLAYER_DISCONNECTED -> send(player, "commands.teleport_commands.tpa.notFound",
 				ChatFormatting.RED);
 		case CANCELLED_BY_EVENT -> send(player, "commands.teleport_commands.common.error",

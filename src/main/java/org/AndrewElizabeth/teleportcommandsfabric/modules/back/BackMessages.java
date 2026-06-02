@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.back;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.MessageSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper;
 
 import net.minecraft.ChatFormatting;
@@ -17,16 +18,11 @@ public final class BackMessages {
 	}
 
 	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
-		if (player != null) {
-			player.sendSystemMessage(TranslationHelper.getTranslatedText(key, player).withStyle(formatting), true);
-		}
+		MessageSupport.send(player, key, formatting);
 	}
 
 	public static void sendDelayStart(ServerPlayer player, int delaySeconds) {
-		if (player != null) {
-			player.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.common.delayStart",
-					player, Component.literal(String.valueOf(delaySeconds))).withStyle(ChatFormatting.AQUA), true);
-		}
+		MessageSupport.sendDelayStart(player, delaySeconds);
 	}
 
 	public static void sendTryBackTpPrompt(ServerPlayer player) {
@@ -45,20 +41,7 @@ public final class BackMessages {
 	}
 
 	public static void sendUnsafeTeleportPrompt(ServerPlayer player, String command) {
-		if (player == null) {
-			return;
-		}
-		player.sendSystemMessage(Component.empty()
-				.append(TranslationHelper.getTranslatedText("commands.teleport_commands.common.noSafeLocation", player)
-						.withStyle(ChatFormatting.RED, ChatFormatting.BOLD))
-				.append("\n")
-				.append(TranslationHelper.getTranslatedText("commands.teleport_commands.common.safetyIsForLosers", player)
-						.withStyle(ChatFormatting.WHITE))
-				.append("\n")
-				.append(TranslationHelper.getTranslatedText("commands.teleport_commands.common.forceTeleport", player)
-						.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
-						.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command))))
-				.append("\n"), false);
+		MessageSupport.sendUnsafeTeleportPrompt(player, command);
 	}
 
 	public static void sendStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds,
@@ -67,9 +50,7 @@ public final class BackMessages {
 			return;
 		}
 		switch (status) {
-		case COOLDOWN -> player.sendSystemMessage(TranslationHelper.getTranslatedText(
-				"commands.teleport_commands.common.cooldown", player,
-				Component.literal(String.valueOf(cooldownSeconds))).withStyle(ChatFormatting.YELLOW), true);
+		case COOLDOWN -> MessageSupport.sendCooldown(player, cooldownSeconds);
 		case NO_SAFE_POSITION -> sendUnsafeTeleportPrompt(player, forceCommand);
 		case TARGET_UNAVAILABLE -> send(player, "commands.teleport_commands.common.noLocation", ChatFormatting.RED);
 		case PLAYER_DISCONNECTED -> {
