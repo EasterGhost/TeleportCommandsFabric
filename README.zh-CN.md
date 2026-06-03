@@ -1,62 +1,58 @@
-# Teleport Commands Fabric 使用说明
+# Teleport Commands Fabric
 
-TeleportCommandsFabric 是一个面向 Fabric 服务端的传送命令模组，提供完整的常用传送能力，并将管理入口集中在同一套命令体系中，便于长期维护。同时提供客户端接口与Xaero地图联动以提高使用体验。
+> 面向 Fabric 服务端的统一传送工具包 — 所有命令，一个管理面板，无需重启。
 
-- 英文文档：[README.md](README.md)
-- 中文维基：[Wiki-Zh_CN](https://github.com/EasterGhost/TeleportCommandsFabric/wiki)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.7%2B-brightgreen)]()
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE.txt)
 
-## 模组特色
+[English](README.md) · [Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki)
 
-这个模组围绕服务端日常管理进行设计。玩家常用的 `back`、`home`、`tpa`、`warp`、`worldspawn`、`rtp`/`wild` 在一套规则下运行，管理员也可以通过 `/tpc` 统一控制模块状态和运行参数；`/teleportcommands` 仍保留为兼容别名。支持与Xaero地图系列模组联动以提高使用体验。
+---
 
-### 主要优势
+## 功能概览
 
-- 功能集中：常见传送场景都在同一个模组里完成。
-- 管理统一：启用/禁用、重载、运行时配置默认都走 `/tpc`。
-- 调整方便：常用参数可在线修改，减少手动改 JSON 的频率。
-- 行为一致：多类传送命令共享统一的延迟与冷却逻辑。
-- 支持联动：可将 `home` 与 `warp` 同步到 Xaero 航点，便于直接在地图上查看和传送。
+| 功能 | 说明 |
+| --- | --- |
+| 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/worldspawn` | 服务器所需的全部传送命令 |
+| 🎛️ `/tpc` | 统一管理入口：启停模块、调整上限、重载配置 — 无需手动编辑 JSON |
+| 🗺️ Xaero 联动 | 家和传送点在地图上显示。删除地图航点时，服务端同步隐藏 |
+| ⚙️ 一致体验 | 延迟、冷却、区块预加载、安全检测在所有传送类型间统一生效 |
+| ⏳ 临时家 | 支持设置有时限的临时家（`/tmphome`），到期自动清理 |
+| ⚡ RTP 性能 | 多人同时随机传送不卡顿 |
 
-## 客户端体验
-
-服务端传送命令的可用性不依赖客户端是否安装本模组，客户端不安装时也可以正常使用 `back`、`home`、`warp`、`tpa`、`worldspawn` 和 `rtp` 等功能。客户端安装本模组后，传送相关交互会更顺手；若再配合 Xaero 地图模组，则可以进一步获得 `home` 和 `warp` 的地图航点联动。
-
-更具体的安装组合与体验差异，可查看 [功能总览](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview) 和 [Xaero 集成模块](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-7-Xaero)。
+---
 
 ## 快速开始
 
 1. 将模组放入服务端 `mods/` 目录。
-2. 启动一次服务端，生成配置文件 `config/teleport_commands.json`。
-3. 执行 `/tpc help` 确认命令已注册。
-4. 使用 `/tpc config` 系列命令修改配置，或手动修改配置文件后执行 `/tpc reload`。
+2. 启动一次 → 自动生成 `config/teleport_commands.json`。
+3. 执行 `/tpc help` 确认注册，`/tpc status` 查看模块状态。
 
-## 文档导航（Wiki）
+常用管理命令速查：
 
-详细说明集中维护在 Wiki。README 主要用于项目介绍和快速入口。
+```
+/tpc status                     # 查看各模块启用状态
+/tpc enable rtp                 # 启用一个模块（rtp）
+/tpc config home max 20         # 在线修改home上限
+/tpc reload                     # 手动编辑配置文件后重载
+```
 
-### 入门
+---
 
-- [首页](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/Home)
-- [快速开始](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/1-Quick-Start)
-- [功能总览](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview)
+## 是否安装客户端模组
 
-### 使用
+服务端模组可独立运行。安装客户端模组（可选）可进一步提升体验：
 
-- [命令说明](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/3-Commands)
-- [配置文件说明](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration)
-- [模块细节](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-Module-Details)
+| | 仅服务端 | 服务端 + 客户端 |
+| --- | :---: | :---: |
+| 全部传送命令 | ✅ | ✅ |
+| 聊天框可点击按钮 | ✅ | ✅ |
+| Xaero 地图航点显示 | — | ✅ |
+| 地图右键直达传送 | — | ✅ |
+| 可信命令跳过确认弹窗 | — | ✅ |
 
-### 维护
+---
 
-- [权限与访问](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/6-Permissions-and-Access)
-- [数据与存储](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/7-Data-and-Storage)
-- [故障排查](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/8-Troubleshooting)
-- [常见问题](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/9-FAQ)
+## 链接
 
-## 配置与管理入口
-
-- 配置文件路径：`config/teleport_commands.json`
-- 运行时配置命令：`/tpc config ...`
-- 重载命令：`/tpc reload`
-
-字段解释和示例请查看 [配置文件说明](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration)。
+[Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki) · [English](README.md) · [Changelog](CHANGELOG.md) · [License](LICENSE.txt)

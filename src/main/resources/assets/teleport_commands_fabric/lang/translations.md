@@ -32,6 +32,6 @@ Things to know:
 - Russian (ru_ru): [rfin0](https://github.com/rfin0)
 - Traditional Chinese - Taiwan (zh_tw): [hugoalh](https://github.com/hugoalh), [Dicecan](https://github.com/Dicecan)
 - Traditional Chinese - Hong Kong (zh_hk): [Dicecan](https://github.com/Dicecan)
-- Simplified Chinese (zh_cn): [Dicecan](https://github.com/Dicecan)
+- Simplified Chinese (zh_cn): [Dicecan](https://github.com/Dicecan) / [EasterGhost](https://github.com/EasterGhost)
 - Bulgarian (bg_bg): Anonymous
 - **All New Translations**: GPT-5.3-Codex / GPT-5.5 / DeepSeek V4 Pro

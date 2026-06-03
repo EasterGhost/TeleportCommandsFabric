@@ -28,7 +28,7 @@ The config and storage schema versions are tracked separately from the mod relea
 - **Legacy Migrators**: Built integrated Storage v5 and Config v3 migrators, ensuring seamless automated upgrades of historical JSON settings from older versions.
 - **Adaptive Execution RTP Service**: Implemented a new RTP random teleport service supporting adaptive scheduling, seamlessly switching between serial ticks-throttled checks and parallel virtual-thread-based searches under backlog pressure.
 - **Configurable Temporary Home TTL**: Added configurable Time-To-Live (TTL) support for Temporary Homes with automated cleanup upon expiration.
-- **Native Version Updates**: Built native compatibility for Minecraft 1.21.1 / Fabric 26.1.2 and Xaero Minimap/Worldmap 26.1.2.
+- **Native Version Updates**: Built native compatibility for Fabric 26.1.2 and Xaero Minimap/Worldmap 26.1.2.
 
 ### Changed
 

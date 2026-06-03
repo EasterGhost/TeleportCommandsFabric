@@ -1,62 +1,58 @@
 # Teleport Commands Fabric
 
-A server-side teleport command mod for Fabric, focused on daily server operations. It also provides a client-side integration path for Xaero map mods to improve in-game usability.
+> A unified teleport toolkit for Fabric servers — all commands, one admin panel, zero restarts.
 
-- Chinese README: [README.zh-CN.md](README.zh-CN.md)
-- Wiki: [Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/EN-Home)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.7%2B-brightgreen)]()
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE.txt)
 
-## Why This Mod
+[中文文档](README.zh-CN.md) · [Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/EN-Home)
 
-TeleportCommandsFabric provides a complete teleport toolkit for Fabric servers. Core modules and admin controls follow one command path, which keeps setup and maintenance straightforward as the server grows. It supports integration with Xaero map mod series for a smoother user experience.
+---
 
-### Highlights
+## What It Does
 
-- Complete command family: `back`, `home`, `tpa`, `warp`, `worldspawn`, `rtp`/`wild`, and `xaero` sync.
-- Unified admin entry: `/tpc` for module switch, reload, and runtime config updates.
-- Runtime-first operations: common settings can be adjusted without manual JSON editing.
-- Consistent behavior: shared delay/cooldown flow across teleport commands.
-- Xaero integration: syncs homes and warps to waypoints for direct map viewing and teleport access.
+| Feature | What it does |
+| --- | --- |
+| 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/worldspawn` | Every teleport command your server needs |
+| 🎛️ `/tpc` | One admin surface: enable/disable modules, tune limits, reload config — no JSON editing |
+| 🗺️ Xaero sync | Homes and warps shown on the map. Delete a map waypoint, and it hides server-side |
+| ⚙️ Shared behavior | Delay, cooldown, chunk preloading, and safety checks apply consistently across all teleport types |
+| ⏳ Temporary homes | Time-limited homes (`/tmphome`) with automatic cleanup on expiry |
+| ⚡ RTP performance | Handles concurrent random teleports without lag |
 
-## Client Experience
-
-Server-side teleport commands remain available regardless of whether clients install this mod. Players can still use `back`, `home`, `warp`, `tpa`, `worldspawn`, and `rtp` with no client installation. Installing the client mod improves teleport-related interaction, and pairing it with Xaero map mods adds waypoint sync for `home` and `warp`.
-
-For a more detailed comparison between client installation options, see [Features Overview](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview) and [Xaero Integration Module](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-7-Xaero).
+---
 
 ## Quick Start
 
-1. Put the mod into server `mods/`.
-2. Start once to generate `config/teleport_commands.json`.
-3. Check command registration: `/tpc help`.
-4. Use `/tpc config` commands for runtime updates, or run `/tpc reload` after manual file edits.
+1. Drop into server `mods/`.
+2. Start once → `config/teleport_commands.json` generated.
+3. Run `/tpc help` to confirm, `/tpc status` to see active modules.
 
-## Documentation
+Common admin commands when you need them:
 
-Detailed docs are maintained in the wiki. This README focuses on project overview and quick entry points.
+```
+/tpc status                     # see which modules are on
+/tpc enable rtp                 # turn a module on
+/tpc config home max 20         # change a limit, live
+/tpc reload                     # reload after manual file edits
+```
 
-### Getting Started
+---
 
-- [Home](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/Home)
-- [Quick Start](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/1-Quick-Start)
-- [Features Overview](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview)
+## With vs. Without Client Mod
 
-### Usage
+Adding the client mod (optional) improves the experience:
 
-- [Commands](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/3-Commands)
-- [Configuration](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration)
-- [Module Details](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-Module-Details)
+| | Server only | Server + Client |
+| --- | :---: | :---: |
+| All teleport commands | ✅ | ✅ |
+| Clickable chat buttons | ✅ | ✅ |
+| Waypoints on Xaero map | — | ✅ |
+| Map right-click → teleport | — | ✅ |
+| Trusted commands skip confirmation | — | ✅ |
 
-### Operations
+---
 
-- [Permissions and Access](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/6-Permissions-and-Access)
-- [Data and Storage](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/7-Data-and-Storage)
-- [Troubleshooting](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/8-Troubleshooting)
-- [FAQ](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/9-FAQ)
+## Links
 
-## Admin Basics
-
-- Config file: `config/teleport_commands.json`
-- Runtime config command: `/tpc config ...`
-- Reload command: `/tpc reload`
-
-For field-level details and examples, see [Configuration](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration).
+[Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/EN-Home) · [中文文档](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [License](LICENSE.txt)
