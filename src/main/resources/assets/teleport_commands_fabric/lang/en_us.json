@@ -6,15 +6,12 @@
   "commands.teleport_commands.back.tp.go": "Returning to your previous teleport location",
   "commands.teleport_commands.back.tp.same": "Already at your previous teleport location",
   "commands.teleport_commands.back.tp.none": "No previous teleport location has been recorded.",
-
   "commands.teleport_commands.worldspawn.go": "Going to the worldspawn",
   "commands.teleport_commands.worldspawn.same": "Already at the worldspawn",
   "commands.teleport_commands.worldspawn.disabled": "Worldspawn is currently disabled.",
-
   "commands.teleport_commands.rtp.go": "Teleporting to a random location",
   "commands.teleport_commands.rtp.disabled": "RTP is currently disabled.",
   "commands.teleport_commands.rtp.invalidRadius": "RTP radius must be at least 1.",
-
   "commands.teleport_commands.home.set": "Home has been set",
   "commands.teleport_commands.home.tempSet": "Temporary home has been set",
   "commands.teleport_commands.home.disabled": "Home is currently disabled.",
@@ -39,10 +36,8 @@
   "commands.teleport_commands.home.temporary": "[Temp]",
   "commands.teleport_commands.home.mapShown": "Home will now be shown on the Xaero map.",
   "commands.teleport_commands.home.mapHidden": "Home will no longer be shown on the Xaero map.",
-
   "commands.teleport_commands.homes.error": "An error occurred while getting your homes!",
   "commands.teleport_commands.homes.title": "Homes",
-
   "commands.teleport_commands.warp.set": "Warp has been set",
   "commands.teleport_commands.warp.disabled": "Warp is currently disabled.",
   "commands.teleport_commands.warp.exists": "Warp already exists!",
@@ -62,13 +57,11 @@
   "commands.teleport_commands.warp.mapHidden": "Warp will no longer be shown on the Xaero map.",
   "commands.teleport_commands.warp.playerMapShown": "Warp will now be shown on your Xaero map.",
   "commands.teleport_commands.warp.playerMapHidden": "Warp will no longer be shown on your Xaero map.",
-
   "commands.teleport_commands.warps.error": "An error occurred while getting the warps!",
   "commands.teleport_commands.warps.title": "Warps",
   "commands.teleport_commands.gwarpmap.error": "An error occurred while getting the warp map list!",
   "commands.teleport_commands.gwarpmap.globalVisible": "[Global Map: On]",
   "commands.teleport_commands.gwarpmap.globalHidden": "[Global Map: Off]",
-
   "commands.teleport_commands.tpa.self": "Well, that was easy",
   "commands.teleport_commands.tpa.alreadySent": "A request has already been sent to %0%",
   "commands.teleport_commands.tpa.received": "Tpa%0% request received from %1%",
@@ -80,7 +73,6 @@
   "commands.teleport_commands.tpa.accepted": "Request accepted",
   "commands.teleport_commands.tpa.denied": "Request denied",
   "commands.teleport_commands.tpa.disabled": "TPA is currently disabled.",
-
   "commands.teleport_commands.admin.stat.enabled": "enabled",
   "commands.teleport_commands.admin.stat.disabled": "disabled",
   "commands.teleport_commands.admin.module.back": "Back command",
@@ -147,7 +139,6 @@
   "commands.teleport_commands.admin.help.desc.config.rtp.maxRadius": "Set the maximum RTP search radius.",
   "commands.teleport_commands.admin.help.desc.config.xaero.syncIntervalSeconds": "Set the Xaero sync interval in seconds.",
   "commands.teleport_commands.admin.help.desc.config.storage.autoSaveIntervalSeconds": "Set storage auto-save interval in seconds.",
-
   "commands.teleport_commands.common.cooldown": "You must wait %0% seconds before teleporting again!",
   "commands.teleport_commands.common.delayStart": "Teleporting in %0% seconds...",
   "commands.teleport_commands.common.error": "An error occurred while teleporting!",
