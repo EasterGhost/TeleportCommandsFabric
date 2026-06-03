@@ -89,6 +89,17 @@ final class TpaRequestHandler {
 		return acceptRequest(recipient, sender, session.get(), settings);
 	}
 
+	static int handleResponseWithRequestId(ServerPlayer recipient, ServerPlayer sender, String requestId, boolean accept) {
+		UUID sessionId;
+		try {
+			sessionId = UUID.fromString(requestId);
+		} catch (IllegalArgumentException exception) {
+			TpaMessages.send(recipient, "commands.teleport_commands.tpa.notFound", ChatFormatting.RED);
+			return 0;
+		}
+		return handleResponse(recipient, sender, sessionId, accept);
+	}
+
 	private static int acceptRequest(ServerPlayer recipient, ServerPlayer sender, Tpa.Session session,
 			TpaCommandSettings settings) {
 		MinecraftServer server = recipient.level().getServer();

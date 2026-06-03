@@ -23,7 +23,6 @@ public final class TeleportExecutor {
 
 	public TeleportStatus executeResolved(MinecraftServer server, TeleportOperation operation, TeleportTarget target) {
 		if (!operationManager.isCurrent(operation)) {
-			operation.resultFuture().complete(TeleportStatus.CANCELLED);
 			return TeleportStatus.CANCELLED;
 		}
 

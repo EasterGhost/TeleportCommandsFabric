@@ -9,8 +9,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 
-import java.util.UUID;
-
 final class TpaNodeFactory {
 	private static final TpaSuggestionProvider REQUEST_SUGGESTIONS = new TpaSuggestionProvider();
 
@@ -33,16 +31,8 @@ final class TpaNodeFactory {
 						.executes(context -> TpaRequestHandler.handleResponse(context.getSource().getPlayerOrException(),
 								EntityArgument.getPlayer(context, "player"), null, accept))
 						.then(Commands.argument("requestId", StringArgumentType.word())
-								.executes(context -> TpaRequestHandler.handleResponse(context.getSource().getPlayerOrException(),
+								.executes(context -> TpaRequestHandler.handleResponseWithRequestId(context.getSource().getPlayerOrException(),
 										EntityArgument.getPlayer(context, "player"),
-										parseRequestId(StringArgumentType.getString(context, "requestId")), accept))));
-	}
-
-	private static UUID parseRequestId(String requestId) {
-		try {
-			return UUID.fromString(requestId);
-		} catch (IllegalArgumentException ignored) {
-			return null;
-		}
+										StringArgumentType.getString(context, "requestId"), accept))));
 	}
 }
