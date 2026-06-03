@@ -14,8 +14,10 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpReq
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public final class RtpCommand {
@@ -65,13 +67,13 @@ public final class RtpCommand {
 			} else {
 				RtpMessages.send(player, "commands.teleport_commands.rtp.go", ChatFormatting.AQUA);
 			}
+			MinecraftServer server = player.level().getServer();
+			UUID playerUuid = player.getUUID();
 			result.whenComplete((status, throwable) -> {
 				if (throwable != null) {
 					ModConstants.LOGGER.error("Error while executing /rtp.", throwable);
-					RtpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-				} else {
-					RtpMessages.sendStatus(player, status, settings.cooldownSeconds());
 				}
+				server.execute(() -> sendResult(server, playerUuid, settings.cooldownSeconds(), status, throwable));
 			});
 			return 0;
 		} catch (Exception exception) {
@@ -87,6 +89,19 @@ public final class RtpCommand {
 		return new RtpCommandSettings(config.getRtp().isEnabled(), config.getRtp().getMinRadius(),
 				config.getRtp().getMaxRadius(), delaySeconds, delaySeconds * TICKS_PER_SECOND,
 				cooldownSeconds, cooldownSeconds * MILLIS_PER_SECOND);
+	}
+
+	private static void sendResult(MinecraftServer server, UUID playerUuid, int cooldownSeconds, TeleportStatus status,
+			Throwable throwable) {
+		ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
+		if (currentPlayer == null) {
+			return;
+		}
+		if (throwable != null) {
+			RtpMessages.send(currentPlayer, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return;
+		}
+		RtpMessages.sendStatus(currentPlayer, status, cooldownSeconds);
 	}
 
 	private record RtpCommandSettings(boolean enabled, int minRadius, int maxRadius, int delaySeconds, int delayTicks,
