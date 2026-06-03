@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
@@ -32,9 +33,10 @@ final class HomeListHandler {
 			return 1;
 		}
 		UUID playerUuid = player.getUUID();
+		MinecraftServer server = player.level().getServer();
 		manager.query(playerUuid, profile -> new HomePageData(profile.getHomes(), profile.getDefaultHomeUuid()))
-				.whenComplete((data, throwable) -> player.level().getServer().execute(() -> {
-					ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(playerUuid);
+				.whenComplete((data, throwable) -> server.execute(() -> {
+					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 					if (currentPlayer == null) {
 						return;
 					}
@@ -59,8 +61,8 @@ final class HomeListHandler {
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderPagePicker(request), false);
 						return;
 					}
-					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> player.level().getServer().execute(() -> {
-						ServerPlayer target = player.level().getServer().getPlayerList().getPlayer(playerUuid);
+					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> server.execute(() -> {
+						ServerPlayer target = server.getPlayerList().getPlayer(playerUuid);
 						if (target == null) {
 							return;
 						}

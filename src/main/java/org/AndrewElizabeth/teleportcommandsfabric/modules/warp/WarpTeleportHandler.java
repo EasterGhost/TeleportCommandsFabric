@@ -23,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class WarpTeleportHandler {
@@ -41,8 +42,10 @@ final class WarpTeleportHandler {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 			return 1;
 		}
-		resolveWarp(name).whenComplete((location, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		resolveWarp(name).whenComplete((location, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}
@@ -73,10 +76,14 @@ final class WarpTeleportHandler {
 				if (source != null) {
 					WaypointCrudService.delete(warp.getName(), source).whenComplete((ignored, throwable) -> server.execute(() -> {
 						if (throwable == null) {
+							ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
+							if (currentPlayer == null) {
+								return;
+							}
 							if (TeleportCommands.WAYPOINT_PAGES != null) {
 								TeleportCommands.WAYPOINT_PAGES.invalidateWarpCache();
 							}
-							WarpMessages.send(player, "commands.teleport_commands.warp.deletedInvalid", ChatFormatting.YELLOW);
+							WarpMessages.send(currentPlayer, "commands.teleport_commands.warp.deletedInvalid", ChatFormatting.YELLOW);
 						}
 					}));
 				}

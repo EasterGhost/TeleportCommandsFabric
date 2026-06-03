@@ -16,8 +16,10 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class HomeMutationHandler {
@@ -117,8 +119,10 @@ final class HomeMutationHandler {
 		}
 		String name = StringArgumentType.getString(context, "name");
 		boolean visible = BoolArgumentType.getBool(context, "visible");
-		WaypointCrudService.updateVisibility(name, visible, source).whenComplete((result, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		WaypointCrudService.updateVisibility(name, visible, source).whenComplete((result, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}
@@ -143,8 +147,10 @@ final class HomeMutationHandler {
 	private static void handleMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,
 			String successKey, String logMessage) {
 		int maxHomes = ConfigManager.query(config -> config.getHome().getPlayerMaximum());
-		future.whenComplete((result, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		future.whenComplete((result, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}

@@ -22,6 +22,7 @@ public final class RtpPositionFinder {
 			Blocks.END_GATEWAY,
 			Blocks.FIRE,
 			Blocks.SOUL_FIRE,
+			Blocks.WITHER_ROSE,
 			Blocks.POWDER_SNOW,
 			Blocks.NETHER_PORTAL);
 

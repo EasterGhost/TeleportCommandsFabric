@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
 
@@ -35,11 +36,13 @@ final class WarpListHandler {
 			return 1;
 		}
 		UUID playerUuid = player.getUUID();
+		MinecraftServer server = player.level().getServer();
+		boolean admin = isAdmin(source);
 		CompletableFuture<List<NamedLocationView>> warpsFuture = globalManager.query(profile -> profile.getWarps());
 		CompletableFuture<Set<UUID>> hiddenFuture = hiddenWarps(playerUuid);
 		warpsFuture.thenCombine(hiddenFuture, WarpPageData::new)
-				.whenComplete((data, throwable) -> player.level().getServer().execute(() -> {
-					ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(playerUuid);
+				.whenComplete((data, throwable) -> server.execute(() -> {
+					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 					if (currentPlayer == null) {
 						return;
 					}
@@ -50,7 +53,7 @@ final class WarpListHandler {
 						return;
 					}
 					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.WARPS, data.warps(), data.hiddenWarpUuids(),
-							null, isAdmin(source), query, language(currentPlayer));
+							null, admin, query, language(currentPlayer));
 					List<NamedLocationView> filtered = TeleportCommands.WAYPOINT_PAGES.filteredRows(request);
 					if (filtered.isEmpty()) {
 						if (query.filter() instanceof WaypointFilter.Dimension dimension) {
@@ -64,8 +67,8 @@ final class WarpListHandler {
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderPagePicker(request), false);
 						return;
 					}
-					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> player.level().getServer().execute(() -> {
-						ServerPlayer target = player.level().getServer().getPlayerList().getPlayer(playerUuid);
+					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> server.execute(() -> {
+						ServerPlayer target = server.getPlayerList().getPlayer(playerUuid);
 						if (target == null) {
 							return;
 						}

@@ -77,7 +77,6 @@ public final class TeleportExecutor {
 			operation.resultFuture().complete(TeleportStatus.SUCCESS);
 		} else {
 			operationManager.cancelPending(operation.playerUuid(), operation.pendingSequence(), status);
-			operation.resultFuture().complete(status);
 		}
 		return status;
 	}

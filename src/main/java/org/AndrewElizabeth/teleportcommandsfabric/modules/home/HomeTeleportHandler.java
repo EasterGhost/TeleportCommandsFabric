@@ -23,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class HomeTeleportHandler {
@@ -42,8 +43,10 @@ final class HomeTeleportHandler {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 			return 1;
 		}
-		resolveHome(player, name).whenComplete((location, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		resolveHome(player, name).whenComplete((location, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}
@@ -73,8 +76,9 @@ final class HomeTeleportHandler {
 			HomeMessages.send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
 			if (settings.deleteInvalidHomes()) {
 				WaypointCrudService.delete(home.getName(), source).whenComplete((ignored, throwable) -> server.execute(() -> {
-					if (throwable == null) {
-						HomeMessages.send(player, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
+					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
+					if (throwable == null && currentPlayer != null) {
+						HomeMessages.send(currentPlayer, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
 					}
 				}));
 			}

@@ -17,6 +17,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
@@ -95,8 +96,10 @@ final class WarpMutationHandler {
 		}
 		String name = StringArgumentType.getString(context, "name");
 		boolean visible = BoolArgumentType.getBool(context, "visible");
-		updatePlayerMapVisibility(player, name, visible).whenComplete((result, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		updatePlayerMapVisibility(player, name, visible).whenComplete((result, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}
@@ -135,8 +138,10 @@ final class WarpMutationHandler {
 		}
 		String name = StringArgumentType.getString(context, "name");
 		boolean visible = BoolArgumentType.getBool(context, "visible");
-		WaypointCrudService.updateVisibility(name, visible, source).whenComplete((result, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		WaypointCrudService.updateVisibility(name, visible, source).whenComplete((result, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}
@@ -159,8 +164,10 @@ final class WarpMutationHandler {
 	private static void handleGlobalMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,
 			String successKey, String logMessage) {
 		int maxWarps = ConfigManager.query(config -> config.getWarp().getMaximum());
-		future.whenComplete((result, throwable) -> player.level().getServer().execute(() -> {
-			ServerPlayer currentPlayer = player.level().getServer().getPlayerList().getPlayer(player.getUUID());
+		MinecraftServer server = player.level().getServer();
+		UUID playerUuid = player.getUUID();
+		future.whenComplete((result, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 			if (currentPlayer == null) {
 				return;
 			}
