@@ -106,12 +106,10 @@ public final class TeleportOperationManager {
 		Objects.requireNonNull(operationType, "operationType");
 		Objects.requireNonNull(visitor, "visitor");
 		int visited = 0;
-		Iterator<UUID> it = activePendingPlayers.iterator();
-		while (it.hasNext()) {
-			UUID playerUuid = it.next();
+		for (UUID playerUuid : new ArrayList<>(activePendingPlayers)) {
 			PlayerTeleportState state = states.get(playerUuid);
 			if (state == null || state.pending == null) {
-				it.remove();
+				activePendingPlayers.remove(playerUuid);
 				continue;
 			}
 			if (!operationType.isInstance(state.pending)) {

@@ -85,6 +85,10 @@ public final class TeleportCoreTestSuite {
 						"Verify create, replace, event cancel, success cooldown refresh, and quit cancel.",
 						"delayTicks=5 cooldownMillis=10000 createdAtTicks=[10,20,30,40] quitTick=50 eventCancelStatus=CANCELLED_BY_EVENT",
 						TeleportCoreTestSuite::testPendingLifecycle),
+				scenario("TeleportOperationManager visit mutation safety",
+						"Verify visitors may finish or cancel operations without mutating the active set during iteration.",
+						"pendingPlayers=2 visitorAction=cancelCurrent",
+						TeleportCoreTestSuite::testVisitCurrentOperationsMutationSafety),
 				scenario("TeleportBatchDispatcher fast path threshold",
 						"Verify same-tick fast path stops after the configured threshold.",
 						"fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD,
@@ -211,6 +215,25 @@ public final class TeleportCoreTestSuite {
 		debug("DATA pending.generic", "tpaSequence=" + tpa.pending().pendingSequence()
 				+ ", rtpSequence=" + rtp.pending().pendingSequence()
 				+ ", replacedType=" + rtp.replaced().get().getClass().getSimpleName());
+	}
+
+	private static void testVisitCurrentOperationsMutationSafety() {
+		TeleportOperationManager manager = new TeleportOperationManager();
+		UUID firstPlayer = UUID.randomUUID();
+		UUID secondPlayer = UUID.randomUUID();
+		manager.createPending(firstPlayer, request(), 1L);
+		manager.createPending(secondPlayer, request(), 1L);
+
+		int visited = manager.visitCurrentTargetPendings(pending -> {
+			assertTrue(manager.cancelPending(pending.playerUuid(), pending.pendingSequence(), TeleportStatus.CANCELLED),
+					"visitor should be able to cancel the current pending");
+			return true;
+		});
+
+		assertEquals(2, visited, "visitor should process both pending operations");
+		assertFalse(manager.hasCurrentOperations(), "all pending operations should be removed");
+		debug("DATA pending.visitMutation", "visited=" + visited
+				+ ", hasCurrentOperations=" + manager.hasCurrentOperations());
 	}
 
 	private static void testDispatcherFastPathThreshold() {

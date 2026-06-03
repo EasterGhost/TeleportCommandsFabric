@@ -139,7 +139,10 @@ public class PlayerProfileManager {
 			entry.cancelUnloadTask();
 			entry.unloadTask = scheduler.schedule(() -> queueUnloadIfIdle(uuid, entry), unloadDelay.toMillis(), TimeUnit.MILLISECONDS);
 			return null;
-		}, false).thenCompose(ignored -> save(uuid));
+		}, false).thenCompose(ignored -> save(uuid)).exceptionally(throwable -> {
+			ModConstants.LOGGER.error("Failed to save player profile on quit for {}", uuid, throwable);
+			return null;
+		});
 	}
 
 	public CompletableFuture<Void> shutdown() {
