@@ -138,6 +138,10 @@ public final class TeleportService {
 		return preloadManager.activeTicketCount();
 	}
 
+	public void configurePreload(boolean enabled, int radiusChunks) {
+		preloadManager.configure(enabled, radiusChunks);
+	}
+
 	private void handlePreloadTick() {
 		TeleportPreloadManager.PreloadTickResult result = preloadManager.tick(currentTick);
 		for (TargetTeleportExecution entry : result.ready()) {
@@ -178,19 +182,20 @@ public final class TeleportService {
 
 			TargetTeleportExecution entry = toExecutionEntry(pending, resolved.target());
 			if (!pending.isDelayDone(currentTick)) {
-				if (shouldStartPreloadDuringDelay(pending) && !pending.isPreloadStarted() && !preloadManager.isChunkLoaded(resolved.target())) {
+				if (shouldStartPreloadDuringDelay(pending) && !pending.isPreloadStarted()
+						&& preloadManager.preload(entry, currentTick)) {
 					pending.markPreloadStarted();
-					preloadManager.preload(entry, currentTick);
 					admitted[0]++;
 				}
 				return true;
 			}
 
-			if (!preloadManager.isChunkLoaded(resolved.target())) {
+			if (preloadManager.shouldPreload(resolved.target())) {
 				pending.markPreloadStarted();
-				preloadManager.preload(entry, currentTick);
-				admitted[0]++;
-				return true;
+				if (preloadManager.preload(entry, currentTick)) {
+					admitted[0]++;
+					return true;
+				}
 			}
 
 			submitReadyExecution(entry);

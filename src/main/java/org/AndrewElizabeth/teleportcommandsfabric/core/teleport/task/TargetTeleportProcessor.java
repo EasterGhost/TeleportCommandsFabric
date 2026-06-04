@@ -41,7 +41,7 @@ public final class TargetTeleportProcessor {
 
 		PreparedExecution prepared = preparation.execution();
 		TeleportTarget target = prepared.target();
-		if (entry.options().safetyEnabled()) {
+		if (shouldCheckSafety(entry)) {
 			Optional<BlockPos> safePos = TeleportSafety.getSafeBlockPos(BlockPos.containing(target.position()), target.world());
 			if (safePos.isEmpty()) {
 				return finishEntry(entry, TeleportStatus.NO_SAFE_POSITION);
@@ -61,7 +61,7 @@ public final class TargetTeleportProcessor {
 				continue;
 			}
 			PreparedExecution prepared = preparation.execution();
-			if (!entry.options().safetyEnabled()) {
+			if (!shouldCheckSafety(entry)) {
 				finishPreparedTeleport(prepared, prepared.target().position());
 				continue;
 			}
@@ -116,12 +116,15 @@ public final class TargetTeleportProcessor {
 			return Preparation.finished(finishEntry(entry, TeleportStatus.TARGET_UNAVAILABLE));
 		}
 
-		if (!preloadManager.isChunkLoaded(target)) {
-			preloadManager.preload(entry, currentTick);
+		if (preloadManager.preload(entry, currentTick)) {
 			return Preparation.finished(TeleportStatus.ACCEPTED);
 		}
 
 		return Preparation.ready(new PreparedExecution(server, entry, target));
+	}
+
+	private boolean shouldCheckSafety(TargetTeleportExecution entry) {
+		return entry.options().safetyEnabled() && preloadManager.isEnabled();
 	}
 
 	private Optional<BlockPos> joinSafetyCheck(PreparedSafetyCheck safetyCheck) {

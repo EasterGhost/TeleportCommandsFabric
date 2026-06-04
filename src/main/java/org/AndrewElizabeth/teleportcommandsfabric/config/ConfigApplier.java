@@ -22,6 +22,9 @@ public final class ConfigApplier {
 			TeleportCommands.GLOBAL_PROFILE_MANAGER.setDeleteInvalidWarps(policy.storage().deleteInvalidWarps());
 		}
 		TeleportEffects.setEnabled(policy.teleportEffects());
+		if (TeleportCommands.TELEPORT_SERVICE != null) {
+			TeleportCommands.TELEPORT_SERVICE.configurePreload(policy.preload().enabled(), policy.preload().radiusChunks());
+		}
 		XaeroSyncServer.applyConfig(policy.xaero().enabled(), policy.xaero().syncIntervalSeconds(),
 				policy.xaero().persistWaypointSets(), policy.xaero().warpSetName(), policy.xaero().homeSetName());
 	}
@@ -33,6 +36,9 @@ public final class ConfigApplier {
 						config.getHome().isDeleteInvalid(),
 						config.getWarp().isDeleteInvalid()),
 				config.getTeleporting().isTeleportEffects(),
+				new PreloadPolicy(
+						config.getTeleporting().isPreloadEnabled(),
+						config.getTeleporting().getPreloadRadiusChunks()),
 				new XaeroPolicy(
 						config.getXaero().isEnabled(),
 						config.getXaero().getSyncIntervalSeconds(),
@@ -41,10 +47,13 @@ public final class ConfigApplier {
 						config.getXaero().getHomeSetName())));
 	}
 
-	private record RuntimePolicy(StoragePolicy storage, boolean teleportEffects, XaeroPolicy xaero) {
+	private record RuntimePolicy(StoragePolicy storage, boolean teleportEffects, PreloadPolicy preload, XaeroPolicy xaero) {
 	}
 
 	private record StoragePolicy(Duration saveInterval, boolean deleteInvalidHomes, boolean deleteInvalidWarps) {
+	}
+
+	private record PreloadPolicy(boolean enabled, int radiusChunks) {
 	}
 
 	private record XaeroPolicy(boolean enabled, int syncIntervalSeconds, boolean persistWaypointSets,

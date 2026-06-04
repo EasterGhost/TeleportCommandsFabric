@@ -20,25 +20,49 @@ import java.util.UUID;
 public final class TeleportPreloadManager {
 	private final Map<Key, PreloadHandle> handles = new HashMap<>();
 	private static final PreloadTickResult EMPTY_TICK_RESULT = new PreloadTickResult(List.of(), List.of());
+	private volatile boolean enabled;
+	private volatile int radiusChunks = TeleportServiceSettings.PRELOAD_RADIUS_CHUNKS;
+	private volatile boolean releaseAllOnNextTick;
+
+	public void configure(boolean enabled, int radiusChunks) {
+		this.enabled = enabled;
+		this.radiusChunks = Math.max(0, radiusChunks);
+		if (!enabled) {
+			releaseAllOnNextTick = true;
+		}
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
  
 	public boolean isChunkLoaded(TeleportTarget target) {
 		Objects.requireNonNull(target, "target");
 		Vec3 position = target.position();
 		return target.world().isLoaded(BlockPos.containing(position));
 	}
+
+	public boolean shouldPreload(TeleportTarget target) {
+		return enabled && !isChunkLoaded(target);
+	}
  
-	public void preload(TargetTeleportExecution entry, long currentTick) {
+	public boolean preload(TargetTeleportExecution entry, long currentTick) {
+		if (!shouldPreload(entry.target())) {
+			return false;
+		}
 		Key key = Key.from(entry);
 		PreloadHandle existing = handles.get(key);
 		if (existing != null) {
-			return;
+			return true;
 		}
  
 		BlockPos blockPos = BlockPos.containing(entry.target().position());
 		ChunkPos chunkPos = new ChunkPos(blockPos.getX() >> 4, blockPos.getZ() >> 4);
+		int radius = radiusChunks;
 		ServerChunkCache chunkSource = entry.target().world().getChunkSource();
-		chunkSource.addTicketWithRadius(TicketType.UNKNOWN, chunkPos, TeleportServiceSettings.PRELOAD_RADIUS_CHUNKS);
-		handles.put(key, new PreloadHandle(entry, chunkPos, currentTick + TeleportServiceSettings.PRELOAD_TIMEOUT_TICKS));
+		chunkSource.addTicketWithRadius(TicketType.UNKNOWN, chunkPos, radius);
+		handles.put(key, new PreloadHandle(entry, chunkPos, radius, currentTick + TeleportServiceSettings.PRELOAD_TIMEOUT_TICKS));
+		return true;
 	}
  
 	public boolean isReady(TargetTeleportExecution entry) {
@@ -46,6 +70,10 @@ public final class TeleportPreloadManager {
 	}
  
 	public PreloadTickResult tick(long currentTick) {
+		if (releaseAllOnNextTick) {
+			releaseAllOnNextTick = false;
+			releaseAll();
+		}
 		if (handles.isEmpty()) {
 			return EMPTY_TICK_RESULT;
 		}
@@ -81,7 +109,7 @@ public final class TeleportPreloadManager {
 			return;
 		}
 		handle.entry.target().world().getChunkSource()
-				.removeTicketWithRadius(TicketType.UNKNOWN, handle.chunkPos, TeleportServiceSettings.PRELOAD_RADIUS_CHUNKS);
+				.removeTicketWithRadius(TicketType.UNKNOWN, handle.chunkPos, handle.radiusChunks);
 	}
  
 	public void releaseAll() {
@@ -109,12 +137,14 @@ public final class TeleportPreloadManager {
 	private static final class PreloadHandle {
 		private final TargetTeleportExecution entry;
 		private final ChunkPos chunkPos;
+		private final int radiusChunks;
 		private final long timeoutTick;
 		private boolean handedOff;
  
-		private PreloadHandle(TargetTeleportExecution entry, ChunkPos chunkPos, long timeoutTick) {
+		private PreloadHandle(TargetTeleportExecution entry, ChunkPos chunkPos, int radiusChunks, long timeoutTick) {
 			this.entry = entry;
 			this.chunkPos = chunkPos;
+			this.radiusChunks = radiusChunks;
 			this.timeoutTick = timeoutTick;
 			this.handedOff = false;
 		}

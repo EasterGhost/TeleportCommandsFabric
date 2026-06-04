@@ -5,8 +5,12 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -41,11 +45,16 @@ public final class SafetyThreadPool {
 			return;
 		}
 		BlockPos spawnPos = level.getRespawnData().pos();
+		ChunkPos chunkPos = new ChunkPos(spawnPos.getX() >> 4, spawnPos.getZ() >> 4);
+		int ticketRadius = 1;
+		level.getChunkSource().addTicketWithRadius(TicketType.UNKNOWN, chunkPos, ticketRadius);
+
 		int threads = TeleportServiceSettings.SAFETY_WORKER_THREADS;
 		int warmupIterationsPerThread = 250;
 		CyclicBarrier barrier = new CyclicBarrier(threads);
+		List<CompletableFuture<Void>> futures = new ArrayList<>(threads);
 		for (int i = 0; i < threads; i++) {
-			CompletableFuture.runAsync(() -> {
+			futures.add(CompletableFuture.runAsync(() -> {
 				try {
 					barrier.await(5, TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
@@ -61,8 +70,12 @@ public final class SafetyThreadPool {
 			}, safetyExecutor).exceptionally(throwable -> {
 				ModConstants.LOGGER.warn("Failed to warmup teleport safety worker", throwable);
 				return null;
-			});
+			}));
 		}
+
+		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+				.whenComplete((ignored, throwable) -> server.execute(() ->
+						level.getChunkSource().removeTicketWithRadius(TicketType.UNKNOWN, chunkPos, ticketRadius)));
 	}
 
 	public void shutdown() {
