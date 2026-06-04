@@ -34,28 +34,13 @@ public final class TargetTeleportProcessor {
 	}
 
 	public TeleportStatus executeOne(MinecraftServer server, TargetTeleportExecution entry, long currentTick) {
-		if (!operationManager.isCurrent(entry.pending())) {
-			return finishEntry(entry, TeleportStatus.CANCELLED);
+		Preparation preparation = prepareExecution(server, entry, currentTick);
+		if (!preparation.ready()) {
+			return preparation.status();
 		}
 
-		ServerPlayer player = server.getPlayerList().getPlayer(entry.playerUuid());
-		if (player == null) {
-			return finishEntry(entry, TeleportStatus.PLAYER_DISCONNECTED);
-		}
-		if (player.isDeadOrDying()) {
-			return finishEntry(entry, TeleportStatus.CANCELLED_BY_EVENT);
-		}
-
-		TeleportTarget target = entry.target();
-		if (server.getLevel(target.world().dimension()) == null) {
-			return finishEntry(entry, TeleportStatus.TARGET_UNAVAILABLE);
-		}
-
-		if (!preloadManager.isChunkLoaded(target)) {
-			preloadManager.preload(entry, currentTick);
-			return TeleportStatus.ACCEPTED;
-		}
-
+		PreparedExecution prepared = preparation.execution();
+		TeleportTarget target = prepared.target();
 		if (entry.options().safetyEnabled()) {
 			Optional<BlockPos> safePos = TeleportSafety.getSafeBlockPos(BlockPos.containing(target.position()), target.world());
 			if (safePos.isEmpty()) {
@@ -71,10 +56,11 @@ public final class TargetTeleportProcessor {
 	public void executeBatch(MinecraftServer server, List<TargetTeleportExecution> entries, long currentTick) {
 		List<PreparedSafetyCheck> safetyChecks = null;
 		for (TargetTeleportExecution entry : entries) {
-			PreparedExecution prepared = prepareBatchExecution(server, entry, currentTick);
-			if (prepared == null) {
+			Preparation preparation = prepareExecution(server, entry, currentTick);
+			if (!preparation.ready()) {
 				continue;
 			}
+			PreparedExecution prepared = preparation.execution();
 			if (!entry.options().safetyEnabled()) {
 				finishPreparedTeleport(prepared, prepared.target().position());
 				continue;
@@ -112,34 +98,30 @@ public final class TargetTeleportProcessor {
 		return result;
 	}
 
-	private PreparedExecution prepareBatchExecution(MinecraftServer server, TargetTeleportExecution entry, long currentTick) {
+	private Preparation prepareExecution(MinecraftServer server, TargetTeleportExecution entry, long currentTick) {
 		if (!operationManager.isCurrent(entry.pending())) {
-			finishEntry(entry, TeleportStatus.CANCELLED);
-			return null;
+			return Preparation.finished(finishEntry(entry, TeleportStatus.CANCELLED));
 		}
 
 		ServerPlayer player = server.getPlayerList().getPlayer(entry.playerUuid());
 		if (player == null) {
-			finishEntry(entry, TeleportStatus.PLAYER_DISCONNECTED);
-			return null;
+			return Preparation.finished(finishEntry(entry, TeleportStatus.PLAYER_DISCONNECTED));
 		}
 		if (player.isDeadOrDying()) {
-			finishEntry(entry, TeleportStatus.CANCELLED_BY_EVENT);
-			return null;
+			return Preparation.finished(finishEntry(entry, TeleportStatus.CANCELLED_BY_EVENT));
 		}
 
 		TeleportTarget target = entry.target();
 		if (server.getLevel(target.world().dimension()) == null) {
-			finishEntry(entry, TeleportStatus.TARGET_UNAVAILABLE);
-			return null;
+			return Preparation.finished(finishEntry(entry, TeleportStatus.TARGET_UNAVAILABLE));
 		}
 
 		if (!preloadManager.isChunkLoaded(target)) {
 			preloadManager.preload(entry, currentTick);
-			return null;
+			return Preparation.finished(TeleportStatus.ACCEPTED);
 		}
 
-		return new PreparedExecution(server, entry, target);
+		return Preparation.ready(new PreparedExecution(server, entry, target));
 	}
 
 	private Optional<BlockPos> joinSafetyCheck(PreparedSafetyCheck safetyCheck) {
@@ -166,6 +148,22 @@ public final class TargetTeleportProcessor {
 			MinecraftServer server,
 			TargetTeleportExecution entry,
 			TeleportTarget target) {
+	}
+
+	private record Preparation(
+			PreparedExecution execution,
+			TeleportStatus status) {
+		static Preparation ready(PreparedExecution execution) {
+			return new Preparation(execution, TeleportStatus.ACCEPTED);
+		}
+
+		static Preparation finished(TeleportStatus status) {
+			return new Preparation(null, status);
+		}
+
+		boolean ready() {
+			return execution != null;
+		}
 	}
 
 	private record PreparedSafetyCheck(
