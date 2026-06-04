@@ -197,17 +197,17 @@ public final class AdminCommand {
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildDisableNode() {
 		return Commands.literal("disable")
+				.requires(AdminCommand::isOpOrConsole)
 				.then(Commands.argument("command", StringArgumentType.word())
 						.suggests(ENABLED_SUGGESTER)
-						.requires(AdminCommand::isOpOrConsole)
 						.executes(context -> toggleModule(context, false)));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildEnableNode() {
 		return Commands.literal("enable")
+				.requires(AdminCommand::isOpOrConsole)
 				.then(Commands.argument("command", StringArgumentType.word())
 						.suggests(DISABLED_SUGGESTER)
-						.requires(AdminCommand::isOpOrConsole)
 						.executes(context -> toggleModule(context, true)));
 	}
 

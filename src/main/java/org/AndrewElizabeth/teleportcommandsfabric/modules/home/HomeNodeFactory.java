@@ -23,7 +23,6 @@ final class HomeNodeFactory {
 		return Commands.literal(literal)
 				.requires(HomeNodeFactory::requiresPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
-						.suggests(HOME_SUGGESTIONS)
 						.executes(context -> HomeMutationHandler.setHome(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "name"), temporary)));
 	}
