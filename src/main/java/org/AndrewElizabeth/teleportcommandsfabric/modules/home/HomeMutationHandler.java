@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudServ
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -211,6 +212,6 @@ final class HomeMutationHandler {
 
 	private static long temporaryHomeExpiredTime() {
 		int ttlSeconds = ConfigManager.query(config -> config.getHome().getTemporaryHomeTtlSeconds());
-		return System.currentTimeMillis() + ttlSeconds * 1000L;
+		return System.currentTimeMillis() + TimeUtils.secondsToMillis(ttlSeconds);
 	}
 }

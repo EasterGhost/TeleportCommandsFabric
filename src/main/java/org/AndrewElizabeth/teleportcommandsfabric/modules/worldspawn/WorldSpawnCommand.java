@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportSt
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
 import net.minecraft.ChatFormatting;
@@ -27,8 +28,6 @@ import net.minecraft.world.level.Level;
 import java.util.concurrent.CompletableFuture;
 
 public final class WorldSpawnCommand {
-	private static final int TICKS_PER_SECOND = 20;
-	private static final long MILLIS_PER_SECOND = 1000L;
 	private static final String ARG_DISABLE_SAFETY = "disableSafety";
 
 	private WorldSpawnCommand() {
@@ -130,8 +129,8 @@ public final class WorldSpawnCommand {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new WorldSpawnCommandSettings(config.getWorldSpawn().isEnabled(), config.getWorldSpawn().getWorld_id(),
-				delaySeconds, delaySeconds * TICKS_PER_SECOND, cooldownSeconds,
-				cooldownSeconds * MILLIS_PER_SECOND);
+				delaySeconds, TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds,
+				TimeUtils.secondsToMillis(cooldownSeconds));
 	}
 
 	private record WorldSpawnCommandSettings(boolean enabled, String worldId, int delaySeconds, int delayTicks,

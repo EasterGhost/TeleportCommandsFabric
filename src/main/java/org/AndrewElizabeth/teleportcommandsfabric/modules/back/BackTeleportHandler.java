@@ -11,6 +11,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTa
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
@@ -26,8 +27,6 @@ final class BackTeleportHandler {
 	private static final String MODE_TP = "tp";
 	private static final String COMMAND_BACK_DEATH_FORCE = COMMAND_BACK + " " + MODE_DEATH + " true";
 	private static final String COMMAND_BACK_TP_FORCE = COMMAND_BACK + " " + MODE_TP + " true";
-	private static final int TICKS_PER_SECOND = 20;
-	private static final long MILLIS_PER_SECOND = 1000L;
 
 	private BackTeleportHandler() {
 	}
@@ -185,8 +184,8 @@ final class BackTeleportHandler {
 	private static BackCommandSettings settingsFrom(Config config) {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
-		return new BackCommandSettings(delaySeconds, delaySeconds * TICKS_PER_SECOND, cooldownSeconds,
-				cooldownSeconds * MILLIS_PER_SECOND, config.getBack().isDeleteAfterTeleport());
+		return new BackCommandSettings(delaySeconds, TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds,
+				TimeUtils.secondsToMillis(cooldownSeconds), config.getBack().isDeleteAfterTeleport());
 	}
 
 	private record BackCommandSettings(int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis,

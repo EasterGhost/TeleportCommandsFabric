@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -21,9 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public final class RtpCommand {
-	private static final int TICKS_PER_SECOND = 20;
-	private static final long MILLIS_PER_SECOND = 1000L;
-
 	private RtpCommand() {
 	}
 
@@ -87,8 +85,8 @@ public final class RtpCommand {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new RtpCommandSettings(config.getRtp().isEnabled(), config.getRtp().getMinRadius(),
-				config.getRtp().getMaxRadius(), delaySeconds, delaySeconds * TICKS_PER_SECOND,
-				cooldownSeconds, cooldownSeconds * MILLIS_PER_SECOND);
+				config.getRtp().getMaxRadius(), delaySeconds, TimeUtils.secondsToTicks(delaySeconds),
+				cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds));
 	}
 
 	private static void sendResult(MinecraftServer server, UUID playerUuid, int cooldownSeconds, TeleportStatus status,

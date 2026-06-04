@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSy
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -37,7 +38,7 @@ public final class XaeroSyncServer {
 
 	public static void applyConfig(boolean enabled, int syncIntervalSeconds, boolean persistWaypointSets,
 			String warpSetName, String homeSetName) {
-		runtimeConfig = new XaeroRuntimeConfig(enabled, syncIntervalSeconds, syncIntervalSeconds * 1000L,
+		runtimeConfig = new XaeroRuntimeConfig(enabled, syncIntervalSeconds, TimeUtils.secondsToMillis(syncIntervalSeconds),
 				persistWaypointSets, warpSetName, homeSetName);
 	}
 
@@ -94,7 +95,7 @@ public final class XaeroSyncServer {
 		}
 
 		long now = System.currentTimeMillis();
-		long intervalMs = intervalSeconds * 1000L;
+		long intervalMs = TimeUtils.secondsToMillis(intervalSeconds);
 
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			UUID uuid = player.getUUID();

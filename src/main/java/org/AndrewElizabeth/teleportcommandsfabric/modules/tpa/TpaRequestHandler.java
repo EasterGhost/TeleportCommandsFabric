@@ -8,6 +8,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
@@ -19,9 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class TpaRequestHandler {
-	private static final int TICKS_PER_SECOND = 20;
-	private static final long MILLIS_PER_SECOND = 1000L;
-
 	private TpaRequestHandler() {
 	}
 
@@ -144,7 +142,7 @@ final class TpaRequestHandler {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new TpaCommandSettings(config.getTpa().isEnabled(), config.getTpa().getRequestExpireTime(),
-				delaySeconds * TICKS_PER_SECOND, cooldownSeconds, cooldownSeconds * MILLIS_PER_SECOND);
+				TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds));
 	}
 
 	private record TpaCommandSettings(boolean enabled, Duration expiry, int delayTicks, int cooldownSeconds,

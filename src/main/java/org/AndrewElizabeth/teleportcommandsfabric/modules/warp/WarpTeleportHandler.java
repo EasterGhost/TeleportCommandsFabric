@@ -15,6 +15,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudServ
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
@@ -27,9 +28,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class WarpTeleportHandler {
-	private static final int TICKS_PER_SECOND = 20;
-	private static final long MILLIS_PER_SECOND = 1000L;
-
 	private WarpTeleportHandler() {
 	}
 
@@ -165,8 +163,8 @@ final class WarpTeleportHandler {
 	private static WarpCommandSettings settingsFrom(Config config) {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
-		return new WarpCommandSettings(delaySeconds, delaySeconds * TICKS_PER_SECOND,
-				cooldownSeconds, cooldownSeconds * MILLIS_PER_SECOND,
+		return new WarpCommandSettings(delaySeconds, TimeUtils.secondsToTicks(delaySeconds),
+				cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds),
 				config.getWarp().isDeleteInvalid());
 	}
 
