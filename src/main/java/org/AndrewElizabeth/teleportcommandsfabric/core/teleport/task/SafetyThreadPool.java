@@ -59,7 +59,11 @@ public final class SafetyThreadPool {
 					barrier.await(5, TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
+					return;
 				} catch (Exception ignored) {
+				}
+				if (!waitForChunks(level, spawnPos)) {
+					return;
 				}
 				for (int j = 0; j < warmupIterationsPerThread; j++) {
 					if (TeleportSafety.getSafeBlockPos(spawnPos, level).isEmpty()) {
@@ -76,6 +80,21 @@ public final class SafetyThreadPool {
 		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
 				.whenComplete((ignored, throwable) -> server.execute(() ->
 						level.getChunkSource().removeTicketWithRadius(TicketType.UNKNOWN, chunkPos, ticketRadius)));
+	}
+
+	private static boolean waitForChunks(ServerLevel level, BlockPos pos) {
+		for (int retries = 0; retries < 40; retries++) {
+			if (level.isLoaded(pos)) {
+				return true;
+			}
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return false;
+			}
+		}
+		return false;
 	}
 
 	public void shutdown() {
