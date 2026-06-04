@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.HomeConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.RtpConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.StorageConfig;
+import org.AndrewElizabeth.teleportcommandsfabric.config.section.TeleportingConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.WarpConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
@@ -84,7 +85,16 @@ public final class AdminCommand {
 				.then(AdminConfigNodeFactory.boolNode("effects",
 						config -> config.getTeleporting().isTeleportEffects(),
 						(config, value) -> config.getTeleporting().setTeleportEffects(value),
-						"commands.teleport_commands.admin.config.teleporting.effects"));
+						"commands.teleport_commands.admin.config.teleporting.effects"))
+				.then(AdminConfigNodeFactory.boolNode("preload",
+						config -> config.getTeleporting().isPreloadEnabled(),
+						(config, value) -> config.getTeleporting().setPreloadEnabled(value),
+						"commands.teleport_commands.admin.config.teleporting.preload"))
+				.then(AdminConfigNodeFactory.intNode("preloadRadius", "chunks",
+						TeleportingConfig.MIN_PRELOAD_RADIUS_CHUNKS,
+						config -> config.getTeleporting().getPreloadRadiusChunks(),
+						(config, value) -> config.getTeleporting().setPreloadRadiusChunks(value),
+						"commands.teleport_commands.admin.config.teleporting.preloadRadius"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildBackConfigNode() {

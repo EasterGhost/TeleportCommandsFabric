@@ -26,7 +26,12 @@ public final class AdminHelpRenderer {
 					config("cooldown", "/tpc config teleporting cooldown <seconds>", "/tpc config teleporting cooldown ",
 							"commands.teleport_commands.admin.help.desc.config.teleporting.cooldown"),
 					config("effects", "/tpc config teleporting effects <true|false>", "/tpc config teleporting effects ",
-							"commands.teleport_commands.admin.help.desc.config.teleporting.effects"))),
+							"commands.teleport_commands.admin.help.desc.config.teleporting.effects"),
+					config("preload", "/tpc config teleporting preload <true|false>", "/tpc config teleporting preload ",
+							"commands.teleport_commands.admin.help.desc.config.teleporting.preload"),
+					config("preloadRadius", "/tpc config teleporting preloadRadius <chunks>",
+							"/tpc config teleporting preloadRadius ",
+							"commands.teleport_commands.admin.help.desc.config.teleporting.preloadRadius"))),
 			new ConfigGroup("back", List.of(
 					config("deleteAfterTeleport", "/tpc config back deleteAfterTeleport <true|false>",
 							"/tpc config back deleteAfterTeleport ",
