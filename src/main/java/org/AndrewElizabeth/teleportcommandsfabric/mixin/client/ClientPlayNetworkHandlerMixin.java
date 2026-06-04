@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 
+import java.util.Locale;
+
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPlayNetworkHandlerMixin {
 
@@ -38,7 +40,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 			return false;
 		}
 
-		String normalized = command.trim().toLowerCase();
+		String normalized = command.trim().toLowerCase(Locale.ROOT);
 		if (normalized.startsWith("/")) {
 			normalized = normalized.substring(1);
 		}

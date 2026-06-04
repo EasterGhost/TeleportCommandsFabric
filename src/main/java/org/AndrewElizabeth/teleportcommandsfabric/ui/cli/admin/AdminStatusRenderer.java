@@ -9,6 +9,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
 import java.util.List;
+import java.util.Locale;
 
 public final class AdminStatusRenderer {
 	private static final String RUN_ROOT_COMMAND = "tpc";
@@ -67,6 +68,6 @@ public final class AdminStatusRenderer {
 	}
 
 	private String normalizeLanguage(String language) {
-		return language == null || language.isBlank() ? "en_us" : language.toLowerCase();
+		return language == null || language.isBlank() ? "en_us" : language.toLowerCase(Locale.ROOT);
 	}
 }

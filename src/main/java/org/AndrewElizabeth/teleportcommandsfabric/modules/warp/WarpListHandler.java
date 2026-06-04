@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -106,7 +107,7 @@ final class WarpListHandler {
 	}
 
 	private static String language(ServerPlayer player) {
-		return player.clientInformation().language().toLowerCase();
+		return player.clientInformation().language().toLowerCase(Locale.ROOT);
 	}
 
 	private record WarpPageData(List<NamedLocationView> warps, Set<UUID> hiddenWarpUuids) {

@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Locale;
 
 public class ConfigMigrator {
 	public static void migrate(Path configFile, Gson gson, int defaultVersion) throws IOException {
@@ -93,7 +94,7 @@ public class ConfigMigrator {
 		}
 
 		String original = xaero.get(key).getAsString();
-		String normalized = original.trim().toLowerCase();
+		String normalized = original.trim().toLowerCase(Locale.ROOT);
 		if (shouldFallbackToDefaultSet(normalized, isWarp)) {
 			xaero.addProperty(key, "Default");
 		}

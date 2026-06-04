@@ -8,6 +8,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
+import java.util.Locale;
 import java.util.Objects;
 
 public final class PagePickerRenderer {
@@ -25,7 +26,7 @@ public final class PagePickerRenderer {
 		WaypointListQuery safeQuery = query == null ? WaypointListQuery.defaultQuery() : query;
 		int safeTotalPages = Math.max(1, totalPages);
 		int safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
-		String safeLanguage = language == null || language.isBlank() ? "en_us" : language.toLowerCase();
+		String safeLanguage = language == null || language.isBlank() ? "en_us" : language.toLowerCase(Locale.ROOT);
 
 		MutableComponent picker = Component.empty();
 		picker.append(ComponentSupport.translate("commands.teleport_commands.common.pagePickerTitle", safeLanguage,

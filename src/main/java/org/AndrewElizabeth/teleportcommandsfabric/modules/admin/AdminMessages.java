@@ -8,6 +8,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Locale;
+
 final class AdminMessages {
 	private static final String DEFAULT_LANGUAGE = "en_us";
 
@@ -16,7 +18,7 @@ final class AdminMessages {
 
 	static String language(CommandSourceStack source) {
 		ServerPlayer player = source.getPlayer();
-		return player == null ? DEFAULT_LANGUAGE : player.clientInformation().language().toLowerCase();
+		return player == null ? DEFAULT_LANGUAGE : player.clientInformation().language().toLowerCase(Locale.ROOT);
 	}
 
 	static MutableComponent t(CommandSourceStack source, String key, MutableComponent... args) {

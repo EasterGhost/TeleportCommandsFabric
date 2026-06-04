@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +30,7 @@ public final class TranslationHelper {
 	}
 
 	public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player, MutableComponent... args) {
-		String language = player.clientInformation().language().toLowerCase();
+		String language = player.clientInformation().language().toLowerCase(Locale.ROOT);
 		return getTranslatedText(key, language, args);
 	}
 
@@ -49,7 +50,7 @@ public final class TranslationHelper {
 	}
 
 	private static String getTranslation(String language, String key) {
-		String safeLanguage = language == null || language.isBlank() ? "en_us" : language;
+		String safeLanguage = language == null || language.isBlank() ? "en_us" : language.toLowerCase(Locale.ROOT);
 		String translation = getLanguage(safeLanguage).get(key);
 		if (translation == null && !"en_us".equals(safeLanguage)) {
 			translation = getLanguage("en_us").get(key);

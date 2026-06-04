@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationVi
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,6 +21,6 @@ public record WaypointPageRequest(
 		locations = locations == null ? List.of() : List.copyOf(locations);
 		hiddenWarpUuids = hiddenWarpUuids == null ? Set.of() : Set.copyOf(hiddenWarpUuids);
 		query = query == null ? WaypointListQuery.defaultQuery() : query;
-		language = language == null || language.isBlank() ? "en_us" : language.toLowerCase();
+		language = language == null || language.isBlank() ? "en_us" : language.toLowerCase(Locale.ROOT);
 	}
 }

@@ -16,6 +16,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -87,7 +88,7 @@ final class HomeListHandler {
 	}
 
 	private static String language(ServerPlayer player) {
-		return player.clientInformation().language().toLowerCase();
+		return player.clientInformation().language().toLowerCase(Locale.ROOT);
 	}
 
 	private record HomePageData(List<NamedLocationView> homes, UUID defaultHomeUuid) {

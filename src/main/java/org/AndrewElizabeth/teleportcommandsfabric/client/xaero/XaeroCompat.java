@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -205,7 +206,7 @@ public final class XaeroCompat {
 		if (setName == null || setName.isBlank()) {
 			return true;
 		}
-		String normalized = setName.trim().toLowerCase();
+		String normalized = setName.trim().toLowerCase(Locale.ROOT);
 		return DEFAULT_SET_SENTINEL.equals(normalized)
 				|| CURRENT_SET_SENTINEL.equals(normalized);
 	}
@@ -216,7 +217,7 @@ public final class XaeroCompat {
 		}
 
 		String trimmed = setName.trim();
-		String normalized = trimmed.toLowerCase();
+		String normalized = trimmed.toLowerCase(Locale.ROOT);
 		if (DEFAULT_SET_SENTINEL.equals(normalized) || CURRENT_SET_SENTINEL.equals(normalized)) {
 			return DEFAULT_SET_SENTINEL;
 		}
