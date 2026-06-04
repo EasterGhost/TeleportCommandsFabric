@@ -104,7 +104,7 @@ final class TpaRequestHandler {
 		try {
 			CompletableFuture<TeleportStatus> result = TeleportCommands.TPA_SERVICE.acceptRequest(server, session.sessionId());
 			if (result.isDone()) {
-				sendFailureStatus(recipient, sender, session, result.join(), settings.cooldownSeconds());
+				sendImmediateStatus(recipient, sender, session, result.join(), settings.cooldownSeconds());
 				return 0;
 			}
 			TpaMessages.sendAccepted(recipient, sender);
@@ -127,6 +127,15 @@ final class TpaRequestHandler {
 			TpaMessages.send(recipient, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 			return 1;
 		}
+	}
+
+	private static void sendImmediateStatus(ServerPlayer recipient, ServerPlayer sender, Tpa.Session session,
+			TeleportStatus status, int cooldownSeconds) {
+		if (status == TeleportStatus.SUCCESS) {
+			TpaMessages.sendAccepted(recipient, sender);
+			return;
+		}
+		sendFailureStatus(recipient, sender, session, status, cooldownSeconds);
 	}
 
 	private static void sendFailureStatus(ServerPlayer recipient, ServerPlayer sender, Tpa.Session session,

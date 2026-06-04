@@ -174,6 +174,8 @@ final class HomeMutationHandler {
 		case LIMIT_REACHED -> HomeMessages.sendMaxReached(player, maxHomes);
 		case TEMP_HOME_EXISTS -> HomeMessages.send(player, "commands.teleport_commands.home.tempExists", ChatFormatting.RED);
 		case CANNOT_BE_DEFAULT -> HomeMessages.send(player, "commands.teleport_commands.home.defaultTemporary", ChatFormatting.RED);
+		case DEFAULT_NOT_SUPPORTED -> HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED,
+				ChatFormatting.BOLD);
 		default -> HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 		}
 	}

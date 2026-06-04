@@ -189,8 +189,7 @@ public class WaypointCrudService {
 	public static CompletableFuture<WaypointOperationResult> setDefault(String name, AsyncWaypointSource source) {
 		return source.mutateAtomic(accessor -> {
 			if (!source.isDefaultSupported()) {
-				// Sources without default support expose this as "no default target found" to callers.
-				return WaypointOperationResult.NOT_FOUND;
+				return WaypointOperationResult.DEFAULT_NOT_SUPPORTED;
 			}
 
 			Optional<NamedLocation> locationOpt = accessor.findByName(name);
