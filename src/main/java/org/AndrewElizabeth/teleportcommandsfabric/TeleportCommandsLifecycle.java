@@ -27,6 +27,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class TeleportCommandsLifecycle {
+	private static boolean playerConnectionEventsRegistered;
+
 	private TeleportCommandsLifecycle() {
 	}
 
@@ -42,7 +44,6 @@ final class TeleportCommandsLifecycle {
 		ConfigManager.initialize();
 		loadStorageManagers();
 		XaeroSyncServer.initialize();
-		registerPlayerConnectionEvents();
 	}
 
 	static void tick(MinecraftServer server) {
@@ -94,7 +95,12 @@ final class TeleportCommandsLifecycle {
 		CompletableFuture.allOf(globalLoad, recordLoad).join();
 	}
 
-	private static void registerPlayerConnectionEvents() {
+	static synchronized void registerPlayerConnectionEvents() {
+		if (playerConnectionEventsRegistered) {
+			return;
+		}
+		playerConnectionEventsRegistered = true;
+
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
 			UUID playerUuid = handler.player.getUUID();
 			if (TeleportCommands.PLAYER_PROFILE_MANAGER != null) {

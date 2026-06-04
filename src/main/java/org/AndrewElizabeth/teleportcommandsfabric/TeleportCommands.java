@@ -47,6 +47,7 @@ public class TeleportCommands implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTING.register(TeleportCommands::initializeMod);
 		ServerTickEvents.END_SERVER_TICK.register(TeleportCommandsLifecycle::tick);
 		ServerLifecycleEvents.SERVER_STOPPING.register(TeleportCommandsLifecycle::shutdown);
+		TeleportCommandsLifecycle.registerPlayerConnectionEvents();
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
 		MOD_LOADER = "Fabric";
 	}
