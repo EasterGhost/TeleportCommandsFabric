@@ -43,7 +43,7 @@ final class WarpNodeFactory {
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(WARP_SUGGESTIONS)
 						.executes(context -> WarpTeleportHandler.teleportWarp(context.getSource().getPlayerOrException(),
-								StringArgumentType.getString(context, "name"), false))
+								StringArgumentType.getString(context, "name"), true))
 						.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 								.executes(context -> WarpTeleportHandler.teleportWarp(context.getSource().getPlayerOrException(),
 										StringArgumentType.getString(context, "name"),
