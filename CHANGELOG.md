@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 Version history below is based on the repository tag history, local commit history, and the public release versions already published for this project. Earlier entries are backfilled from code history and may be less detailed than newer releases.
 
+## Data Version History
+
+The config and storage schema versions are tracked separately from the mod release version.
+
+| Mod version     | Config version | Storage version | Data compatibility notes                                                                                                                                                            |
+| --------------- | -------------: | --------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.0             |              3 |               1 | Core refactoring release. Dynamically applied config and independent storage format. |
+| 1.7             |              2 |               5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
+| 1.6.1/1.5.2     |              2 |               4 | Corrected the declared storage schema for UUID-based home/warp identity,`DefaultHomeUuid`, and `HiddenWarpUuids`; repairs historical files from the earlier `v3` declaration. |
+| 1.6             |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                  |
+| 1.5.1           |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                  |
+| 1.5             |              2 |               3 | Storage `v3` is the intended `1.5` baseline for Xaero visibility and named-location metadata before the UUID-based layout correction.                                      |
+| 1.4             |              2 |               2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
+| 1.3             |              2 |               2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
+| 1.2 and earlier |   not embedded |    not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+
+## [2.0] - 2026-06-03
+
+### Added
+
+- **NBT-based Storage Engine**: Migrated the storage system to a high-performance NBT-based profile storage engine, replacing legacy JSON storage for superior persistence stability.
+- **Legacy Migrators**: Built integrated Storage v5 and Config v3 migrators, ensuring seamless automated upgrades of historical JSON settings from older versions.
+- **Adaptive Execution RTP Service**: Implemented a new RTP random teleport service supporting adaptive scheduling, seamlessly switching between serial ticks-throttled checks and parallel virtual-thread-based searches under backlog pressure.
+- **Configurable Temporary Home TTL**: Added configurable Time-To-Live (TTL) support for Temporary Homes with automated cleanup upon expiration.
+- **Native Version Updates**: Built native compatibility for Fabric 26.1.2 and Xaero Minimap/Worldmap 26.1.2.
+
+### Changed
+
+- **Shared Operation Flow**: Introduced a unified `TeleportOperation` model, centralizing teleport state-transitions, chunk preloading, and cooldowns within a shared `TeleportOperationManager`.
+- **Shared Query Infrastructure**: Refactored command arguments to share common parsing, sorting, and dimension/prefix filtering nodes across warp and home queries.
+- **Asynchronous CLI Page Rendering**: Completed the CLI rendering layer under `WaypointPages` to assemble paged Component outputs asynchronously.
+- **Unified Config Applier**: Wired runtime settings adjustments to update live services dynamically via `ConfigApplier`.
+- **Lifecycle Decoupling**: Moved server lifecycle event subscriptions out of the primary ModInitializer into a dedicated Lifecycle Manager.
+- **Normalized Safety Toggles**: Unified command safety toggle argument names across all packages to `Disable Safety`.
+- **Storage Layer Reorganization**: Reorganized the storage package, separating responsibilities into dedicated modules for NBT codecs, disk I/O limiters, and managers for player, global, and recorded location profiles.
+
+### Fixed
+
+- **Translation Quality**: Cleaned localizations to resolve translation key overlaps, and resolved a concurrency issue during translation loading to prevent circular nested cache initialization.
+- **Heavy Concurrency Hardening**: Strengthened state checks and boundaries for teleport operations and waypoints updates under multi-player concurrency.
+
 ## [1.6.1] - 2026-04-03
 
 ### Changed

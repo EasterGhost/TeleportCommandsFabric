@@ -1,0 +1,45 @@
+package org.AndrewElizabeth.teleportcommandsfabric.modules.back;
+
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+
+final class BackNodeFactory {
+	private static final String COMMAND_BACK = "back";
+	private static final String MODE_DEATH = "death";
+	private static final String MODE_TP = "tp";
+	private static final String ARG_DISABLE_SAFETY = "disableSafety";
+
+	private BackNodeFactory() {
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildBackNode() {
+		return Commands.literal(COMMAND_BACK)
+				.requires(source -> source.getPlayer() != null)
+				.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(), null))
+				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
+						.requires(source -> source.getPlayer() != null)
+						.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(),
+								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))))
+				.then(buildBackModeNode(MODE_DEATH, BackTeleportHandler::handleBackDeath))
+				.then(buildBackModeNode(MODE_TP, BackTeleportHandler::handleBackTp));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildBackModeNode(String mode, BackModeHandler handler) {
+		return Commands.literal(mode)
+				.requires(source -> source.getPlayer() != null)
+				.executes(context -> handler.run(context.getSource().getPlayerOrException(), null))
+				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
+						.requires(source -> source.getPlayer() != null)
+						.executes(context -> handler.run(context.getSource().getPlayerOrException(),
+								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))));
+	}
+
+	@FunctionalInterface
+	private interface BackModeHandler {
+		int run(ServerPlayer player, Boolean safetyDisabledOverride);
+	}
+}

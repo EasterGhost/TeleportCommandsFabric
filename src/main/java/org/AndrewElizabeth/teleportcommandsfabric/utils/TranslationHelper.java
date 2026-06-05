@@ -2,9 +2,11 @@ package org.AndrewElizabeth.teleportcommandsfabric.utils;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import org.AndrewElizabeth.teleportcommandsfabric.Constants;
-import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.jetbrains.annotations.NotNull;
+
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,13 +15,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.AndrewElizabeth.teleportcommandsfabric.Constants.ASSETS_ID;
 
 public final class TranslationHelper {
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%(\\d+)%");
@@ -28,14 +29,12 @@ public final class TranslationHelper {
 	private TranslationHelper() {
 	}
 
-	public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player,
-			MutableComponent... args) {
-		String language = player.clientInformation().language().toLowerCase();
+	public static @NotNull MutableComponent getTranslatedText(String key, ServerPlayer player, MutableComponent... args) {
+		String language = player.clientInformation().language().toLowerCase(Locale.ROOT);
 		return getTranslatedText(key, language, args);
 	}
 
-	public static @NotNull MutableComponent getTranslatedText(String key, String language,
-			MutableComponent... args) {
+	public static @NotNull MutableComponent getTranslatedText(String key, String language, MutableComponent... args) {
 		try {
 			return buildTranslatedComponent(getTranslation(language, key), args);
 		} catch (Exception e) {
@@ -45,29 +44,33 @@ public final class TranslationHelper {
 				}
 			} catch (Exception ignored) {
 			}
-			Constants.LOGGER.error("Key \"{}\" not found in the default language (en_us), sending raw key as fallback.",
-					key);
+			DebugLog.error("Key \"{}\" not found in the default language (en_us), sending raw key as fallback.", key);
 			return Component.literal(key);
 		}
 	}
 
 	private static String getTranslation(String language, String key) {
-		Map<String, String> translations = TRANSLATION_CACHE.computeIfAbsent(language, TranslationHelper::loadLanguage);
-		String translation = translations.get(key);
-		if (translation == null) {
-			throw new IllegalArgumentException("Missing translation key: " + key);
+		String safeLanguage = language == null || language.isBlank() ? "en_us" : language.toLowerCase(Locale.ROOT);
+		String translation = getLanguage(safeLanguage).get(key);
+		if (translation == null && !"en_us".equals(safeLanguage)) {
+			translation = getLanguage("en_us").get(key);
 		}
-		return translation;
+		if (translation != null) {
+			return translation;
+		}
+		throw new IllegalArgumentException("Missing translation key: " + key);
+	}
+
+	private static Map<String, String> getLanguage(String language) {
+		return TRANSLATION_CACHE.computeIfAbsent(language, TranslationHelper::loadLanguage);
 	}
 
 	private static Map<String, String> loadLanguage(String language) {
-		String filePath = String.format("/assets/%s/lang/%s.json", ASSETS_ID, language);
-		try (InputStream stream = TeleportCommands.class.getResourceAsStream(filePath)) {
+		String filePath = String.format("/assets/%s/lang/%s.json", ModConstants.ASSETS_ID, language);
+		try (InputStream stream = TranslationHelper.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
-				Constants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.",
-						language);
-				return "en_us".equals(language) ? new ConcurrentHashMap<>()
-						: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
+				DebugLog.warn("Couldn't find the required language file for \"{}\", falling back to en_us.", language);
+				return Map.of();
 			}
 			Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 			JsonElement json = JsonParser.parseReader(reader);
@@ -76,9 +79,8 @@ public final class TranslationHelper {
 					.forEach(entry -> translations.put(entry.getKey(), entry.getValue().getAsString()));
 			return translations;
 		} catch (Exception e) {
-			Constants.LOGGER.warn("Failed to load language file: {}, falling back to en_us.", language, e);
-			return "en_us".equals(language) ? new ConcurrentHashMap<>()
-					: TRANSLATION_CACHE.computeIfAbsent("en_us", TranslationHelper::loadLanguage);
+			DebugLog.warn("Failed to load language file: {}, falling back to en_us.", language, e);
+			return Map.of();
 		}
 	}
 
@@ -96,7 +98,7 @@ public final class TranslationHelper {
 				component.append(args[index]);
 			} else {
 				component.append(
-						Component.literal("{MISSING_ARG:" + index + "}").withStyle(net.minecraft.ChatFormatting.RED));
+						Component.literal("{MISSING_ARG:" + index + "}").withStyle(ChatFormatting.RED));
 			}
 
 			lastIndex = matcher.end();

@@ -1,12 +1,15 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.client;
 
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+
+import java.util.Locale;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPlayNetworkHandlerMixin {
@@ -37,7 +40,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 			return false;
 		}
 
-		String normalized = command.trim().toLowerCase();
+		String normalized = command.trim().toLowerCase(Locale.ROOT);
 		if (normalized.startsWith("/")) {
 			normalized = normalized.substring(1);
 		}
@@ -47,6 +50,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.equals("homes")
 				|| normalized.startsWith("homes ")
 				|| normalized.startsWith("home ")
+				|| normalized.startsWith("tmphome ")
 				|| normalized.startsWith("maphome ")
 				|| normalized.startsWith("updatehome ")
 				|| normalized.startsWith("defaulthome ")
@@ -58,13 +62,8 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.startsWith("gwarpmap ")
 				|| normalized.equals("back")
 				|| normalized.startsWith("back ")
-				|| normalized.equals("worldspawn true")
-				|| normalized.equals("teleportcommands status")
-				|| normalized.startsWith("teleportcommands enable ")
-				|| normalized.startsWith("teleportcommands disable ")
-				|| normalized.equals("tpc status")
-				|| normalized.startsWith("tpc enable ")
-				|| normalized.startsWith("tpc disable ")
+				|| normalized.startsWith("worldspawn ")
+				|| normalized.startsWith("tpc ")
 				|| normalized.startsWith("teleportcommandsfabric:");
 	}
 }

@@ -1,19 +1,26 @@
-## New features
+## 2.1+ Candidates
 
-- Add optional switch for each warps and homes on map (also add intract in xaero's map-"delete waypoint" option)
-- Add ctp to undo the completed but wrong teleportation action (maybe change to a more proper name? `/tpb`? or anything else?)
-- Add back command to xaero's waypoint interact (also tp option same as warp and home, but death-location waypoint's name to be checked, or other more stable way to implement)
+- 共享锚点机制
 
-## Improvements
+  - 涉及权限、归属、可见性、Xaero 同步与存储模型，建议单独版本处理。
+- 多维度 WorldSpawn
 
-- Maybe update i18n
-- Maybe update CLI immediately when interact with CLI
-- Maybe optimize command implements
+  - 涉及配置结构、命令语义与默认行为，建议单独版本处理。
+- TPA trust 系统
 
-## Bug Fix
+  - 会改变现有 TPA 交互模型，建议与权限设计一起处理。
+- home 动态配额
 
-- none
+  - 涉及权限组、玩家覆盖与配置来源，建议后置。
+- warp 锚点靠近解锁
 
-## Others
+  - 涉及复杂交互逻辑和数据存储方式改变。
 
-- none
+## Needs Discussion
+
+- 增加 TPA 距离 / 维度限制
+
+  - 需要先明确玩法合理性与默认策略。
+- 传送的空间朝向复原
+
+  - 需要先明确是否扩展位置状态模型，以及与已有传送记录的关系。

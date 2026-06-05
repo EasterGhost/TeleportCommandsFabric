@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.15.4'
+    id 'net.fabricmc.fabric-loom' version '1.15.5'
     id 'maven-publish'
 }
 
@@ -46,6 +46,8 @@ dependencies {
     compileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
     compileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
 }
+
+apply from: "test.gradle"
 
 processResources {
     inputs.property "version", project.version
