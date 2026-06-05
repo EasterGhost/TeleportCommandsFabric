@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.config;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportEffects;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import java.time.Duration;
 
@@ -13,6 +14,7 @@ public final class ConfigApplier {
 	public static void applyRuntime() {
 		RuntimePolicy policy = runtimePolicy();
 
+		DebugLog.setEnabled(policy.debugEnabled());
 		if (TeleportCommands.PLAYER_PROFILE_MANAGER != null) {
 			TeleportCommands.PLAYER_PROFILE_MANAGER.setSaveInterval(policy.storage().saveInterval());
 			TeleportCommands.PLAYER_PROFILE_MANAGER.setDeleteInvalidHomes(policy.storage().deleteInvalidHomes());
@@ -31,6 +33,7 @@ public final class ConfigApplier {
 
 	private static RuntimePolicy runtimePolicy() {
 		return ConfigManager.query(config -> new RuntimePolicy(
+				config.isDebugEnabled(),
 				new StoragePolicy(
 						Duration.ofSeconds(config.getStorage().getAutoSaveIntervalSeconds()),
 						config.getHome().isDeleteInvalid(),
@@ -47,7 +50,8 @@ public final class ConfigApplier {
 						config.getXaero().getHomeSetName())));
 	}
 
-	private record RuntimePolicy(StoragePolicy storage, boolean teleportEffects, PreloadPolicy preload, XaeroPolicy xaero) {
+	private record RuntimePolicy(boolean debugEnabled, StoragePolicy storage, boolean teleportEffects,
+			PreloadPolicy preload, XaeroPolicy xaero) {
 	}
 
 	private record StoragePolicy(Duration saveInterval, boolean deleteInvalidHomes, boolean deleteInvalidWarps) {

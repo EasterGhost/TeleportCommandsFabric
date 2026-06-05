@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -80,7 +81,8 @@ public class ConfigManager {
 
 			ModConstants.LOGGER.warn("Config file was not found or was empty! Initializing config");
 			setConfig(new Config());
-			ModConstants.LOGGER.info("Config created successfully!");
+			DebugLog.setEnabled(CONFIG.isDebugEnabled());
+			DebugLog.info("Config created successfully!");
 			return;
 		}
 
@@ -97,7 +99,8 @@ public class ConfigManager {
 		}
 
 		setConfig(loadedConfig);
-		ModConstants.LOGGER.info("Config loaded successfully!");
+		DebugLog.setEnabled(CONFIG.isDebugEnabled());
+		DebugLog.info("Config loaded successfully!");
 	}
 
 	private static void saveConfigSync() {

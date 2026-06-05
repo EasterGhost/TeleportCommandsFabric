@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -67,7 +68,7 @@ public final class SafetyThreadPool {
 				}
 				for (int j = 0; j < warmupIterationsPerThread; j++) {
 					if (TeleportSafety.getSafeBlockPos(spawnPos, level).isEmpty()) {
-						ModConstants.LOGGER.warn("Teleport safety warmup check returned no safe position.");
+						DebugLog.warn("Teleport safety warmup check returned no safe position.");
 						break;
 					}
 				}

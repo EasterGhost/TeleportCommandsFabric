@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.network.core.XaeroSyncPackets;
 import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSyncDataPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSyncPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSyncRequestPayload;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -37,7 +38,7 @@ public final class XaeroSyncClient {
 		}
 		initialized = true;
 		xaeroAvailable = isXaeroAvailable();
-		ModConstants.LOGGER.info("Xaero sync client init. Xaero available: {}", xaeroAvailable);
+		DebugLog.info("Xaero sync client init. Xaero available: {}", xaeroAvailable);
 
 		XaeroSyncPackets.registerPayloadTypes();
 
@@ -47,7 +48,7 @@ public final class XaeroSyncClient {
 						return;
 					}
 					pendingPayload = payload.payload();
-					ModConstants.LOGGER.info("Xaero sync payload received (warps: {}, homes: {}).", pendingPayload.warps().size(),
+					DebugLog.info("Xaero sync payload received (warps: {}, homes: {}).", pendingPayload.warps().size(),
 							pendingPayload.homes().size());
 				}));
 
@@ -98,7 +99,7 @@ public final class XaeroSyncClient {
 			try {
 				if (XaeroCompat.applySyncPayload(pendingPayload)) {
 					pendingPayload = null;
-					ModConstants.LOGGER.info("Xaero sync payload applied.");
+					DebugLog.info("Xaero sync payload applied.");
 				}
 			} catch (Throwable throwable) {
 				ModConstants.LOGGER.error("Xaero sync apply failed; deferring retry.", throwable);
@@ -114,7 +115,7 @@ public final class XaeroSyncClient {
 			return;
 		}
 		lastRequestMs = now;
-		ModConstants.LOGGER.info("Sending Xaero sync request.");
+		DebugLog.info("Sending Xaero sync request.");
 		ClientPlayNetworking.send(new XaeroSyncRequestPayload());
 	}
 

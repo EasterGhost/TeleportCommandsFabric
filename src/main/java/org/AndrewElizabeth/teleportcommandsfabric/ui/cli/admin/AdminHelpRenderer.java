@@ -17,6 +17,8 @@ public final class AdminHelpRenderer {
 			new HelpEntry("help", "/tpc help", "/tpc help", "commands.teleport_commands.admin.help.desc.help"),
 			new HelpEntry("status", "/tpc status", "/tpc status", "commands.teleport_commands.admin.help.desc.status"),
 			new HelpEntry("reload", "/tpc reload", "/tpc reload", "commands.teleport_commands.admin.help.desc.reload"),
+			new HelpEntry("debug", "/tpc debug <true|false>", "/tpc debug ",
+					"commands.teleport_commands.admin.help.desc.debug"),
 			new HelpEntry("enable", "/tpc enable <module>", "/tpc enable ", "commands.teleport_commands.admin.help.desc.enable"),
 			new HelpEntry("disable", "/tpc disable <module>", "/tpc disable ", "commands.teleport_commands.admin.help.desc.disable"));
 	private static final List<ConfigGroup> CONFIG_GROUPS = List.of(

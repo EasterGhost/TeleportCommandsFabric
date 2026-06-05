@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.network.protocol.xaero.XaeroSy
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -47,7 +48,7 @@ public final class XaeroSyncServer {
 			return;
 		}
 		initialized = true;
-		ModConstants.LOGGER.info("Xaero sync server hooks initializing.");
+		DebugLog.info("Xaero sync server hooks initializing.");
 
 		XaeroSyncPackets.registerPayloadTypes();
 
@@ -74,7 +75,7 @@ public final class XaeroSyncServer {
 		long lastRequest = LAST_REQUEST.getOrDefault(uuid, 0L);
 		long requestIntervalMs = getRequestIntervalMs();
 		if (now - lastRequest < requestIntervalMs) {
-			ModConstants.LOGGER.debug("Xaero sync request throttled for {}", player.getName().getString());
+			DebugLog.debug("Xaero sync request throttled for {}", player.getName().getString());
 			return;
 		}
 
@@ -131,7 +132,7 @@ public final class XaeroSyncServer {
 			return;
 		}
 
-		ModConstants.LOGGER.info("Sending Xaero sync to {} (warps: {}, homes: {})",
+		DebugLog.info("Sending Xaero sync to {} (warps: {}, homes: {})",
 				player.getName().getString(), payload.warps().size(), payload.homes().size());
 		ServerPlayNetworking.send(player, new XaeroSyncDataPayload(payload));
 	}

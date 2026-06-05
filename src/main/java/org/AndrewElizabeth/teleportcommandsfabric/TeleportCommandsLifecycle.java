@@ -16,6 +16,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileMa
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedLocationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPages;
+import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
@@ -33,7 +34,7 @@ final class TeleportCommandsLifecycle {
 	}
 
 	static void initialize(MinecraftServer server) {
-		ModConstants.LOGGER.info("Initializing Teleport Commands (V{})! Hello {}!", ModConstants.VERSION,
+		DebugLog.info("Initializing Teleport Commands (V{})! Hello {}!", ModConstants.VERSION,
 				TeleportCommands.MOD_LOADER);
 
 		TeleportCommands.SAVE_DIR = Path.of(String.valueOf(server.getWorldPath(LevelResource.ROOT)));

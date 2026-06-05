@@ -9,6 +9,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.config.Config;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.HomeConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.RtpConfig;
@@ -24,6 +25,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.permissions.Permissions;
 
 import java.util.List;
@@ -51,6 +53,7 @@ public final class AdminCommand {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildRootCommand(String literal) {
 		return Commands.literal(literal)
 				.then(buildConfigNode())
+				.then(buildDebugNode())
 				.then(buildStatusNode())
 				.then(buildReloadNode())
 				.then(buildDisableNode())
@@ -203,6 +206,17 @@ public final class AdminCommand {
 				});
 	}
 
+	private static LiteralArgumentBuilder<CommandSourceStack> buildDebugNode() {
+		return Commands.literal("debug")
+				.requires(AdminCommand::isOpOrConsole)
+				.executes(context -> AdminMessages.sendCurrentValue(context.getSource(), "debug",
+						enabledText(context.getSource(), ConfigManager.query(Config::isDebugEnabled))))
+				.then(Commands.literal("true")
+						.executes(context -> setDebug(context, true)))
+				.then(Commands.literal("false")
+						.executes(context -> setDebug(context, false)));
+	}
+
 	private static LiteralArgumentBuilder<CommandSourceStack> buildStatusNode() {
 		return Commands.literal("status")
 				.requires(AdminCommand::isOpOrConsole)
@@ -275,6 +289,25 @@ public final class AdminCommand {
 		return sendStatus(source);
 	}
 
+	private static int setDebug(CommandContext<CommandSourceStack> context, boolean enabled)
+			throws CommandSyntaxException {
+		CommandSourceStack source = context.getSource();
+		try {
+			ConfigManager.mutate(config -> config.setDebugEnabled(enabled));
+		} catch (Exception exception) {
+			ModConstants.LOGGER.error("Failed to update debug logging.", exception);
+			throw new SimpleCommandExceptionType(AdminMessages.t(source,
+					"commands.teleport_commands.admin.save.error",
+					Component.literal(String.valueOf(exception.getMessage()))).withStyle(ChatFormatting.RED))
+							.create();
+		}
+
+		AdminMessages.sendSuccess(source, AdminMessages.t(source,
+				"commands.teleport_commands.admin.debug",
+				enabledText(source, enabled)), true);
+		return 0;
+	}
+
 	private static int sendStatus(CommandSourceStack source) {
 		source.sendSuccess(() -> STATUS_RENDERER.render(AdminModuleRegistry.statuses(), AdminMessages.language(source)),
 				false);
@@ -284,6 +317,12 @@ public final class AdminCommand {
 	private static int sendHelp(CommandSourceStack source, AdminHelpRequest request) {
 		source.sendSuccess(() -> HELP_RENDERER.render(request), false);
 		return 0;
+	}
+
+	private static MutableComponent enabledText(CommandSourceStack source, boolean enabled) {
+		return AdminMessages.t(source, enabled
+				? "commands.teleport_commands.admin.stat.enabled"
+				: "commands.teleport_commands.admin.stat.disabled");
 	}
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {

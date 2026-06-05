@@ -5,6 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.config.section.*;
 
 public class Config {
 	private final int version = ModConstants.CONFIG_VERSION;
+	private boolean debugEnabled = false;
 	public TeleportingConfig teleporting = new TeleportingConfig();
 	public BackConfig back = new BackConfig();
 	public HomeConfig home = new HomeConfig();
@@ -17,6 +18,14 @@ public class Config {
 
 	public int getVersion() {
 		return version;
+	}
+
+	public boolean isDebugEnabled() {
+		return debugEnabled;
+	}
+
+	public void setDebugEnabled(boolean debugEnabled) {
+		this.debugEnabled = debugEnabled;
 	}
 
 	public TeleportingConfig getTeleporting() {

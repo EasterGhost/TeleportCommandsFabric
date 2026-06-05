@@ -44,7 +44,7 @@ public final class TranslationHelper {
 				}
 			} catch (Exception ignored) {
 			}
-			ModConstants.LOGGER.error("Key \"{}\" not found in the default language (en_us), sending raw key as fallback.", key);
+			DebugLog.error("Key \"{}\" not found in the default language (en_us), sending raw key as fallback.", key);
 			return Component.literal(key);
 		}
 	}
@@ -69,7 +69,7 @@ public final class TranslationHelper {
 		String filePath = String.format("/assets/%s/lang/%s.json", ModConstants.ASSETS_ID, language);
 		try (InputStream stream = TranslationHelper.class.getResourceAsStream(filePath)) {
 			if (stream == null) {
-				ModConstants.LOGGER.warn("Couldn't find the required language file for \"{}\", falling back to en_us.", language);
+				DebugLog.warn("Couldn't find the required language file for \"{}\", falling back to en_us.", language);
 				return Map.of();
 			}
 			Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
@@ -79,7 +79,7 @@ public final class TranslationHelper {
 					.forEach(entry -> translations.put(entry.getKey(), entry.getValue().getAsString()));
 			return translations;
 		} catch (Exception e) {
-			ModConstants.LOGGER.warn("Failed to load language file: {}, falling back to en_us.", language, e);
+			DebugLog.warn("Failed to load language file: {}, falling back to en_us.", language, e);
 			return Map.of();
 		}
 	}
