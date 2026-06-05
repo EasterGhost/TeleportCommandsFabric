@@ -39,11 +39,11 @@ final class HomeNodeFactory {
 	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode() {
 		return Commands.literal("home")
 				.requires(HomeNodeFactory::requiresPlayer)
-				.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(), null, true))
+				.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(), null, null))
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(HOME_SUGGESTIONS)
 						.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(),
-								StringArgumentType.getString(context, "name"), true))
+								StringArgumentType.getString(context, "name"), null))
 						.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 								.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(),
 										StringArgumentType.getString(context, "name"),

@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.Tel
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.PlayerHomeSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
@@ -31,7 +32,7 @@ final class HomeTeleportHandler {
 	private HomeTeleportHandler() {
 	}
 
-	static int teleportHome(ServerPlayer player, String name, boolean safetyDisabled) {
+	static int teleportHome(ServerPlayer player, String name, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
 			return 1;
 		}
@@ -59,13 +60,13 @@ final class HomeTeleportHandler {
 						ChatFormatting.AQUA);
 				return;
 			}
-			executeTeleport(currentPlayer, location.get(), source, settings, safetyDisabled);
+			executeTeleport(currentPlayer, location.get(), source, settings, safetyDisabledOverride);
 		}));
 		return 0;
 	}
 
 	private static void executeTeleport(ServerPlayer player, NamedLocationView home, AsyncWaypointSource source,
-			HomeCommandSettings settings, boolean safetyDisabled) {
+			HomeCommandSettings settings, Boolean safetyDisabledOverride) {
 		MinecraftServer server = player.level().getServer();
 		ServerLevel world = server.getLevel(home.getDimension());
 		if (world == null) {
@@ -90,7 +91,7 @@ final class HomeTeleportHandler {
 		TargetTeleportOptions options = TargetTeleportOptions.builder()
 				.delayTicks(settings.delayTicks())
 				.cooldownMillis(settings.cooldownMillis())
-				.safetyEnabled(!safetyDisabled)
+				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
 				.recordPrevious(true)
 				.build();
 		TeleportTarget target = TeleportTarget.of(world, new Vec3(
@@ -162,10 +163,13 @@ final class HomeTeleportHandler {
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new HomeCommandSettings(delaySeconds, TimeUtils.secondsToTicks(delaySeconds),
 				cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds),
-				config.getHome().isDeleteInvalid());
+				config.getHome().isDeleteInvalid(), config.getTeleporting().isDefaultSafetyCheck());
 	}
 
 	private record HomeCommandSettings(int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis,
-			boolean deleteInvalidHomes) {
+			boolean deleteInvalidHomes, boolean defaultSafetyCheck) {
+		private boolean safetyEnabled(Boolean safetyDisabledOverride) {
+			return TargetTeleportSafety.resolveEnabled(defaultSafetyCheck, safetyDisabledOverride);
+		}
 	}
 }

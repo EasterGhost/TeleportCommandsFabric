@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportSt
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
@@ -31,7 +32,7 @@ final class BackTeleportHandler {
 	private BackTeleportHandler() {
 	}
 
-	static int handleBackDeath(ServerPlayer player, boolean safetyDisabled) {
+	static int handleBackDeath(ServerPlayer player, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
 			return 1;
 		}
@@ -59,13 +60,13 @@ final class BackTeleportHandler {
 				promptPreviousIfPresent(source, playerUuid, currentPlayer);
 				return;
 			}
-			executeResolved(currentPlayer, location.get(), safetyDisabled, COMMAND_BACK_DEATH_FORCE, true,
+			executeResolved(currentPlayer, location.get(), safetyDisabledOverride, COMMAND_BACK_DEATH_FORCE, true,
 					"commands.teleport_commands.back.same", "commands.teleport_commands.back.go");
 		}));
 		return 0;
 	}
 
-	static int handleBackTp(ServerPlayer player, boolean safetyDisabled) {
+	static int handleBackTp(ServerPlayer player, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
 			return 1;
 		}
@@ -93,13 +94,13 @@ final class BackTeleportHandler {
 						BackMessages.send(currentPlayer, "commands.teleport_commands.back.tp.none", ChatFormatting.RED);
 						return;
 					}
-					executeResolved(currentPlayer, location.get(), safetyDisabled, COMMAND_BACK_TP_FORCE, false,
+					executeResolved(currentPlayer, location.get(), safetyDisabledOverride, COMMAND_BACK_TP_FORCE, false,
 							"commands.teleport_commands.back.tp.same", "commands.teleport_commands.back.tp.go");
 				}));
 		return 0;
 	}
 
-	private static void executeResolved(ServerPlayer player, RecordedLocationView location, boolean safetyDisabled,
+	private static void executeResolved(ServerPlayer player, RecordedLocationView location, Boolean safetyDisabledOverride,
 			String forceCommand, boolean removeDeathOnSuccess, String sameKey, String goKey) {
 		MinecraftServer server = player.level().getServer();
 		ServerLevel world = server.getLevel(location.getDimension());
@@ -124,7 +125,7 @@ final class BackTeleportHandler {
 		TargetTeleportOptions options = TargetTeleportOptions.builder()
 				.delayTicks(settings.delayTicks())
 				.cooldownMillis(settings.cooldownMillis())
-				.safetyEnabled(!safetyDisabled)
+				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
 				.recordPrevious(removeDeathOnSuccess)
 				.build();
 		TeleportRequest request = TeleportRequest.resolved(TeleportTarget.centered(world, location.getBlockPos()), options);
@@ -185,10 +186,14 @@ final class BackTeleportHandler {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new BackCommandSettings(delaySeconds, TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds,
-				TimeUtils.secondsToMillis(cooldownSeconds), config.getBack().isDeleteAfterTeleport());
+				TimeUtils.secondsToMillis(cooldownSeconds), config.getBack().isDeleteAfterTeleport(),
+				config.getTeleporting().isDefaultSafetyCheck());
 	}
 
 	private record BackCommandSettings(int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis,
-			boolean deleteDeathAfterTeleport) {
+			boolean deleteDeathAfterTeleport, boolean defaultSafetyCheck) {
+		private boolean safetyEnabled(Boolean safetyDisabledOverride) {
+			return TargetTeleportSafety.resolveEnabled(defaultSafetyCheck, safetyDisabledOverride);
+		}
 	}
 }

@@ -94,7 +94,11 @@ public final class AdminCommand {
 						TeleportingConfig.MIN_PRELOAD_RADIUS_CHUNKS,
 						config -> config.getTeleporting().getPreloadRadiusChunks(),
 						(config, value) -> config.getTeleporting().setPreloadRadiusChunks(value),
-						"commands.teleport_commands.admin.config.teleporting.preloadRadius"));
+						"commands.teleport_commands.admin.config.teleporting.preloadRadius"))
+				.then(AdminConfigNodeFactory.boolNode("defaultSafetyCheck",
+						config -> config.getTeleporting().isDefaultSafetyCheck(),
+						(config, value) -> config.getTeleporting().setDefaultSafetyCheck(value),
+						"commands.teleport_commands.admin.config.teleporting.defaultSafetyCheck"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildBackConfigNode() {

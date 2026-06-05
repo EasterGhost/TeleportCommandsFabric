@@ -19,7 +19,7 @@ final class BackNodeFactory {
 	static LiteralArgumentBuilder<CommandSourceStack> buildBackNode() {
 		return Commands.literal(COMMAND_BACK)
 				.requires(source -> source.getPlayer() != null)
-				.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(), false))
+				.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(), null))
 				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(),
@@ -31,7 +31,7 @@ final class BackNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildBackModeNode(String mode, BackModeHandler handler) {
 		return Commands.literal(mode)
 				.requires(source -> source.getPlayer() != null)
-				.executes(context -> handler.run(context.getSource().getPlayerOrException(), false))
+				.executes(context -> handler.run(context.getSource().getPlayerOrException(), null))
 				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> handler.run(context.getSource().getPlayerOrException(),
@@ -40,6 +40,6 @@ final class BackNodeFactory {
 
 	@FunctionalInterface
 	private interface BackModeHandler {
-		int run(ServerPlayer player, boolean safetyDisabled);
+		int run(ServerPlayer player, Boolean safetyDisabledOverride);
 	}
 }

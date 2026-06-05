@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.Tel
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.GlobalWarpSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
@@ -31,7 +32,7 @@ final class WarpTeleportHandler {
 	private WarpTeleportHandler() {
 	}
 
-	static int teleportWarp(ServerPlayer player, String name, boolean safetyDisabled) {
+	static int teleportWarp(ServerPlayer player, String name, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
 			return 1;
 		}
@@ -56,13 +57,13 @@ final class WarpTeleportHandler {
 				WarpMessages.send(currentPlayer, "commands.teleport_commands.warp.notFound", ChatFormatting.RED);
 				return;
 			}
-			executeTeleport(currentPlayer, location.get(), settings, safetyDisabled);
+			executeTeleport(currentPlayer, location.get(), settings, safetyDisabledOverride);
 		}));
 		return 0;
 	}
 
 	private static void executeTeleport(ServerPlayer player, NamedLocationView warp, WarpCommandSettings settings,
-			boolean safetyDisabled) {
+			Boolean safetyDisabledOverride) {
 		MinecraftServer server = player.level().getServer();
 		ServerLevel world = server.getLevel(warp.getDimension());
 		if (world == null) {
@@ -96,7 +97,7 @@ final class WarpTeleportHandler {
 		TargetTeleportOptions options = TargetTeleportOptions.builder()
 				.delayTicks(settings.delayTicks())
 				.cooldownMillis(settings.cooldownMillis())
-				.safetyEnabled(!safetyDisabled)
+				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
 				.recordPrevious(true)
 				.build();
 		TeleportTarget target = TeleportTarget.of(world, new Vec3(
@@ -165,10 +166,13 @@ final class WarpTeleportHandler {
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new WarpCommandSettings(delaySeconds, TimeUtils.secondsToTicks(delaySeconds),
 				cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds),
-				config.getWarp().isDeleteInvalid());
+				config.getWarp().isDeleteInvalid(), config.getTeleporting().isDefaultSafetyCheck());
 	}
 
 	private record WarpCommandSettings(int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis,
-			boolean deleteInvalidWarps) {
+			boolean deleteInvalidWarps, boolean defaultSafetyCheck) {
+		private boolean safetyEnabled(Boolean safetyDisabledOverride) {
+			return TargetTeleportSafety.resolveEnabled(defaultSafetyCheck, safetyDisabledOverride);
+		}
 	}
 }

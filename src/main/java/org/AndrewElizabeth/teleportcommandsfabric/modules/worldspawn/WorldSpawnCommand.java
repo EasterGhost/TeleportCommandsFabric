@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportSt
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.WorldResolver;
 
@@ -40,14 +41,14 @@ public final class WorldSpawnCommand {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildWorldSpawnNode() {
 		return Commands.literal("worldspawn")
 				.requires(source -> source.getPlayer() != null)
-				.executes(context -> handleWorldSpawn(context.getSource().getPlayerOrException(), false))
+				.executes(context -> handleWorldSpawn(context.getSource().getPlayerOrException(), null))
 				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> handleWorldSpawn(context.getSource().getPlayerOrException(),
 								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))));
 	}
 
-	private static int handleWorldSpawn(ServerPlayer player, boolean safetyDisabled) {
+	private static int handleWorldSpawn(ServerPlayer player, Boolean safetyDisabledOverride) {
 		WorldSpawnCommandSettings settings = ConfigManager.query(WorldSpawnCommand::settingsFrom);
 		if (!settings.enabled()) {
 			WorldSpawnMessages.send(player, "commands.teleport_commands.worldspawn.disabled", ChatFormatting.RED);
@@ -78,7 +79,7 @@ public final class WorldSpawnCommand {
 		TargetTeleportOptions options = TargetTeleportOptions.builder()
 				.delayTicks(settings.delayTicks())
 				.cooldownMillis(settings.cooldownMillis())
-				.safetyEnabled(!safetyDisabled)
+				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
 				.recordPrevious(true)
 				.build();
 		TeleportRequest request = TeleportRequest.resolved(TeleportTarget.centered(world, spawnPos), options);
@@ -130,10 +131,13 @@ public final class WorldSpawnCommand {
 		int cooldownSeconds = config.getTeleporting().getCooldown();
 		return new WorldSpawnCommandSettings(config.getWorldSpawn().isEnabled(), config.getWorldSpawn().getWorld_id(),
 				delaySeconds, TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds,
-				TimeUtils.secondsToMillis(cooldownSeconds));
+				TimeUtils.secondsToMillis(cooldownSeconds), config.getTeleporting().isDefaultSafetyCheck());
 	}
 
 	private record WorldSpawnCommandSettings(boolean enabled, String worldId, int delaySeconds, int delayTicks,
-			int cooldownSeconds, long cooldownMillis) {
+			int cooldownSeconds, long cooldownMillis, boolean defaultSafetyCheck) {
+		private boolean safetyEnabled(Boolean safetyDisabledOverride) {
+			return TargetTeleportSafety.resolveEnabled(defaultSafetyCheck, safetyDisabledOverride);
+		}
 	}
 }

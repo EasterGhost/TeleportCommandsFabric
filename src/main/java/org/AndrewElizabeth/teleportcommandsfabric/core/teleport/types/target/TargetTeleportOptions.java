@@ -1,7 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target;
 
 public record TargetTeleportOptions(int delayTicks, long cooldownMillis, boolean safetyEnabled, boolean recordPrevious) {
-	public static final TargetTeleportOptions DEFAULT = new TargetTeleportOptions(0, 0, true, true);
+	public static final TargetTeleportOptions DEFAULT = new TargetTeleportOptions(0, 0, false, true);
 
 	public static Builder builder() {
 		return new Builder();
@@ -14,7 +14,7 @@ public record TargetTeleportOptions(int delayTicks, long cooldownMillis, boolean
 	public static class Builder {
 		private int delayTicks = 0;
 		private long cooldownMillis = 0;
-		private boolean safetyEnabled = true;
+		private boolean safetyEnabled = false;
 		private boolean recordPrevious = true;
 
 		public Builder delayTicks(int delayTicks) {

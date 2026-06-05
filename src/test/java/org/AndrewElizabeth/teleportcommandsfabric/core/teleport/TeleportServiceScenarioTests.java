@@ -130,11 +130,13 @@ public final class TeleportServiceScenarioTests {
 	private static void testDelayedPreloadStartsOnlyInsideLeadWindow() {
 		Harness harness = Harness.create();
 		harness.preload.loaded = false;
-		TargetTeleportOptions options = new TargetTeleportOptions(6, 0L, false, false);
+		int delayTicks = (int) TeleportServiceSettings.PRELOAD_LEAD_TICKS + 2;
+		TargetTeleportOptions options = new TargetTeleportOptions(delayTicks, 0L, false, false);
 		CompletableFuture<TeleportStatus> result = harness.service.request(TeleportRequest.resolved(
 				harness.target(new Vec3(60.5D, 85.0D, 60.5D)), options));
 
-		for (int i = 0; i < 3; i++) {
+		int ticksBeforeLeadWindow = delayTicks - (int) TeleportServiceSettings.PRELOAD_LEAD_TICKS - 1;
+		for (int i = 0; i < ticksBeforeLeadWindow; i++) {
 			harness.service.tick();
 		}
 		assertFalse(result.isDone(), "delayed request should still be pending before lead window");
@@ -146,7 +148,9 @@ public final class TeleportServiceScenarioTests {
 		harness.preload.loaded = true;
 		harness.service.tick();
 		assertFalse(result.isDone(), "preload ready before delay deadline should not execute early");
-		harness.service.tick();
+		for (int i = 0; i < delayTicks - ticksBeforeLeadWindow - 2; i++) {
+			harness.service.tick();
+		}
 		assertEquals(TeleportStatus.SUCCESS, result.join(), "delayed preload should execute at delay deadline");
 	}
 

@@ -31,7 +31,10 @@ public final class AdminHelpRenderer {
 							"commands.teleport_commands.admin.help.desc.config.teleporting.preload"),
 					config("preloadRadius", "/tpc config teleporting preloadRadius <chunks>",
 							"/tpc config teleporting preloadRadius ",
-							"commands.teleport_commands.admin.help.desc.config.teleporting.preloadRadius"))),
+							"commands.teleport_commands.admin.help.desc.config.teleporting.preloadRadius"),
+					config("defaultSafetyCheck", "/tpc config teleporting defaultSafetyCheck <true|false>",
+							"/tpc config teleporting defaultSafetyCheck ",
+							"commands.teleport_commands.admin.help.desc.config.teleporting.defaultSafetyCheck"))),
 			new ConfigGroup("back", List.of(
 					config("deleteAfterTeleport", "/tpc config back deleteAfterTeleport <true|false>",
 							"/tpc config back deleteAfterTeleport ",

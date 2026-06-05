@@ -8,6 +8,7 @@ public final class TeleportingConfig {
 	private int cooldown = 3;
 	private boolean preloadEnabled = false;
 	private int preloadRadiusChunks = 1;
+	private boolean defaultSafetyCheck = false;
 	private boolean teleportEffects = true;
 
 	public int getDelay() {
@@ -40,6 +41,14 @@ public final class TeleportingConfig {
 
 	public void setPreloadRadiusChunks(int preloadRadiusChunks) {
 		this.preloadRadiusChunks = Math.max(MIN_PRELOAD_RADIUS_CHUNKS, preloadRadiusChunks);
+	}
+
+	public boolean isDefaultSafetyCheck() {
+		return defaultSafetyCheck;
+	}
+
+	public void setDefaultSafetyCheck(boolean defaultSafetyCheck) {
+		this.defaultSafetyCheck = defaultSafetyCheck;
 	}
 
 	public boolean isTeleportEffects() {
