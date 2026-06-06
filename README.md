@@ -16,9 +16,9 @@
 | 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/worldspawn` | Every teleport command your server needs |
 | 🎛️ `/tpc` | One admin surface: enable/disable modules, tune limits, reload config — no JSON editing |
 | 🗺️ Xaero sync | Homes and warps shown on the map. Delete a map waypoint, and it hides server-side |
-| ⚙️ Shared behavior | Delay, cooldown, chunk preloading, and safety checks apply consistently across all teleport types |
-| ⏳ Temporary homes | Time-limited homes (`/tmphome`) with automatic cleanup on expiry |
-| ⚡ RTP performance | Handles concurrent random teleports without lag |
+| ⚙️ Shared teleport rules | Shared delay/cooldown, optional target preloading, configurable effects, and RTP-specific safety checks |
+| ⏳ Temporary homes | Time-limited homes (`/tmphome`) with configurable automatic cleanup |
+| ⚡ High-concurrency handling | Batches target teleports and handles concurrent random teleports without unnecessary main-thread pressure |
 
 ---
 
@@ -34,8 +34,12 @@ Common admin commands when you need them:
 /tpc status                     # see which modules are on
 /tpc enable rtp                 # turn a module on
 /tpc config home max 20         # change a limit, live
+/tpc config teleporting preload true
+/tpc debug true                 # enable extra logs while troubleshooting
 /tpc reload                     # reload after manual file edits
 ```
+
+By default, extra debug logs are disabled. Target chunk preloading and default target safety checks are also disabled by default; RTP uses its own independent safety logic.
 
 ---
 
@@ -49,7 +53,7 @@ Adding the client mod (optional) improves the experience:
 | Clickable chat buttons | ✅ | ✅ |
 | Waypoints on Xaero map | — | ✅ |
 | Map right-click → teleport | — | ✅ |
-| Trusted commands skip confirmation | — | ✅ |
+| Smoother trusted-command sending | — | ✅ |
 
 ---
 
