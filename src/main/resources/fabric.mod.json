@@ -5,11 +5,11 @@
 	"name": "TeleportCommandsFabric",
 	"description": "A simple tpa command mod for Fabric.",
 	"authors": [
-		"Andrew Elizabeth"
+		"Andrew Elizabeth / EasterGhost"
 	],
 	"contact": {
-		"sources": "https://github.com/AndrewElizabeth/TeleportCommandsFabric",
-		"issues": "https://github.com/AndrewElizabeth/TeleportCommandsFabric/issues",
+		"sources": "https://github.com/EasterGhost/TeleportCommandsFabric",
+		"issues": "https://github.com/EasterGhost/TeleportCommandsFabric/issues",
 		"email": "easterghost1@gmail.com"
 	},
 	"license": "GPL-3.0-only",
