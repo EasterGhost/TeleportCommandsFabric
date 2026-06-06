@@ -218,7 +218,7 @@ public final class CliTestSuite {
 		String zhRtpConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
 				"rtp", "zh_cn", "test-version")).getString();
 
-		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [enable] [disable]",
+		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
 				"overview help should render compact topic and quick command entries");
 		assertContains(admin, "========== TPC Admin Commands ==========", "admin help should render admin title");
 		assertContains(admin, "/tpc enable <module>\n  Enable a command module.",
