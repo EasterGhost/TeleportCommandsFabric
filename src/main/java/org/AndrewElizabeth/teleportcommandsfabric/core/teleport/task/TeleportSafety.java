@@ -2,7 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -11,7 +10,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public final class TeleportSafety {
     static final int SEARCH_RADIUS = 3;
@@ -24,16 +22,6 @@ public final class TeleportSafety {
     private static final byte MASK_BODY_CLEAR = 2;
     private static final Offset[] CANDIDATE_OFFSETS = createCandidateOffsets();
     private static final ThreadLocal<SearchContext> SEARCH_CONTEXT = ThreadLocal.withInitial(SearchContext::new);
-
-    private static final Set<Block> UNSAFE_COLLISION_FREE_BLOCKS = Set.of(
-            Blocks.LAVA,
-            Blocks.END_PORTAL,
-            Blocks.END_GATEWAY,
-            Blocks.FIRE,
-            Blocks.SOUL_FIRE,
-            Blocks.WITHER_ROSE,
-            Blocks.POWDER_SNOW,
-            Blocks.NETHER_PORTAL);
 
     private TeleportSafety() {
     }
@@ -159,7 +147,7 @@ public final class TeleportSafety {
             if (!collisionEmpty) {
                 mask |= MASK_SUPPORT;
             }
-            if (collisionEmpty && !UNSAFE_COLLISION_FREE_BLOCKS.contains(state.getBlock())) {
+            if (collisionEmpty && !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock())) {
                 mask |= MASK_BODY_CLEAR;
             }
 

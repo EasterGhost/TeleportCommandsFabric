@@ -33,9 +33,17 @@ public final class WaypointTeleportTargets {
 			return TeleportTargetResult.failed(TeleportStatus.TARGET_UNAVAILABLE);
 		}
 
-		return TeleportTargetResult.resolved(TeleportTarget.of(world, new Vec3(
+		return TeleportTargetResult.resolved(toTarget(namedLocation, world));
+	}
+
+	public static TeleportTarget toTarget(NamedLocationView namedLocation, ServerLevel world) {
+		Vec3 position = new Vec3(
 				namedLocation.getX() + 0.5D,
 				namedLocation.getYPrecise(),
-				namedLocation.getZ() + 0.5D)));
+				namedLocation.getZ() + 0.5D);
+		if (namedLocation.getYRot() != null && namedLocation.getXRot() != null) {
+			return TeleportTarget.of(world, position, namedLocation.getYRot(), namedLocation.getXRot());
+		}
+		return TeleportTarget.of(world, position);
 	}
 }

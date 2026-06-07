@@ -9,7 +9,12 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.RecordedLocationTeleportTargets;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationNbtCodec;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationNbtCodec;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 
@@ -19,6 +24,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -56,6 +62,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public final class TeleportCoreTestSuite {
 	private static final TeleportTarget DUMMY_TARGET = createDummyTarget();
+	private static final ServerLevel DUMMY_WORLD = createDummyWorld();
 
 	TeleportCoreTestSuite() {
 	}
@@ -125,6 +132,10 @@ public final class TeleportCoreTestSuite {
 						"Verify recorded location snapshots do not expose mutable storage objects.",
 						"initialPos=(1,2,3) mutatedSourcePos=(4,5,6) dimension=minecraft:overworld",
 						TeleportCoreTestSuite::testRecordedLocationSnapshot),
+				scenario("Named location rotation persists and resolves",
+						"Verify named locations preserve optional yaw/pitch and old data remains compatible.",
+						"rotation=(90.0,12.5) legacyRotation=absent",
+						TeleportCoreTestSuite::testNamedLocationRotation),
 				scenario("Recorded target resolver maps empty target",
 						"Verify missing death/previous records map to a failed target result.",
 						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
@@ -569,16 +580,53 @@ public final class TeleportCoreTestSuite {
 
 	private static void testRecordedLocationSnapshot() {
 		ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("minecraft:overworld"));
-		RecordedLocation location = new RecordedLocation(new BlockPos(1, 2, 3), dimension);
+		RecordedLocation location = new RecordedLocation(new BlockPos(1, 2, 3), dimension, 180.0F, 25.0F);
 		Optional<RecordedLocationView> snapshot = RecordedLocationSnapshot.optional(Optional.of(location));
 		assertTrue(snapshot.isPresent(), "snapshot should be present");
 
 		location.setBlockPos(new BlockPos(4, 5, 6));
+		location.setRotation(90.0F, 10.0F);
 		assertEquals(new BlockPos(1, 2, 3), snapshot.get().getBlockPos(), "snapshot should keep original block position");
 		assertEquals("minecraft:overworld", snapshot.get().getDimensionId(), "dimension id should be derived from key");
+		assertEquals(180.0F, snapshot.get().getYRot(), "snapshot should keep original yaw");
+		assertEquals(25.0F, snapshot.get().getXRot(), "snapshot should keep original pitch");
+
+		RecordedLocation decoded = RecordedLocationNbtCodec.fromNbt(RecordedLocationNbtCodec.toNbt(RecordedLocation.copyOf(snapshot.get())));
+		TeleportTarget target = RecordedLocationTeleportTargets.toTarget(decoded, DUMMY_WORLD);
+		assertEquals(180.0F, target.yRot(), "recorded target should use stored yaw");
+		assertEquals(25.0F, target.xRot(), "recorded target should use stored pitch");
 		debug("DATA record.snapshot", "sourcePos=" + location.getBlockPos()
 				+ ", snapshotPos=" + snapshot.get().getBlockPos()
-				+ ", dimensionId=" + snapshot.get().getDimensionId());
+				+ ", dimensionId=" + snapshot.get().getDimensionId()
+				+ ", yaw=" + snapshot.get().getYRot()
+				+ ", pitch=" + snapshot.get().getXRot());
+	}
+
+	private static void testNamedLocationRotation() {
+		NamedLocation location = NamedLocation.create("spawn", 10, 64.25D, -3, Level.OVERWORLD, 90.0F, 12.5F);
+		NamedLocation decoded = NamedLocationNbtCodec.fromNbt(NamedLocationNbtCodec.toNbt(location));
+		assertEquals(90.0F, decoded.getYRot(), "yaw should survive NBT round trip");
+		assertEquals(12.5F, decoded.getXRot(), "pitch should survive NBT round trip");
+
+		NamedLocationSnapshot snapshot = NamedLocationSnapshot.from(decoded);
+		TeleportTarget target = WaypointTeleportTargets.toTarget(snapshot, DUMMY_WORLD);
+		assertEquals(90.0F, target.yRot(), "target should use stored yaw");
+		assertEquals(12.5F, target.xRot(), "target should use stored pitch");
+
+		net.minecraft.nbt.CompoundTag legacyTag = NamedLocationNbtCodec.toNbt(location);
+		legacyTag.remove("YRot");
+		legacyTag.remove("XRot");
+		NamedLocation legacyDecoded = NamedLocationNbtCodec.fromNbt(legacyTag);
+		assertNull(legacyDecoded.getYRot(), "legacy data should load without yaw");
+		assertNull(legacyDecoded.getXRot(), "legacy data should load without pitch");
+
+		TeleportTarget legacyTarget = WaypointTeleportTargets.toTarget(legacyDecoded, DUMMY_WORLD);
+		assertNull(legacyTarget.yRot(), "legacy target should keep current player yaw at execution time");
+		assertNull(legacyTarget.xRot(), "legacy target should keep current player pitch at execution time");
+		debug("DATA named.rotation", "decodedYaw=" + decoded.getYRot()
+				+ ", decodedPitch=" + decoded.getXRot()
+				+ ", legacyYaw=" + legacyDecoded.getYRot()
+				+ ", legacyPitch=" + legacyDecoded.getXRot());
 	}
 
 	private static void testRecordedTargetEmpty() {
@@ -608,6 +656,17 @@ public final class TeleportCoreTestSuite {
 			unsafeField.setAccessible(true);
 			Unsafe unsafe = (Unsafe) unsafeField.get(null);
 			return (TeleportTarget) unsafe.allocateInstance(TeleportTarget.class);
+		} catch (ReflectiveOperationException exception) {
+			throw new ExceptionInInitializerError(exception);
+		}
+	}
+
+	private static ServerLevel createDummyWorld() {
+		try {
+			Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+			unsafeField.setAccessible(true);
+			Unsafe unsafe = (Unsafe) unsafeField.get(null);
+			return (ServerLevel) unsafe.allocateInstance(ServerLevel.class);
 		} catch (ReflectiveOperationException exception) {
 			throw new ExceptionInInitializerError(exception);
 		}

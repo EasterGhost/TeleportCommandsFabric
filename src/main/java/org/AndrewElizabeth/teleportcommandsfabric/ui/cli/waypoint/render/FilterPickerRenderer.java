@@ -7,7 +7,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRe
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -56,7 +55,7 @@ public final class FilterPickerRenderer {
 
 	private void appendAllButton(MutableComponent picker, WaypointPageRequest request) {
 		boolean active = request.query().filter().isNone();
-		picker.append(button(ComponentSupport.translate("commands.teleport_commands.common.all", request.language()),
+		picker.append(WaypointRenderSupport.stateButton(ComponentSupport.translate("commands.teleport_commands.common.all", request.language()),
 				commands.clearFilterCommand(request.kind(), request.query()), active));
 	}
 
@@ -67,7 +66,7 @@ public final class FilterPickerRenderer {
 			String value = String.valueOf(letter);
 			boolean active = request.query().filter() instanceof WaypointFilter.Prefix prefix
 					&& prefix.value().equals(value);
-			picker.append(button(Component.literal(value.toUpperCase(Locale.ROOT)),
+			picker.append(WaypointRenderSupport.stateButton(Component.literal(value.toUpperCase(Locale.ROOT)),
 					commands.prefixFilterCommand(request.kind(), request.query(), value), active));
 		}
 	}
@@ -85,22 +84,9 @@ public final class FilterPickerRenderer {
 			picker.append(index % DIMENSION_COLUMNS == 0 ? "\n" : " ");
 			boolean active = request.query().filter() instanceof WaypointFilter.Dimension dimension
 					&& dimension.dimensionId().equals(dimensionId);
-			picker.append(button(Component.literal(shortDimensionId(dimensionId)),
+			picker.append(WaypointRenderSupport.stateButton(Component.literal(WaypointRenderSupport.shortDimensionId(dimensionId)),
 					commands.dimensionFilterCommand(request.kind(), request.query(), dimensionId), active));
 			index++;
 		}
-	}
-
-	private MutableComponent button(MutableComponent label, String command, boolean active) {
-		ChatFormatting color = active ? ChatFormatting.GOLD : ChatFormatting.AQUA;
-		return Component.literal("[")
-				.append(label)
-				.append("]")
-				.withStyle(color)
-				.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command)));
-	}
-
-	private String shortDimensionId(String dimensionId) {
-		return dimensionId.startsWith("minecraft:") ? dimensionId.substring("minecraft:".length()) : dimensionId;
 	}
 }

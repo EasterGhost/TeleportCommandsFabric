@@ -50,16 +50,17 @@ public final class PageRenderer {
 		controls.append(ComponentSupport.translate("commands.teleport_commands.common.view", request.language())
 				.withStyle(ChatFormatting.GRAY));
 		controls.append(" ");
-		appendViewButton(controls, request, ComponentSupport.translate("commands.teleport_commands.common.all", request.language()),
-				commands.clearFilterCommand(request.kind(), request.query()), request.query().filter().isNone());
+		controls.append(WaypointRenderSupport.stateButton(
+				ComponentSupport.translate("commands.teleport_commands.common.all", request.language()),
+				commands.clearFilterCommand(request.kind(), request.query()), request.query().filter().isNone()));
 		controls.append(" ");
-		appendViewButton(controls, request, prefixLabel(request),
+		controls.append(WaypointRenderSupport.stateButton(prefixLabel(request),
 				commands.prefixFilterPickerCommand(request.kind(), request.query(), currentPage),
-				request.query().filter() instanceof WaypointFilter.Prefix);
+				request.query().filter() instanceof WaypointFilter.Prefix));
 		controls.append(" ");
-		appendViewButton(controls, request, dimensionLabel(request),
+		controls.append(WaypointRenderSupport.stateButton(dimensionLabel(request),
 				commands.dimensionFilterPickerCommand(request.kind(), request.query(), currentPage),
-				request.query().filter() instanceof WaypointFilter.Dimension);
+				request.query().filter() instanceof WaypointFilter.Dimension));
 		controls.append("   ");
 		controls.append(ComponentSupport.translate("commands.teleport_commands.common.sort", request.language())
 				.withStyle(ChatFormatting.GRAY));
@@ -192,16 +193,6 @@ public final class PageRenderer {
 		return navigation;
 	}
 
-	private void appendViewButton(MutableComponent message, WaypointPageRequest request, MutableComponent label, String command,
-			boolean active) {
-		ChatFormatting color = active ? ChatFormatting.GOLD : ChatFormatting.AQUA;
-		message.append(Component.literal("[")
-				.append(label)
-				.append("]")
-				.withStyle(color)
-				.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command))));
-	}
-
 	private void appendSortButton(MutableComponent message, WaypointPageRequest request, SortKey key) {
 		WaypointSort sort = request.query().sort();
 		boolean active = sort.key() == key;
@@ -237,13 +228,9 @@ public final class PageRenderer {
 			return Component.empty()
 					.append(ComponentSupport.translate("commands.teleport_commands.common.dimension", request.language()))
 					.append(": ")
-					.append(shortDimensionId(dimension.dimensionId()));
+					.append(WaypointRenderSupport.shortDimensionId(dimension.dimensionId()));
 		}
 		return ComponentSupport.translate("commands.teleport_commands.common.dimension", request.language());
-	}
-
-	private String shortDimensionId(String dimensionId) {
-		return dimensionId.startsWith("minecraft:") ? dimensionId.substring("minecraft:".length()) : dimensionId;
 	}
 
 	private MutableComponent button(String language, String key, ChatFormatting color, ClickEvent clickEvent) {

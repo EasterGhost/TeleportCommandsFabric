@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationVi
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointRenderMode;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
@@ -29,18 +30,18 @@ final class WarpListHandler {
 	}
 
 	static int renderWarps(CommandSourceStack source, ServerPlayer player, WaypointListQuery query, boolean pagePicker) {
-		return renderWarps(source, player, query, pagePicker ? RenderMode.PAGE_PICKER : RenderMode.PAGE);
+		return renderWarps(source, player, query, pagePicker ? WaypointRenderMode.PAGE_PICKER : WaypointRenderMode.PAGE);
 	}
 
 	static int renderWarpFilterPicker(CommandSourceStack source, ServerPlayer player, WaypointListQuery query,
 			WaypointFilterPickerKind pickerKind) {
 		return renderWarps(source, player, query, pickerKind == WaypointFilterPickerKind.DIMENSION
-				? RenderMode.DIMENSION_FILTER_PICKER
-				: RenderMode.PREFIX_FILTER_PICKER);
+				? WaypointRenderMode.DIMENSION_FILTER_PICKER
+				: WaypointRenderMode.PREFIX_FILTER_PICKER);
 	}
 
 	private static int renderWarps(CommandSourceStack source, ServerPlayer player, WaypointListQuery query,
-			RenderMode renderMode) {
+			WaypointRenderMode renderMode) {
 		if (!ensureEnabled(player)) {
 			return 1;
 		}
@@ -77,12 +78,12 @@ final class WarpListHandler {
 						}
 						return;
 					}
-					if (renderMode == RenderMode.PAGE_PICKER) {
+					if (renderMode == WaypointRenderMode.PAGE_PICKER) {
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderPagePicker(request), false);
 						return;
 					}
-					if (renderMode == RenderMode.PREFIX_FILTER_PICKER || renderMode == RenderMode.DIMENSION_FILTER_PICKER) {
-						WaypointFilterPickerKind pickerKind = renderMode == RenderMode.DIMENSION_FILTER_PICKER
+					if (renderMode == WaypointRenderMode.PREFIX_FILTER_PICKER || renderMode == WaypointRenderMode.DIMENSION_FILTER_PICKER) {
+						WaypointFilterPickerKind pickerKind = renderMode == WaypointRenderMode.DIMENSION_FILTER_PICKER
 								? WaypointFilterPickerKind.DIMENSION
 								: WaypointFilterPickerKind.PREFIX;
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderFilterPicker(request, pickerKind),
@@ -132,12 +133,5 @@ final class WarpListHandler {
 	}
 
 	private record WarpPageData(List<NamedLocationView> warps, Set<UUID> hiddenWarpUuids) {
-	}
-
-	private enum RenderMode {
-		PAGE,
-		PAGE_PICKER,
-		PREFIX_FILTER_PICKER,
-		DIMENSION_FILTER_PICKER
 	}
 }

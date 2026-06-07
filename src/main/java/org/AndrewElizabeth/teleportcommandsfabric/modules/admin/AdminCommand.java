@@ -89,6 +89,10 @@ public final class AdminCommand {
 						config -> config.getTeleporting().isTeleportEffects(),
 						(config, value) -> config.getTeleporting().setTeleportEffects(value),
 						"commands.teleport_commands.admin.config.teleporting.effects"))
+				.then(AdminConfigNodeFactory.boolNode("restoreRotation",
+						config -> config.getTeleporting().isRestoreRotation(),
+						(config, value) -> config.getTeleporting().setRestoreRotation(value),
+						"commands.teleport_commands.admin.config.teleporting.restoreRotation"))
 				.then(AdminConfigNodeFactory.boolNode("preload",
 						config -> config.getTeleporting().isPreloadEnabled(),
 						(config, value) -> config.getTeleporting().setPreloadEnabled(value),

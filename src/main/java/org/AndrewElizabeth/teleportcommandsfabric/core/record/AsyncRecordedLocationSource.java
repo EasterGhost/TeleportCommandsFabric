@@ -17,7 +17,17 @@ public interface AsyncRecordedLocationSource {
 
 	CompletableFuture<Void> recordDeathLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension);
 
+	default CompletableFuture<Void> recordDeathLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension,
+			float yRot, float xRot) {
+		return recordDeathLocation(playerUuid, pos, dimension);
+	}
+
 	CompletableFuture<Void> recordPreviousTeleportLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension);
+
+	default CompletableFuture<Void> recordPreviousTeleportLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension,
+			float yRot, float xRot) {
+		return recordPreviousTeleportLocation(playerUuid, pos, dimension);
+	}
 
 	CompletableFuture<Void> removeDeathLocation(UUID playerUuid);
 

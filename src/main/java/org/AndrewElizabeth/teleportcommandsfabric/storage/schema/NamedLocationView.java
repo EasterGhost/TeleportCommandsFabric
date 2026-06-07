@@ -31,6 +31,14 @@ public interface NamedLocationView {
 		return getDimension().identifier().toString();
 	}
 
+	default Float getYRot() {
+		return null;
+	}
+
+	default Float getXRot() {
+		return null;
+	}
+
 	boolean isVisible();
 
 	long getExpiredTime();

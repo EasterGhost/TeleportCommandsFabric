@@ -41,6 +41,10 @@ public class PlayerRecordedLocationManager {
 		recordDeathLocation(playerUuid, new RecordedLocation(pos, dimension));
 	}
 
+	public void recordDeathLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension, float yRot, float xRot) {
+		recordDeathLocation(playerUuid, new RecordedLocation(pos, dimension, yRot, xRot));
+	}
+
 	public void recordDeathLocation(UUID playerUuid, RecordedLocation location) {
 		records.compute(playerUuid, (ignored, existing) -> {
 			PlayerRecordedLocations record = existing == null ? new PlayerRecordedLocations() : existing;
@@ -51,6 +55,10 @@ public class PlayerRecordedLocationManager {
 
 	public void recordPreviousTeleportLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension) {
 		recordPreviousTeleportLocation(playerUuid, new RecordedLocation(pos, dimension));
+	}
+
+	public void recordPreviousTeleportLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension, float yRot, float xRot) {
+		recordPreviousTeleportLocation(playerUuid, new RecordedLocation(pos, dimension, yRot, xRot));
 	}
 
 	public void recordPreviousTeleportLocation(UUID playerUuid, RecordedLocation location) {
