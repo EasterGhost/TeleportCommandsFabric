@@ -102,6 +102,9 @@ public final class RtpPositionFinder {
 	}
 
 	private static boolean isBodyClear(ServerLevel world, BlockPos pos, BlockState state) {
+		if (state.isAir()) {
+			return true;
+		}
 		if (!state.getFluidState().isEmpty()) {
 			return false;
 		}

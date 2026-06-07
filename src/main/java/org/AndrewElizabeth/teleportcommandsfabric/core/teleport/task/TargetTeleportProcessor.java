@@ -9,7 +9,11 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTa
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -42,7 +46,9 @@ public final class TargetTeleportProcessor {
 		PreparedExecution prepared = preparation.execution();
 		TeleportTarget target = prepared.target();
 		if (shouldCheckSafety(entry)) {
-			Optional<BlockPos> safePos = TeleportSafety.getSafeBlockPos(BlockPos.containing(target.position()), target.world());
+			BlockPos basePos = BlockPos.containing(target.position());
+			Optional<BlockPos> safePos = TeleportSafety.getSafeBlockPos(basePos, target.world(),
+					createBlockStateReader(target.world(), basePos));
 			if (safePos.isEmpty()) {
 				return finishEntry(entry, TeleportStatus.NO_SAFE_POSITION);
 			}
@@ -67,8 +73,9 @@ public final class TargetTeleportProcessor {
 			}
 
 			BlockPos basePos = BlockPos.containing(prepared.target().position());
+			TeleportSafety.BlockStateReader reader = createBlockStateReader(prepared.target().world(), basePos);
 			CompletableFuture<Optional<BlockPos>> safetyFuture = CompletableFuture.supplyAsync(
-					() -> TeleportSafety.getSafeBlockPos(basePos, prepared.target().world()),
+					() -> TeleportSafety.getSafeBlockPos(basePos, prepared.target().world(), reader),
 					workerPool.getExecutor());
 			if (safetyChecks == null) {
 				safetyChecks = new ArrayList<>();
@@ -127,6 +134,11 @@ public final class TargetTeleportProcessor {
 		return entry.options().safetyEnabled() && preloadManager.isEnabled();
 	}
 
+	private TeleportSafety.BlockStateReader createBlockStateReader(ServerLevel world, BlockPos basePos) {
+		ChunkBlockStateReader reader = ChunkBlockStateReader.create(world, basePos);
+		return reader == null ? world::getBlockState : reader;
+	}
+
 	private Optional<BlockPos> joinSafetyCheck(PreparedSafetyCheck safetyCheck) {
 		try {
 			return safetyCheck.safetyFuture().join();
@@ -173,5 +185,44 @@ public final class TargetTeleportProcessor {
 			PreparedExecution prepared,
 			BlockPos basePos,
 			CompletableFuture<Optional<BlockPos>> safetyFuture) {
+	}
+
+	private record ChunkBlockStateReader(
+			ServerLevel world,
+			long[] chunkKeys,
+			LevelChunk[] chunks) implements TeleportSafety.BlockStateReader {
+		private static ChunkBlockStateReader create(ServerLevel world, BlockPos basePos) {
+			int minChunkX = (basePos.getX() - TeleportSafety.SEARCH_RADIUS) >> 4;
+			int maxChunkX = (basePos.getX() + TeleportSafety.SEARCH_RADIUS) >> 4;
+			int minChunkZ = (basePos.getZ() - TeleportSafety.SEARCH_RADIUS) >> 4;
+			int maxChunkZ = (basePos.getZ() + TeleportSafety.SEARCH_RADIUS) >> 4;
+			int chunkCount = (maxChunkX - minChunkX + 1) * (maxChunkZ - minChunkZ + 1);
+			long[] chunkKeys = new long[chunkCount];
+			LevelChunk[] chunks = new LevelChunk[chunkCount];
+			int index = 0;
+			for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+				for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+					LevelChunk chunk = world.getChunkSource().getChunkNow(chunkX, chunkZ);
+					if (chunk == null) {
+						return null;
+					}
+					chunkKeys[index] = ChunkPos.pack(chunkX, chunkZ);
+					chunks[index] = chunk;
+					index++;
+				}
+			}
+			return new ChunkBlockStateReader(world, chunkKeys, chunks);
+		}
+
+		@Override
+		public BlockState getBlockState(BlockPos pos) {
+			long chunkKey = ChunkPos.pack(pos);
+			for (int i = 0; i < chunkKeys.length; i++) {
+				if (chunkKeys[i] == chunkKey) {
+					return chunks[i].getBlockState(pos);
+				}
+			}
+			return world.getBlockState(pos);
+		}
 	}
 }
