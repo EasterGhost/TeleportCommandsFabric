@@ -83,7 +83,7 @@
   "commands.teleport_commands.back.tryTp": "Няма намерена точка на смърт. Опитайте",
   "commands.teleport_commands.common.cooldown": "Трябва да изчакаш %0% секунди преди следващия телепорт!",
   "commands.teleport_commands.common.default": "(По подразбиране)",
-  "commands.teleport_commands.common.defaultPrompt": "[Задай по подразбиране]",
+  "commands.teleport_commands.common.defaultPrompt": "[По подразбиране]",
   "commands.teleport_commands.common.delayStart": "Телепортиране след %0% секунди...",
   "commands.teleport_commands.common.delete": "[Изтриване]",
   "commands.teleport_commands.common.error": "Възникна грешка при телепортацията!",

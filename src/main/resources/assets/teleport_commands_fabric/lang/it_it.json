@@ -83,7 +83,7 @@
   "commands.teleport_commands.back.tryTp": "Nessun punto di morte trovato. Prova",
   "commands.teleport_commands.common.cooldown": "Devi attendere %0% secondi prima di teletrasportarti di nuovo!",
   "commands.teleport_commands.common.default": "(Predefinita)",
-  "commands.teleport_commands.common.defaultPrompt": "[Imposta predefinita]",
+  "commands.teleport_commands.common.defaultPrompt": "[Predefinito]",
   "commands.teleport_commands.common.delayStart": "Teletrasporto tra %0% secondi...",
   "commands.teleport_commands.common.delete": "[Elimina]",
   "commands.teleport_commands.common.error": "Errore durante il teletrasporto!",

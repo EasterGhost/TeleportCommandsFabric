@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.WaypointQueryNodes;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
@@ -93,6 +94,18 @@ final class HomeNodeFactory {
 		}
 		root.then(WaypointQueryNodes.pageArgument(
 				(context, query) -> HomeListHandler.renderHomes(context.getSource().getPlayerOrException(), query, pagePicker)));
+		return root;
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildFilterPickerNode(String literal,
+			WaypointFilterPickerKind pickerKind) {
+		LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(literal)
+				.requires(HomeNodeFactory::requiresPlayer)
+				.executes(context -> HomeListHandler.renderHomeFilterPicker(context.getSource().getPlayerOrException(),
+						WaypointListQuery.defaultQuery(), pickerKind));
+		root.then(WaypointQueryNodes.pageArgument(
+				(context, query) -> HomeListHandler.renderHomeFilterPicker(context.getSource().getPlayerOrException(),
+						query, pickerKind)));
 		return root;
 	}
 

@@ -2,6 +2,8 @@ package org.AndrewElizabeth.teleportcommandsfabric.modules.home;
 
 import com.mojang.brigadier.CommandDispatcher;
 
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
+
 import net.minecraft.commands.CommandSourceStack;
 
 public final class HomeCommand {
@@ -18,6 +20,10 @@ public final class HomeCommand {
 		dispatcher.register(HomeNodeFactory.buildDefaultNode());
 		dispatcher.register(HomeNodeFactory.buildListNode("homes", false));
 		dispatcher.register(HomeNodeFactory.buildListNode("teleportcommandsfabric:homespages", true));
+		dispatcher.register(HomeNodeFactory.buildFilterPickerNode("teleportcommandsfabric:homesprefixfilters",
+				WaypointFilterPickerKind.PREFIX));
+		dispatcher.register(HomeNodeFactory.buildFilterPickerNode("teleportcommandsfabric:homesdimensionfilters",
+				WaypointFilterPickerKind.DIMENSION));
 		dispatcher.register(HomeNodeFactory.buildMapVisibilityNode("maphome", false));
 		dispatcher.register(HomeNodeFactory.buildMapVisibilityNode("teleportcommandsfabric:maphome", true));
 	}

@@ -83,7 +83,7 @@
   "commands.teleport_commands.back.tryTp": "Nincs halálozási pont. Próbáld",
   "commands.teleport_commands.common.cooldown": "Várj %0% másodpercet a következő teleportálásig!",
   "commands.teleport_commands.common.default": "(Alap)",
-  "commands.teleport_commands.common.defaultPrompt": "[Beállítás alapértelmezettként]",
+  "commands.teleport_commands.common.defaultPrompt": "[Alapértelmezett]",
   "commands.teleport_commands.common.delayStart": "%0% másodperc múlva teleportálás...",
   "commands.teleport_commands.common.delete": "[Törlés]",
   "commands.teleport_commands.common.error": "Hiba történt a teleportálással!",

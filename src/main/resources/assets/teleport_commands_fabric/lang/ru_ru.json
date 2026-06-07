@@ -83,7 +83,7 @@
   "commands.teleport_commands.back.tryTp": "Точка смерти не найдена. Попробуйте",
   "commands.teleport_commands.common.cooldown": "Подождите %0% секунд перед следующей телепортацией!",
   "commands.teleport_commands.common.default": "(По умолчанию)",
-  "commands.teleport_commands.common.defaultPrompt": "[Установить по умолчанию]",
+  "commands.teleport_commands.common.defaultPrompt": "[По умолчанию]",
   "commands.teleport_commands.common.delayStart": "Телепортация через %0% секунд...",
   "commands.teleport_commands.common.delete": "[Удалить]",
   "commands.teleport_commands.common.error": "Ошибка телепортации!",

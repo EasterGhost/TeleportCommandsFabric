@@ -83,7 +83,7 @@
   "commands.teleport_commands.back.tryTp": "Geen doodsplek gevonden. Probeer",
   "commands.teleport_commands.common.cooldown": "Je moet %0% seconden wachten voordat je weer teleporteert!",
   "commands.teleport_commands.common.default": "(Standaard)",
-  "commands.teleport_commands.common.defaultPrompt": "[Standaard instellen]",
+  "commands.teleport_commands.common.defaultPrompt": "[Standaard]",
   "commands.teleport_commands.common.delayStart": "Teleporteren over %0% seconden...",
   "commands.teleport_commands.common.delete": "[Verwijderen]",
   "commands.teleport_commands.common.error": "Probleem tijdens het teleporteren!",

@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileMa
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointRows;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
@@ -25,6 +26,16 @@ final class HomeListHandler {
 	}
 
 	static int renderHomes(ServerPlayer player, WaypointListQuery query, boolean pagePicker) {
+		return renderHomes(player, query, pagePicker ? RenderMode.PAGE_PICKER : RenderMode.PAGE);
+	}
+
+	static int renderHomeFilterPicker(ServerPlayer player, WaypointListQuery query, WaypointFilterPickerKind pickerKind) {
+		return renderHomes(player, query, pickerKind == WaypointFilterPickerKind.DIMENSION
+				? RenderMode.DIMENSION_FILTER_PICKER
+				: RenderMode.PREFIX_FILTER_PICKER);
+	}
+
+	private static int renderHomes(ServerPlayer player, WaypointListQuery query, RenderMode renderMode) {
 		if (!ensureEnabled(player)) {
 			return 1;
 		}
@@ -58,8 +69,16 @@ final class HomeListHandler {
 					}
 					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.HOMES, data.homes(), Set.of(),
 							data.defaultHomeUuid(), true, query, language(currentPlayer));
-					if (pagePicker) {
+					if (renderMode == RenderMode.PAGE_PICKER) {
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderPagePicker(request), false);
+						return;
+					}
+					if (renderMode == RenderMode.PREFIX_FILTER_PICKER || renderMode == RenderMode.DIMENSION_FILTER_PICKER) {
+						WaypointFilterPickerKind pickerKind = renderMode == RenderMode.DIMENSION_FILTER_PICKER
+								? WaypointFilterPickerKind.DIMENSION
+								: WaypointFilterPickerKind.PREFIX;
+						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderFilterPicker(request, pickerKind),
+								false);
 						return;
 					}
 					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> server.execute(() -> {
@@ -92,5 +111,12 @@ final class HomeListHandler {
 	}
 
 	private record HomePageData(List<NamedLocationView> homes, UUID defaultHomeUuid) {
+	}
+
+	private enum RenderMode {
+		PAGE,
+		PAGE_PICKER,
+		PREFIX_FILTER_PICKER,
+		DIMENSION_FILTER_PICKER
 	}
 }

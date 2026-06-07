@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
@@ -37,6 +38,11 @@ public final class WaypointQueryNodes {
 	}
 
 	public static LiteralArgumentBuilder<CommandSourceStack> filterNode(int page, QueryExecutor executor) {
+		return filterNode(page, WaypointDimensionSuggestions.LOADED_DIMENSIONS, executor);
+	}
+
+	public static LiteralArgumentBuilder<CommandSourceStack> filterNode(int page,
+			SuggestionProvider<CommandSourceStack> dimensionSuggestions, QueryExecutor executor) {
 		return Commands.literal("filter")
 				.then(Commands.literal("prefix")
 						.then(Commands.argument(ARG_PREFIX, StringArgumentType.string())
@@ -48,6 +54,7 @@ public final class WaypointQueryNodes {
 										executor))))
 				.then(Commands.literal("dimension")
 						.then(Commands.argument(ARG_DIMENSION, StringArgumentType.string())
+								.suggests(dimensionSuggestions)
 								.executes(context -> executor.run(context,
 										new WaypointListQuery(resolvePage(context, page),
 												WaypointFilter.dimension(StringArgumentType.getString(context, ARG_DIMENSION)), null)))
