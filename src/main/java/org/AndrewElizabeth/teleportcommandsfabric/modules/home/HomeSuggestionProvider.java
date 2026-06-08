@@ -41,9 +41,7 @@ final class HomeSuggestionProvider implements SuggestionProvider<CommandSourceSt
 		}
 
 		return TeleportCommands.PLAYER_PROFILE_MANAGER.query(player.getUUID(), profile -> profile.getHomes().stream()
-				.filter(filter)
-				.map(NamedLocationView::getName)
-				.toList()).handle((names, throwable) -> {
+				.filter(filter).map(NamedLocationView::getName).toList()).handle((names, throwable) -> {
 					if (throwable == null) {
 						for (String name : names) {
 							builder.suggest(CommandArgumentUtils.quote(name));

@@ -21,8 +21,7 @@ final class WarpSuggestionProvider implements SuggestionProvider<CommandSourceSt
 			return builder.buildFuture();
 		}
 		return TeleportCommands.GLOBAL_PROFILE_MANAGER.query(profile -> profile.getWarps().stream()
-				.map(NamedLocationView::getName)
-				.toList()).handle((names, throwable) -> {
+		.map(NamedLocationView::getName).toList()).handle((names, throwable) -> {
 					if (throwable == null) {
 						for (String name : names) {
 							builder.suggest(CommandArgumentUtils.quote(name));
