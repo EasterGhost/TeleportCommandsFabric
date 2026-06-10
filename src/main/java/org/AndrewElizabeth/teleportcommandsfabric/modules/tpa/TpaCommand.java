@@ -17,6 +17,7 @@ public final class TpaCommand {
 		dispatcher.register(TpaNodeFactory.buildRequestNode("tpahere", Tpa.Type.TPAHERE));
 		dispatcher.register(TpaNodeFactory.buildResponseNode("tpaaccept", true));
 		dispatcher.register(TpaNodeFactory.buildResponseNode("tpadeny", false));
+		dispatcher.register(TpaNodeFactory.buildTrustNode());
 	}
 
 	public static void sendExpired(MinecraftServer server, Tpa.Session session) {

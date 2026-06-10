@@ -3,6 +3,8 @@ package org.AndrewElizabeth.teleportcommandsfabric.modules.tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.MessageSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustEntry;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper;
 
 import net.minecraft.ChatFormatting;
@@ -61,6 +63,43 @@ final class TpaMessages {
 		send(recipient, "commands.teleport_commands.tpa.denied", ChatFormatting.WHITE);
 	}
 
+	static void sendTrustDenied(ServerPlayer sender, ServerPlayer target, Tpa.Type type) {
+		sender.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustDenied",
+				sender, hereText(type), Component.literal(target.getName().getString()).withStyle(ChatFormatting.BOLD))
+				.withStyle(ChatFormatting.RED), true);
+	}
+
+	static void sendTrustedAccepted(ServerPlayer sender, ServerPlayer target, Tpa.Type type) {
+		sender.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustedAcceptedSender",
+				sender, hereText(type), Component.literal(target.getName().getString()).withStyle(ChatFormatting.BOLD))
+				.withStyle(ChatFormatting.GREEN), true);
+		target.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustedAcceptedTarget",
+				target, hereText(type), Component.literal(sender.getName().getString()).withStyle(ChatFormatting.BOLD))
+				.withStyle(ChatFormatting.WHITE), true);
+	}
+
+	static void sendTrustUpdated(ServerPlayer owner, TpaTrustTarget target, Tpa.Type type, TpaTrustDecision decision) {
+		owner.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustUpdated",
+				owner, targetText(owner, target), typeText(owner, type), decisionText(owner, decision))
+				.withStyle(ChatFormatting.GREEN), false);
+	}
+
+	static void sendTrustUpdated(ServerPlayer owner, TpaTrustTarget target, TpaTrustDecision tpaDecision,
+			TpaTrustDecision tpaHereDecision) {
+		owner.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustUpdatedBoth",
+				owner, targetText(owner, target), decisionText(owner, tpaDecision), decisionText(owner, tpaHereDecision))
+				.withStyle(ChatFormatting.GREEN), false);
+	}
+
+	static void sendTrustStatus(ServerPlayer owner, TpaTrustTarget target, TpaTrustEntry entry) {
+		String key = target.all()
+				? "commands.teleport_commands.tpa.trustStatus"
+				: "commands.teleport_commands.tpa.trustOverrideStatus";
+		owner.sendSystemMessage(TranslationHelper.getTranslatedText(key,
+				owner, targetText(owner, target), decisionText(owner, entry.tpa()), decisionText(owner, entry.tpaHere()))
+				.withStyle(ChatFormatting.AQUA), false);
+	}
+
 	static void sendExpired(ServerPlayer sender, ServerPlayer target, Tpa.Type type) {
 		if (sender != null) {
 			sender.sendSystemMessage(TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.expired",
@@ -88,5 +127,23 @@ final class TpaMessages {
 
 	private static MutableComponent hereText(Tpa.Type type) {
 		return Component.literal(type == Tpa.Type.TPAHERE ? "Here" : "");
+	}
+
+	private static MutableComponent targetText(ServerPlayer owner, TpaTrustTarget target) {
+		if (target.all()) {
+			return TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustTargetAll", owner);
+		}
+		return Component.literal(target.displayName()).withStyle(ChatFormatting.BOLD);
+	}
+
+	private static MutableComponent typeText(ServerPlayer owner, Tpa.Type type) {
+		return TranslationHelper.getTranslatedText(type == Tpa.Type.TPAHERE
+				? "commands.teleport_commands.tpa.trustTypeTpahere"
+				: "commands.teleport_commands.tpa.trustTypeTpa", owner);
+	}
+
+	private static MutableComponent decisionText(ServerPlayer owner, TpaTrustDecision decision) {
+		TpaTrustDecision safeDecision = decision == null ? TpaTrustDecision.DEFAULT : decision;
+		return TranslationHelper.getTranslatedText("commands.teleport_commands.tpa.trustDecision." + safeDecision.serializedName(), owner);
 	}
 }

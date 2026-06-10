@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage.player;
 
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
 
 import java.util.HashMap;
@@ -20,6 +21,9 @@ public class PlayerProfile {
 	private final LinkedHashMap<UUID, NamedLocation> homes = new LinkedHashMap<>();
 	private final HashMap<String, UUID> homeNameIndex = new HashMap<>();
 	private final HashSet<UUID> hiddenWarpUuids = new HashSet<>();
+	private TpaTrustDecision defaultTpaTrust = TpaTrustDecision.DEFAULT;
+	private TpaTrustDecision defaultTpaHereTrust = TpaTrustDecision.DEFAULT;
+	private final HashMap<UUID, TpaTrustEntry> tpaTrustEntries = new HashMap<>();
 
 	public PlayerProfile(UUID uuid) {
 		this.playerUuid = uuid;
@@ -49,6 +53,18 @@ public class PlayerProfile {
 		return Set.copyOf(hiddenWarpUuids);
 	}
 
+	public TpaTrustDecision getDefaultTpaTrust() {
+		return defaultTpaTrust;
+	}
+
+	public TpaTrustDecision getDefaultTpaHereTrust() {
+		return defaultTpaHereTrust;
+	}
+
+	public Map<UUID, TpaTrustEntry> getTpaTrustEntries() {
+		return Map.copyOf(tpaTrustEntries);
+	}
+
 	public PlayerProfile snapshotForSave() {
 		PlayerProfile snapshot = new PlayerProfile(playerUuid);
 		for (NamedLocation home : homes.values()) {
@@ -56,6 +72,9 @@ public class PlayerProfile {
 		}
 		snapshot.defaultHomeUuid = defaultHomeUuid;
 		snapshot.hiddenWarpUuids.addAll(hiddenWarpUuids);
+		snapshot.defaultTpaTrust = defaultTpaTrust;
+		snapshot.defaultTpaHereTrust = defaultTpaHereTrust;
+		snapshot.tpaTrustEntries.putAll(tpaTrustEntries);
 		return snapshot;
 	}
 
@@ -81,10 +100,7 @@ public class PlayerProfile {
 	}
 
 	public Optional<NamedLocation> getTemporaryHomeLocation() {
-		return homes.values().stream()
-				.filter(home -> !home.isExpired())
-				.filter(NamedLocation::isTemporary)
-				.findFirst();
+		return homes.values().stream().filter(home -> !home.isExpired()).filter(NamedLocation::isTemporary).findFirst();
 	}
 
 	public boolean hasTemporaryHome() {
@@ -93,6 +109,37 @@ public class PlayerProfile {
 
 	public boolean isWarpHidden(UUID warpUuid) {
 		return hiddenWarpUuids.contains(warpUuid);
+	}
+
+	public TpaTrustDecision resolveTpaTrust(UUID requesterUuid, Tpa.Type type) {
+		TpaTrustEntry entry = tpaTrustEntries.get(requesterUuid);
+		if (entry != null && entry.decision(type) != TpaTrustDecision.DEFAULT) {
+			return entry.decision(type);
+		}
+		return type == Tpa.Type.TPAHERE ? defaultTpaHereTrust : defaultTpaTrust;
+	}
+
+	public void setDefaultTpaTrust(Tpa.Type type, TpaTrustDecision decision) {
+		TpaTrustDecision safeDecision = decision == null ? TpaTrustDecision.DEFAULT : decision;
+		if (type == Tpa.Type.TPAHERE) {
+			defaultTpaHereTrust = safeDecision;
+		} else {
+			defaultTpaTrust = safeDecision;
+		}
+	}
+
+	public void setPlayerTpaTrust(UUID requesterUuid, Tpa.Type type,
+			TpaTrustDecision decision) {
+		if (requesterUuid == null) {
+			return;
+		}
+		TpaTrustEntry updated = tpaTrustEntries.getOrDefault(requesterUuid, TpaTrustEntry.defaults())
+				.withDecision(type, decision);
+		if (updated.isDefault()) {
+			tpaTrustEntries.remove(requesterUuid);
+		} else {
+			tpaTrustEntries.put(requesterUuid, updated);
+		}
 	}
 
 	public boolean setDefaultHomeByName(String defaultHome) {
@@ -232,13 +279,12 @@ public class PlayerProfile {
 	}
 
 	public boolean refreshHomeState() {
-		boolean changed = removeExpiredHomes();
-		changed |= ensureDefaultHomeUuid();
-		return changed;
+		return removeExpiredHomes() | ensureDefaultHomeUuid();
 	}
 
 	public boolean isEmpty() {
-		return homes.isEmpty() && defaultHomeUuid == null && hiddenWarpUuids.isEmpty();
+		return homes.isEmpty() && defaultHomeUuid == null && hiddenWarpUuids.isEmpty() && defaultTpaTrust == TpaTrustDecision.DEFAULT
+				&& defaultTpaHereTrust == TpaTrustDecision.DEFAULT && tpaTrustEntries.isEmpty();
 	}
 
 	public void rebuildHomeNameIndex() {

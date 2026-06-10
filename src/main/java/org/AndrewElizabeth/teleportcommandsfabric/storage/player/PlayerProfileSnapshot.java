@@ -1,9 +1,11 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage.player;
 
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -35,6 +37,21 @@ record PlayerProfileSnapshot(PlayerProfile profile) implements PlayerProfileView
 	}
 
 	@Override
+	public TpaTrustDecision getDefaultTpaTrust() {
+		return profile.getDefaultTpaTrust();
+	}
+
+	@Override
+	public TpaTrustDecision getDefaultTpaHereTrust() {
+		return profile.getDefaultTpaHereTrust();
+	}
+
+	@Override
+	public Map<UUID, TpaTrustEntry> getTpaTrustEntries() {
+		return profile.getTpaTrustEntries();
+	}
+
+	@Override
 	public Optional<NamedLocationView> getHomeByName(String name) {
 		return NamedLocationSnapshot.optional(profile.getHomeByName(name));
 	}
@@ -62,6 +79,11 @@ record PlayerProfileSnapshot(PlayerProfile profile) implements PlayerProfileView
 	@Override
 	public boolean isWarpHidden(UUID warpUuid) {
 		return profile.isWarpHidden(warpUuid);
+	}
+
+	@Override
+	public TpaTrustDecision resolveTpaTrust(UUID requesterUuid, Tpa.Type type) {
+		return profile.resolveTpaTrust(requesterUuid, type);
 	}
 
 	@Override

@@ -17,6 +17,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationNbtCodec;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfile;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileNbtCodec;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -136,6 +139,10 @@ public final class TeleportCoreTestSuite {
 						"Verify named locations preserve optional yaw/pitch and old data remains compatible.",
 						"rotation=(90.0,12.5) legacyRotation=absent",
 						TeleportCoreTestSuite::testNamedLocationRotation),
+				scenario("TPA trust rules resolve and persist",
+						"Verify per-player TPA trust overrides default incoming rules and survives NBT round-trip.",
+						"defaultTpa=deny requesterTpa=accept requesterTpahere=deny legacyTrust=absent",
+						TeleportCoreTestSuite::testTpaTrustRules),
 				scenario("Recorded target resolver maps empty target",
 						"Verify missing death/previous records map to a failed target result.",
 						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
@@ -627,6 +634,50 @@ public final class TeleportCoreTestSuite {
 				+ ", decodedPitch=" + decoded.getXRot()
 				+ ", legacyYaw=" + legacyDecoded.getYRot()
 				+ ", legacyPitch=" + legacyDecoded.getXRot());
+	}
+
+	private static void testTpaTrustRules() {
+		UUID ownerUuid = UUID.randomUUID();
+		UUID requesterUuid = UUID.randomUUID();
+		PlayerProfile profile = new PlayerProfile(ownerUuid);
+
+		assertEquals(TpaTrustDecision.DEFAULT, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
+				"missing trust should use default request flow");
+		profile.setDefaultTpaTrust(Tpa.Type.TPA, TpaTrustDecision.DENY);
+		profile.setDefaultTpaTrust(Tpa.Type.TPAHERE, TpaTrustDecision.ACCEPT);
+		assertEquals(TpaTrustDecision.DENY, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
+				"default TPA rule should apply");
+		assertEquals(TpaTrustDecision.ACCEPT, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE),
+				"default TPAHere rule should apply");
+
+		profile.setPlayerTpaTrust(requesterUuid, Tpa.Type.TPA, TpaTrustDecision.ACCEPT);
+		profile.setPlayerTpaTrust(requesterUuid, Tpa.Type.TPAHERE, TpaTrustDecision.DENY);
+		assertEquals(TpaTrustDecision.ACCEPT, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
+				"per-player TPA rule should override default");
+		assertEquals(TpaTrustDecision.DENY, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE),
+				"per-player TPAHere rule should override default");
+
+		PlayerProfile decoded = PlayerProfileNbtCodec.fromNbt(PlayerProfileNbtCodec.toNbt(profile));
+		assertEquals(TpaTrustDecision.DENY, decoded.getDefaultTpaTrust(), "default TPA rule should persist");
+		assertEquals(TpaTrustDecision.ACCEPT, decoded.getDefaultTpaHereTrust(), "default TPAHere rule should persist");
+		assertEquals(TpaTrustDecision.ACCEPT, decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
+				"per-player TPA rule should persist");
+		assertEquals(TpaTrustDecision.DENY, decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE),
+				"per-player TPAHere rule should persist");
+
+		profile.setPlayerTpaTrust(requesterUuid, Tpa.Type.TPA, TpaTrustDecision.DEFAULT);
+		profile.setPlayerTpaTrust(requesterUuid, Tpa.Type.TPAHERE, TpaTrustDecision.DEFAULT);
+		assertFalse(profile.getTpaTrustEntries().containsKey(requesterUuid), "default/default entry should be removed");
+
+		var legacyTag = PlayerProfileNbtCodec.toNbt(profile);
+		legacyTag.remove("TpaTrust");
+		PlayerProfile legacyDecoded = PlayerProfileNbtCodec.fromNbt(legacyTag);
+		assertEquals(TpaTrustDecision.DEFAULT, legacyDecoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
+				"legacy profile without trust tag should use default request flow");
+		debug("DATA tpa.trust", "defaultTpa=" + decoded.getDefaultTpaTrust()
+				+ ", defaultTpahere=" + decoded.getDefaultTpaHereTrust()
+				+ ", requesterTpa=" + decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA)
+				+ ", requesterTpahere=" + decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE));
 	}
 
 	private static void testRecordedTargetEmpty() {

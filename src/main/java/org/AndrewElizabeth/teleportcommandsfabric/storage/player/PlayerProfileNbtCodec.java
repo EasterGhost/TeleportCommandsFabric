@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.storage.player;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationNbtCodec;
 
@@ -9,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.ListTag;
 
+import java.util.Map;
 import java.util.UUID;
 
 public final class PlayerProfileNbtCodec {
@@ -33,6 +35,23 @@ public final class PlayerProfileNbtCodec {
 			hiddenWarpList.add(new IntArrayTag(UUIDUtil.uuidToIntArray(warpUuid)));
 		}
 		tag.put("HiddenWarpUUIDs", hiddenWarpList);
+
+		CompoundTag trustTag = new CompoundTag();
+		trustTag.putString("DefaultTpa", profile.getDefaultTpaTrust().serializedName());
+		trustTag.putString("DefaultTpaHere", profile.getDefaultTpaHereTrust().serializedName());
+		ListTag trustPlayers = new ListTag();
+		for (Map.Entry<UUID, TpaTrustEntry> entry : profile.getTpaTrustEntries().entrySet()) {
+			if (entry.getValue().isDefault()) {
+				continue;
+			}
+			CompoundTag playerTag = new CompoundTag();
+			playerTag.putIntArray("PlayerUUID", UUIDUtil.uuidToIntArray(entry.getKey()));
+			playerTag.putString("Tpa", entry.getValue().tpa().serializedName());
+			playerTag.putString("TpaHere", entry.getValue().tpaHere().serializedName());
+			trustPlayers.add(playerTag);
+		}
+		trustTag.put("Players", trustPlayers);
+		tag.put("TpaTrust", trustTag);
 
 		return tag;
 	}
@@ -61,6 +80,25 @@ public final class PlayerProfileNbtCodec {
 					.orElseThrow(() -> new IllegalArgumentException("Invalid HiddenWarpUUIDs[" + index + "]")));
 			profile.hideWarp(warpUuid);
 		}
+
+		tag.getCompound("TpaTrust").ifPresent(trustTag -> {
+			profile.setDefaultTpaTrust(Tpa.Type.TPA,
+					TpaTrustDecision.fromSerialized(trustTag.getString("DefaultTpa").orElse("default")));
+			profile.setDefaultTpaTrust(Tpa.Type.TPAHERE,
+					TpaTrustDecision.fromSerialized(trustTag.getString("DefaultTpaHere").orElse("default")));
+			ListTag trustPlayers = trustTag.getListOrEmpty("Players");
+			for (int i = 0; i < trustPlayers.size(); i++) {
+				final int index = i;
+				CompoundTag playerTag = trustPlayers.getCompound(index)
+						.orElseThrow(() -> new IllegalArgumentException("Invalid TpaTrust.Players[" + index + "]"));
+				UUID trustedUuid = UUIDUtil.uuidFromIntArray(playerTag.getIntArray("PlayerUUID")
+						.orElseThrow(() -> new IllegalArgumentException("Missing TpaTrust.Players[" + index + "].PlayerUUID")));
+				profile.setPlayerTpaTrust(trustedUuid, Tpa.Type.TPA,
+						TpaTrustDecision.fromSerialized(playerTag.getString("Tpa").orElse("default")));
+				profile.setPlayerTpaTrust(trustedUuid, Tpa.Type.TPAHERE,
+						TpaTrustDecision.fromSerialized(playerTag.getString("TpaHere").orElse("default")));
+			}
+		});
 
 		return profile;
 	}
