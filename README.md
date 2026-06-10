@@ -16,8 +16,11 @@
 | 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/worldspawn` | Every teleport command your server needs |
 | 🎛️ `/tpc` | One admin surface: enable/disable modules, tune limits, reload config — no JSON editing |
 | 🗺️ Xaero sync | Homes and warps shown on the map. Delete a map waypoint, and it hides server-side |
+| 📋 Better lists | `/homes` and `/warps` include clickable paging, sorting, and filtering controls |
 | ⚙️ Shared behavior | Delay, cooldown, chunk preloading, and safety checks apply consistently across all teleport types |
 | ⏳ Temporary homes | Time-limited homes (`/tmphome`) with automatic cleanup on expiry |
+| 🤝 TPA trust | Auto-accept or auto-deny TPA / TPAHere requests globally or per player |
+| 🧭 Rotation restore | Saved homes, warps, and teleport records can preserve facing direction |
 | ⚡ RTP performance | Handles concurrent random teleports without lag |
 
 ---
@@ -34,6 +37,7 @@ Common admin commands when you need them:
 /tpc status                     # see which modules are on
 /tpc enable rtp                 # turn a module on
 /tpc config home max 20         # change a limit, live
+/tpc config teleporting restoreRotation true
 /tpc reload                     # reload after manual file edits
 ```
 
@@ -50,6 +54,7 @@ Adding the client mod (optional) improves the experience:
 | Waypoints on Xaero map | — | ✅ |
 | Map right-click → teleport | — | ✅ |
 | Trusted commands skip confirmation | — | ✅ |
+| TPA trust auto-accept / deny | ✅ | ✅ |
 
 ---
 
