@@ -168,7 +168,7 @@
   "commands.teleport_commands.tpa.trustDenied": "Запрос Tpa%0% не был отправлен, так как %1% не принимает этот тип запросов.",
   "commands.teleport_commands.tpa.trustedAcceptedSender": "%1% автоматически принял ваш запрос Tpa%0%.",
   "commands.teleport_commands.tpa.trustedAcceptedTarget": "Автоматически принят запрос Tpa%0% от %1%.",
-  "commands.teleport_commands.tpa.trustStatus": "Правило доверия для %0%: TPA=%1%, TPAHere=%2%",
+  "commands.teleport_commands.tpa.trustStatus": "Правило по умолчанию для %0%: TPA=%1%, TPAHere=%2%",
   "commands.teleport_commands.tpa.trustOverrideStatus": "Правило переопределения для %0%: TPA=%1%, TPAHere=%2%",
   "commands.teleport_commands.tpa.trustTargetAll": "все игроки",
   "commands.teleport_commands.tpa.trustTypeTpa": "TPA",

@@ -168,7 +168,7 @@
   "commands.teleport_commands.tpa.trustDenied": "Tpa%0% заявка не беше изпратена, защото %1% не приема този тип заявки.",
   "commands.teleport_commands.tpa.trustedAcceptedSender": "%1% автоматично прие твоята Tpa%0% заявка.",
   "commands.teleport_commands.tpa.trustedAcceptedTarget": "Автоматично приета Tpa%0% заявка от %1%.",
-  "commands.teleport_commands.tpa.trustStatus": "Правило за доверие за %0%: TPA=%1%, TPAHere=%2%",
+  "commands.teleport_commands.tpa.trustStatus": "Правило по подразбиране за %0%: TPA=%1%, TPAHere=%2%",
   "commands.teleport_commands.tpa.trustOverrideStatus": "Правило за замяна за %0%: TPA=%1%, TPAHere=%2%",
   "commands.teleport_commands.tpa.trustTargetAll": "всички играчи",
   "commands.teleport_commands.tpa.trustTypeTpa": "TPA",

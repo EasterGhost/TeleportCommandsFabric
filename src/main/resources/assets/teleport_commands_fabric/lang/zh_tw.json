@@ -168,7 +168,7 @@
   "commands.teleport_commands.tpa.trustDenied": "未傳送 Tpa%0% 請求，因為 %1% 不接受此類請求。",
   "commands.teleport_commands.tpa.trustedAcceptedSender": "%1% 自動接受了你的 Tpa%0% 請求。",
   "commands.teleport_commands.tpa.trustedAcceptedTarget": "已自動接受來自 %1% 的 Tpa%0% 請求。",
-  "commands.teleport_commands.tpa.trustStatus": "%0% 的信任規則：TPA=%1%，TPAHere=%2%",
+  "commands.teleport_commands.tpa.trustStatus": "%0%的預設規則：TPA=%1%，TPAHere=%2%",
   "commands.teleport_commands.tpa.trustOverrideStatus": "%0% 的覆蓋規則：TPA=%1%，TPAHere=%2%",
   "commands.teleport_commands.tpa.trustTargetAll": "所有玩家",
   "commands.teleport_commands.tpa.trustTypeTpa": "TPA",
