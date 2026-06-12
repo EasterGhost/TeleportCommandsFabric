@@ -26,15 +26,13 @@ public class WaypointDeleteMixin {
 	@Inject(method = "deleteCollected", at = @At("HEAD"))
 	private void tpc$hideWaypointOnDelete(MinimapSession session, MinimapWorld world, boolean save, CallbackInfo ci) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.player == null || mc.player.connection == null || world == null || toDeleteList == null
-				|| toDeleteList.isEmpty()) {
+		if (mc.player == null || mc.player.connection == null || toDeleteList == null || toDeleteList.isEmpty()) {
 			return;
 		}
 
-		String currentSetName = world.getCurrentWaypointSet() == null ? null : world.getCurrentWaypointSet().getName();
 		Set<String> commands = new LinkedHashSet<>();
 		for (Waypoint waypoint : List.copyOf(toDeleteList)) {
-			String command = XaeroWaypointCommandHelper.buildHideCommand(waypoint, currentSetName);
+			String command = XaeroWaypointCommandHelper.buildHideCommand(waypoint);
 			if (command != null) {
 				commands.add(command);
 			}
