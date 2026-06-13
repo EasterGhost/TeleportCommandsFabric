@@ -41,6 +41,8 @@ Common admin commands when you need them:
 /tpc reload                     # reload after manual file edits
 ```
 
+By default, extra debug logs are disabled. Target chunk preloading and default target safety checks are also disabled by default; RTP uses its own independent safety logic.
+
 ---
 
 ## With vs. Without Client Mod
