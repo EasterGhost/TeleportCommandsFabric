@@ -10,6 +10,7 @@ public final class TeleportingConfig {
 	private int preloadRadiusChunks = 1;
 	private boolean defaultSafetyCheck = false;
 	private boolean teleportEffects = true;
+	private boolean restoreRotation = true;
 
 	public int getDelay() {
 		return delay;
@@ -57,6 +58,14 @@ public final class TeleportingConfig {
 
 	public void setTeleportEffects(boolean teleportEffects) {
 		this.teleportEffects = teleportEffects;
+	}
+
+	public boolean isRestoreRotation() {
+		return restoreRotation;
+	}
+
+	public void setRestoreRotation(boolean restoreRotation) {
+		this.restoreRotation = restoreRotation;
 	}
 
 	public void normalize() {

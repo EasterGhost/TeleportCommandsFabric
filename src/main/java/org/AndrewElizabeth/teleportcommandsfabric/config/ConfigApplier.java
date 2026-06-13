@@ -2,6 +2,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.config;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportEffects;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportRotation;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
@@ -24,6 +25,7 @@ public final class ConfigApplier {
 			TeleportCommands.GLOBAL_PROFILE_MANAGER.setDeleteInvalidWarps(policy.storage().deleteInvalidWarps());
 		}
 		TeleportEffects.setEnabled(policy.teleportEffects());
+		TeleportRotation.setRestoreEnabled(policy.restoreRotation());
 		if (TeleportCommands.TELEPORT_SERVICE != null) {
 			TeleportCommands.TELEPORT_SERVICE.configurePreload(policy.preload().enabled(), policy.preload().radiusChunks());
 		}
@@ -39,6 +41,7 @@ public final class ConfigApplier {
 						config.getHome().isDeleteInvalid(),
 						config.getWarp().isDeleteInvalid()),
 				config.getTeleporting().isTeleportEffects(),
+				config.getTeleporting().isRestoreRotation(),
 				new PreloadPolicy(
 						config.getTeleporting().isPreloadEnabled(),
 						config.getTeleporting().getPreloadRadiusChunks()),
@@ -51,7 +54,7 @@ public final class ConfigApplier {
 	}
 
 	private record RuntimePolicy(boolean debugEnabled, StoragePolicy storage, boolean teleportEffects,
-			PreloadPolicy preload, XaeroPolicy xaero) {
+			boolean restoreRotation, PreloadPolicy preload, XaeroPolicy xaero) {
 	}
 
 	private record StoragePolicy(Duration saveInterval, boolean deleteInvalidHomes, boolean deleteInvalidWarps) {

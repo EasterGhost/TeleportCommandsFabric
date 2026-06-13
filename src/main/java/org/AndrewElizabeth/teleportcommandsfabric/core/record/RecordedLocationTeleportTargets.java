@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +42,17 @@ public final class RecordedLocationTeleportTargets {
 			return TeleportTargetResult.failed(TeleportStatus.TARGET_UNAVAILABLE);
 		}
 
-		return TeleportTargetResult.resolved(TeleportTarget.centered(world, recordedLocation.getBlockPos()));
+		return TeleportTargetResult.resolved(toTarget(recordedLocation, world));
+	}
+
+	public static TeleportTarget toTarget(RecordedLocationView recordedLocation, ServerLevel world) {
+		Vec3 position = new Vec3(
+				recordedLocation.getBlockPos().getX() + 0.5D,
+				recordedLocation.getBlockPos().getY(),
+				recordedLocation.getBlockPos().getZ() + 0.5D);
+		if (recordedLocation.getYRot() != null && recordedLocation.getXRot() != null) {
+			return TeleportTarget.of(world, position, recordedLocation.getYRot(), recordedLocation.getXRot());
+		}
+		return TeleportTarget.of(world, position);
 	}
 }

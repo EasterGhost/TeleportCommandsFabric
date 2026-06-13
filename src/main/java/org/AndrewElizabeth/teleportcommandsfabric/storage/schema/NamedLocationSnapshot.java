@@ -9,7 +9,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public record NamedLocationSnapshot(UUID getUuid, String getName, int getX, double getYPrecise, int getZ,
-		ResourceKey<Level> getDimension, boolean isVisible, long getExpiredTime, int getSequence) implements NamedLocationView {
+		ResourceKey<Level> getDimension, Float getYRot, Float getXRot,
+		boolean isVisible, long getExpiredTime, int getSequence) implements NamedLocationView {
 	public static NamedLocationSnapshot from(NamedLocationView location) {
 		return new NamedLocationSnapshot(location.getUuid(),
 				location.getName(),
@@ -17,6 +18,8 @@ public record NamedLocationSnapshot(UUID getUuid, String getName, int getX, doub
 				location.getYPrecise(),
 				location.getZ(),
 				location.getDimension(),
+				location.getYRot(),
+				location.getXRot(),
 				location.isVisible(),
 				location.getExpiredTime(),
 				location.getSequence());

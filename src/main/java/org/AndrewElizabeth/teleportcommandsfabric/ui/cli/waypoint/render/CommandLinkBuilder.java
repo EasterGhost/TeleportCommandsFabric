@@ -18,6 +18,37 @@ public final class CommandLinkBuilder {
 		return pagePickerCommand(kind) + " " + pageQueryArgs(query, page);
 	}
 
+	public String prefixFilterPickerCommand(WaypointPageKind kind, WaypointListQuery query, int page) {
+		return prefixFilterPickerCommand(kind) + " " + pageQueryArgs(query, page);
+	}
+
+	public String dimensionFilterPickerCommand(WaypointPageKind kind, WaypointListQuery query, int page) {
+		return dimensionFilterPickerCommand(kind) + " " + pageQueryArgs(query, page);
+	}
+
+	public String clearFilterCommand(WaypointPageKind kind, WaypointListQuery query) {
+		WaypointListQuery nextQuery = new WaypointListQuery(1, WaypointFilter.none(), safeQuery(query).sort());
+		return listCommand(kind, nextQuery, 1);
+	}
+
+	public String prefixFilterCommand(WaypointPageKind kind, WaypointListQuery query, String prefix) {
+		WaypointListQuery nextQuery = new WaypointListQuery(1, WaypointFilter.prefix(prefix), safeQuery(query).sort());
+		return listCommand(kind, nextQuery, 1);
+	}
+
+	public String dimensionFilterCommand(WaypointPageKind kind, WaypointListQuery query, String dimensionId) {
+		WaypointListQuery nextQuery = new WaypointListQuery(1, WaypointFilter.dimension(dimensionId), safeQuery(query).sort());
+		return listCommand(kind, nextQuery, 1);
+	}
+
+	public String sortCommand(WaypointPageKind kind, WaypointListQuery query, SortKey key) {
+		WaypointListQuery safeQuery = safeQuery(query);
+		WaypointSort currentSort = safeQuery.sort();
+		SortDirection direction = currentSort.key() == key ? toggle(currentSort.direction()) : SortDirection.ASC;
+		WaypointListQuery nextQuery = new WaypointListQuery(1, safeQuery.filter(), new WaypointSort(key, direction));
+		return listCommand(kind, nextQuery, 1);
+	}
+
 	public String visibilityCommand(WaypointPageRequest request, String quotedName, boolean visible, int currentPage) {
 		return visibilityCommand(request.kind()) + " " + quotedName + " " + visible + " "
 				+ pageQueryArgs(request.query(), currentPage);
@@ -51,7 +82,7 @@ public final class CommandLinkBuilder {
 	}
 
 	private void appendQuery(StringBuilder command, WaypointListQuery query) {
-		WaypointListQuery safeQuery = query == null ? WaypointListQuery.defaultQuery() : query;
+		WaypointListQuery safeQuery = safeQuery(query);
 		appendFilter(command, safeQuery.filter());
 		appendSort(command, safeQuery.sort());
 	}
@@ -80,7 +111,27 @@ public final class CommandLinkBuilder {
 		return kind == WaypointPageKind.HOMES ? "teleportcommandsfabric:homespages" : "teleportcommandsfabric:warpspages";
 	}
 
+	private String prefixFilterPickerCommand(WaypointPageKind kind) {
+		return kind == WaypointPageKind.HOMES
+				? "teleportcommandsfabric:homesprefixfilters"
+				: "teleportcommandsfabric:warpsprefixfilters";
+	}
+
+	private String dimensionFilterPickerCommand(WaypointPageKind kind) {
+		return kind == WaypointPageKind.HOMES
+				? "teleportcommandsfabric:homesdimensionfilters"
+				: "teleportcommandsfabric:warpsdimensionfilters";
+	}
+
 	private String visibilityCommand(WaypointPageKind kind) {
 		return kind == WaypointPageKind.HOMES ? "teleportcommandsfabric:maphome" : "teleportcommandsfabric:mapwarp";
+	}
+
+	private WaypointListQuery safeQuery(WaypointListQuery query) {
+		return query == null ? WaypointListQuery.defaultQuery() : query;
+	}
+
+	private SortDirection toggle(SortDirection direction) {
+		return direction == SortDirection.ASC ? SortDirection.DESC : SortDirection.ASC;
 	}
 }

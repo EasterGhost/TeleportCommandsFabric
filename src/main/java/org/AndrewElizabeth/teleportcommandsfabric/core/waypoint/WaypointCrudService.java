@@ -29,6 +29,8 @@ public class WaypointCrudService {
 		double py = player.getY();
 		int pz = player.getBlockZ();
 		ResourceKey<Level> pDim = player.level().dimension();
+		float yRot = player.getYRot();
+		float xRot = player.getXRot();
 
 		return source.mutateAtomic(accessor -> {
 			if (accessor.findByName(name).isPresent()) {
@@ -40,7 +42,7 @@ public class WaypointCrudService {
 				return WaypointOperationResult.LIMIT_REACHED;
 			}
 
-			NamedLocation newLoc = source.createLocation(name, px, py, pz, pDim);
+			NamedLocation newLoc = source.createLocation(name, px, py, pz, pDim, yRot, xRot);
 			if (!accessor.put(newLoc)) {
 				return WaypointOperationResult.INTERNAL_ERROR;
 			}
@@ -68,6 +70,8 @@ public class WaypointCrudService {
 		double py = player.getY();
 		int pz = player.getBlockZ();
 		ResourceKey<Level> pDim = player.level().dimension();
+		float yRot = player.getYRot();
+		float xRot = player.getXRot();
 
 		return source.mutateAtomic(accessor -> {
 			if (accessor.hasTemporary()) {
@@ -83,7 +87,7 @@ public class WaypointCrudService {
 				return WaypointOperationResult.ALREADY_EXISTS;
 			}
 
-			NamedLocation newLoc = source.createTemporaryLocation(name, px, py, pz, pDim, expiredTime);
+			NamedLocation newLoc = source.createTemporaryLocation(name, px, py, pz, pDim, expiredTime, yRot, xRot);
 			if (!accessor.put(newLoc)) {
 				return WaypointOperationResult.INTERNAL_ERROR;
 			}
@@ -108,6 +112,8 @@ public class WaypointCrudService {
 		net.minecraft.core.BlockPos currentPos = player.blockPosition();
 		double currentY = player.getY();
 		ResourceKey<Level> currentDim = player.level().dimension();
+		float currentYRot = player.getYRot();
+		float currentXRot = player.getXRot();
 
 		return source.mutateAtomic(accessor -> {
 			Optional<NamedLocation> locationOpt = accessor.findByName(name);
@@ -120,18 +126,24 @@ public class WaypointCrudService {
 			if (currentPos.getX() == location.getX() &&
 				Double.compare(currentY, location.getYPrecise()) == 0 &&
 				currentPos.getZ() == location.getZ() &&
-				currentDim.equals(location.getDimension())) {
+				currentDim.equals(location.getDimension()) &&
+				sameRotation(currentYRot, location.getYRot()) &&
+				sameRotation(currentXRot, location.getXRot())) {
 				return WaypointOperationResult.SAME_LOCATION;
 			}
 
 			NamedLocation newLoc = NamedLocation.copyOf(location);
-			newLoc.setCoordinates(currentPos.getX(), currentY, currentPos.getZ(), currentDim);
+			newLoc.setCoordinates(currentPos.getX(), currentY, currentPos.getZ(), currentDim, currentYRot, currentXRot);
 			if (!accessor.put(newLoc)) {
 				return WaypointOperationResult.INTERNAL_ERROR;
 			}
 
 			return WaypointOperationResult.SUCCESS;
 		});
+	}
+
+	private static boolean sameRotation(float currentRotation, Float storedRotation) {
+		return storedRotation != null && Float.compare(currentRotation, storedRotation) == 0;
 	}
 
 	public static CompletableFuture<WaypointOperationResult> rename(String oldName, String newName, AsyncWaypointSource source) {

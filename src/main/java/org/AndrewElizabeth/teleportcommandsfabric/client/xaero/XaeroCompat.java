@@ -29,8 +29,6 @@ public final class XaeroCompat {
 	private static final String LEGACY_HOME_SET_SENTINEL = "teleportcommands homes";
 	private static final Set<String> WARP_SYNCED_WORLDS = new HashSet<>();
 	private static final Set<String> HOME_SYNCED_WORLDS = new HashSet<>();
-	private static String currentWarpSetName = DEFAULT_SET_SENTINEL;
-	private static String currentHomeSetName = DEFAULT_SET_SENTINEL;
 
 	private XaeroCompat() {
 	}
@@ -49,20 +47,10 @@ public final class XaeroCompat {
 		boolean persist = payload.persistWaypointSets();
 		String warpSetName = normalizeSetName(payload.warpSetName(), EntryType.WARP);
 		String homeSetName = normalizeSetName(payload.homeSetName(), EntryType.HOME);
-		currentWarpSetName = warpSetName;
-		currentHomeSetName = homeSetName;
 
 		applyEntries(worldManager, payload.warps(), EntryType.WARP, persist, warpSetName, homeSetName);
 		applyEntries(worldManager, payload.homes(), EntryType.HOME, persist, warpSetName, homeSetName);
 		return true;
-	}
-
-	public static String getCurrentWarpSetName() {
-		return currentWarpSetName;
-	}
-
-	public static String getCurrentHomeSetName() {
-		return currentHomeSetName;
 	}
 
 	private static void applyEntries(MinimapWorldManager worldManager, List<XaeroSyncEntry> entries,
@@ -76,8 +64,7 @@ public final class XaeroCompat {
 				continue;
 			}
 
-			List<Waypoint> waypoints = toWaypoints(entry.getValue(), type);
-			persistWaypoints(world, entry.getValue(), waypoints, type, persist, warpSetName, homeSetName);
+			persistWaypoints(world, entry.getValue(), type, persist, warpSetName, homeSetName);
 			markWorldSynced(worldId, type);
 		}
 
@@ -96,7 +83,7 @@ public final class XaeroCompat {
 				trackedWorlds.remove(worldId);
 				continue;
 			}
-			persistWaypoints(world, List.of(), List.of(), type, persist, warpSetName, homeSetName);
+			persistWaypoints(world, List.of(), type, persist, warpSetName, homeSetName);
 			trackedWorlds.remove(worldId);
 		}
 	}
@@ -130,19 +117,11 @@ public final class XaeroCompat {
 		return null;
 	}
 
-	private static List<Waypoint> toWaypoints(List<XaeroSyncEntry> entries, EntryType type) {
-		return createWaypoints(entries, type, false);
-	}
-
 	private static List<Waypoint> toTaggedWaypoints(List<XaeroSyncEntry> entries, EntryType type) {
-		return createWaypoints(entries, type, true);
-	}
-
-	private static List<Waypoint> createWaypoints(List<XaeroSyncEntry> entries, EntryType type, boolean tagged) {
 		List<Waypoint> waypoints = new ArrayList<>(entries.size());
 		WaypointColor color = type == EntryType.WARP ? WaypointColor.BLUE : WaypointColor.GREEN;
 		String symbol = type == EntryType.WARP ? "W" : "H";
-		String prefix = tagged ? XaeroWaypointTags.prefix(type == EntryType.WARP) : "";
+		String prefix = XaeroWaypointTags.prefix(type == EntryType.WARP);
 
 		for (XaeroSyncEntry entry : entries) {
 			Waypoint waypoint = new Waypoint(entry.x(), entry.y(), entry.z(),
@@ -153,8 +132,8 @@ public final class XaeroCompat {
 		return waypoints;
 	}
 
-	private static void persistWaypoints(MinimapWorld world, List<XaeroSyncEntry> entries, List<Waypoint> waypoints,
-			EntryType type, boolean persist, String warpSetName, String homeSetName) {
+	private static void persistWaypoints(MinimapWorld world, List<XaeroSyncEntry> entries, EntryType type,
+			boolean persist, String warpSetName, String homeSetName) {
 		if (!persist) {
 			return;
 		}
@@ -177,7 +156,7 @@ public final class XaeroCompat {
 		}
 
 		set.clear();
-		set.addAll(waypoints);
+		set.addAll(toTaggedWaypoints(entries, type));
 	}
 
 	private static void markWorldSynced(String worldId, EntryType type) {

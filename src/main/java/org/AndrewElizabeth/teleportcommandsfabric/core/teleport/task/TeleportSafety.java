@@ -2,7 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -11,10 +10,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public final class TeleportSafety {
-    private static final int SEARCH_RADIUS = 3;
+    static final int SEARCH_RADIUS = 3;
     private static final int CACHE_X_SIZE = SEARCH_RADIUS * 2 + 1;
     private static final int CACHE_Y_SIZE = SEARCH_RADIUS * 2 + 3;
     private static final int CACHE_Z_SIZE = SEARCH_RADIUS * 2 + 1;
@@ -25,22 +23,16 @@ public final class TeleportSafety {
     private static final Offset[] CANDIDATE_OFFSETS = createCandidateOffsets();
     private static final ThreadLocal<SearchContext> SEARCH_CONTEXT = ThreadLocal.withInitial(SearchContext::new);
 
-    private static final Set<Block> UNSAFE_COLLISION_FREE_BLOCKS = Set.of(
-            Blocks.LAVA,
-            Blocks.END_PORTAL,
-            Blocks.END_GATEWAY,
-            Blocks.FIRE,
-            Blocks.SOUL_FIRE,
-            Blocks.WITHER_ROSE,
-            Blocks.POWDER_SNOW,
-            Blocks.NETHER_PORTAL);
-
     private TeleportSafety() {
     }
 
     public static Optional<BlockPos> getSafeBlockPos(BlockPos blockPos, ServerLevel world) {
+        return getSafeBlockPos(blockPos, world, world::getBlockState);
+    }
+
+    public static Optional<BlockPos> getSafeBlockPos(BlockPos blockPos, ServerLevel world, BlockStateReader reader) {
         SearchContext context = SEARCH_CONTEXT.get();
-        context.reset(blockPos, world);
+        context.reset(blockPos, world, reader);
         try {
             for (Offset offset : CANDIDATE_OFFSETS) {
                 if (context.isSafe(offset)) {
@@ -51,6 +43,11 @@ public final class TeleportSafety {
         } finally {
             context.clearWorld();
         }
+    }
+
+    @FunctionalInterface
+    public interface BlockStateReader {
+        BlockState getBlockState(BlockPos pos);
     }
 
     private static Offset[] createCandidateOffsets() {
@@ -90,19 +87,22 @@ public final class TeleportSafety {
         private int baseY;
         private int baseZ;
         private ServerLevel world;
+        private BlockStateReader reader;
         private final byte[] maskCache = new byte[CACHE_X_SIZE * CACHE_Y_SIZE * CACHE_Z_SIZE];
         private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
-        private void reset(BlockPos blockPos, ServerLevel world) {
+        private void reset(BlockPos blockPos, ServerLevel world, BlockStateReader reader) {
             this.baseX = blockPos.getX();
             this.baseY = blockPos.getY();
             this.baseZ = blockPos.getZ();
             this.world = world;
+            this.reader = reader;
             Arrays.fill(maskCache, CACHE_UNKNOWN);
         }
 
         private void clearWorld() {
             this.world = null;
+            this.reader = null;
         }
 
         private boolean isSafe(Offset offset) {
@@ -127,20 +127,27 @@ public final class TeleportSafety {
             }
 
             mutablePos.set(baseX + relativeX, baseY + relativeY, baseZ + relativeZ);
-            BlockState state = world.getBlockState(mutablePos);
+            BlockState state = reader.getBlockState(mutablePos);
             byte mask = createMask(state);
             maskCache[index] = (byte) (mask + 1);
             return mask;
         }
 
         private byte createMask(BlockState state) {
+            if (state.isAir()) {
+                return MASK_BODY_CLEAR;
+            }
+            if (state.is(Blocks.WATER)) {
+                return MASK_SUPPORT | MASK_BODY_CLEAR;
+            }
+
             boolean collisionEmpty = state.getCollisionShape(world, mutablePos).isEmpty();
             byte mask = 0;
 
-            if (state.is(Blocks.WATER) || !collisionEmpty) {
+            if (!collisionEmpty) {
                 mask |= MASK_SUPPORT;
             }
-            if (collisionEmpty && !UNSAFE_COLLISION_FREE_BLOCKS.contains(state.getBlock())) {
+            if (collisionEmpty && !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock())) {
                 mask |= MASK_BODY_CLEAR;
             }
 

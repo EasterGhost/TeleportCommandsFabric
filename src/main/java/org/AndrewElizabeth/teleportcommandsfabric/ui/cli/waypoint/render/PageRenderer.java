@@ -5,6 +5,10 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.ComponentSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointSort;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import net.minecraft.ChatFormatting;
@@ -28,6 +32,7 @@ public final class PageRenderer {
 	public Component render(WaypointPageRequest request, PageView<NamedLocationView> page) {
 		MutableComponent message = Component.empty();
 		message.append(buildHeader(request, page));
+		message.append(buildControls(request, page.currentPage()));
 		for (NamedLocationView location : page.entries()) {
 			appendEntry(message, request, location, page.currentPage());
 		}
@@ -37,6 +42,33 @@ public final class PageRenderer {
 
 	private MutableComponent buildHeader(WaypointPageRequest request, PageView<NamedLocationView> page) {
 		return ComponentSupport.waypointHeader(request.kind(), page.currentPage(), page.totalPages(), request.language());
+	}
+
+	private MutableComponent buildControls(WaypointPageRequest request, int currentPage) {
+		MutableComponent controls = Component.empty();
+		controls.append("\n");
+		controls.append(ComponentSupport.translate("commands.teleport_commands.common.view", request.language())
+				.withStyle(ChatFormatting.GRAY));
+		controls.append(" ");
+		controls.append(WaypointRenderSupport.stateButton(
+				ComponentSupport.translate("commands.teleport_commands.common.all", request.language()),
+				commands.clearFilterCommand(request.kind(), request.query()), request.query().filter().isNone()));
+		controls.append(" ");
+		controls.append(WaypointRenderSupport.stateButton(prefixLabel(request),
+				commands.prefixFilterPickerCommand(request.kind(), request.query(), currentPage),
+				request.query().filter() instanceof WaypointFilter.Prefix));
+		controls.append(" ");
+		controls.append(WaypointRenderSupport.stateButton(dimensionLabel(request),
+				commands.dimensionFilterPickerCommand(request.kind(), request.query(), currentPage),
+				request.query().filter() instanceof WaypointFilter.Dimension));
+		controls.append("   ");
+		controls.append(ComponentSupport.translate("commands.teleport_commands.common.sort", request.language())
+				.withStyle(ChatFormatting.GRAY));
+		controls.append(" ");
+		appendSortButton(controls, request, SortKey.SEQUENCE);
+		controls.append(" ");
+		appendSortButton(controls, request, SortKey.NAME);
+		return controls;
 	}
 
 	private void appendEntry(MutableComponent message, WaypointPageRequest request, NamedLocationView location, int currentPage) {
@@ -159,6 +191,46 @@ public final class PageRenderer {
 		navigation.append(ComponentSupport.navButton(request.language(), "commands.teleport_commands.common.last",
 				currentPage < totalPages ? commands.listCommand(request.kind(), request.query(), totalPages) : null));
 		return navigation;
+	}
+
+	private void appendSortButton(MutableComponent message, WaypointPageRequest request, SortKey key) {
+		WaypointSort sort = request.query().sort();
+		boolean active = sort.key() == key;
+		String label = sortLabel(request.language(), key, active ? sort.direction() : null);
+		ChatFormatting color = active ? ChatFormatting.GOLD : ChatFormatting.AQUA;
+		message.append(Component.literal(label).withStyle(color)
+				.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(
+						commands.sortCommand(request.kind(), request.query(), key)))));
+	}
+
+	private String sortLabel(String language, SortKey key, SortDirection direction) {
+		String base = ComponentSupport.translate(key == SortKey.SEQUENCE
+				? "commands.teleport_commands.common.sequence"
+				: "commands.teleport_commands.common.name", language).getString();
+		if (direction == null) {
+			return "[" + base + "]";
+		}
+		return "[" + base + " " + (direction == SortDirection.ASC ? "↑" : "↓") + "]";
+	}
+
+	private MutableComponent prefixLabel(WaypointPageRequest request) {
+		if (request.query().filter() instanceof WaypointFilter.Prefix prefix) {
+			return Component.empty()
+					.append(ComponentSupport.translate("commands.teleport_commands.common.prefix", request.language()))
+					.append(": ")
+					.append(prefix.value().toUpperCase(Locale.ROOT));
+		}
+		return ComponentSupport.translate("commands.teleport_commands.common.prefix", request.language());
+	}
+
+	private MutableComponent dimensionLabel(WaypointPageRequest request) {
+		if (request.query().filter() instanceof WaypointFilter.Dimension dimension) {
+			return Component.empty()
+					.append(ComponentSupport.translate("commands.teleport_commands.common.dimension", request.language()))
+					.append(": ")
+					.append(WaypointRenderSupport.shortDimensionId(dimension.dimensionId()));
+		}
+		return ComponentSupport.translate("commands.teleport_commands.common.dimension", request.language());
 	}
 
 	private MutableComponent button(String language, String key, ChatFormatting color, ClickEvent clickEvent) {

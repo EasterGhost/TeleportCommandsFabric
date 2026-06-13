@@ -10,11 +10,13 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageAssembler;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPages;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.CommandLinkBuilder;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointSort;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
@@ -59,6 +61,9 @@ public final class CliTestSuite {
 				scenario("Waypoint page picker",
 						"Verify waypoint page picker renders all pages in rows and preserves the list query.",
 						CliTestSuite::testWaypointPagePicker),
+				scenario("Waypoint filter controls",
+						"Verify waypoint filter controls render picker pages and quote dimension commands.",
+						CliTestSuite::testWaypointFilterControls),
 				scenario("Regular warps hide admin actions",
 						"Verify regular /warps output keeps only teleport and personal map visibility controls.",
 						CliTestSuite::testRegularWarpsHideAdminActions),
@@ -78,6 +83,8 @@ public final class CliTestSuite {
 
 	private static void testCommandArgumentQuoting() {
 		assertEquals("spawn", CommandArgumentUtils.quote("spawn"), "simple argument should not be quoted");
+		assertEquals("\"minecraft:overworld\"", CommandArgumentUtils.quote("minecraft:overworld"),
+				"Brigadier string arguments with namespace separators should be quoted");
 		assertEquals("\"main base\"", CommandArgumentUtils.quote("main base"), "argument with spaces should be quoted");
 		assertEquals("\"a\\\"b\"", CommandArgumentUtils.quote("a\"b"), "quote should be escaped");
 		assertEquals("\"a\\\\b\"", CommandArgumentUtils.quote("a\\b"), "backslash should be escaped");
@@ -143,6 +150,39 @@ public final class CliTestSuite {
 		assertContains(text, "Warps pages (2/9)", "page picker should render title and current page");
 		assertContains(text, "[1] [2] [3] [4] [5] [6] [7] [8]\n[9]",
 				"page picker should render eight page buttons per row");
+	}
+
+	private static void testWaypointFilterControls() {
+		List<NamedLocationView> locations = List.of(
+				location("alpha", 0, 64.0D, 0, OVERWORLD, true, 0),
+				location("nether", 0, 64.0D, 0, NETHER, true, 1),
+				location("end", 0, 64.0D, 0, END, true, 2));
+		WaypointListQuery query = new WaypointListQuery(2,
+				WaypointFilter.dimension("minecraft:overworld"),
+				new WaypointSort(SortKey.NAME, SortDirection.ASC));
+		WaypointPageRequest request = new WaypointPageRequest(
+				WaypointPageKind.WARPS,
+				locations,
+				Set.of(),
+				null,
+				true,
+				query,
+				"en_us");
+		String prefixPicker = renderFilterPicker(request, WaypointFilterPickerKind.PREFIX);
+		String dimensionPicker = renderFilterPicker(request, WaypointFilterPickerKind.DIMENSION);
+		CommandLinkBuilder commands = new CommandLinkBuilder();
+
+		assertContains(prefixPicker, "Warps Prefix Filter",
+				"prefix picker should render its title");
+		assertContains(prefixPicker, "[All]\n[A] [B] [C] [D] [E] [F] [G] [H] [I]",
+				"prefix picker should render A-Z buttons in rows");
+		assertContains(dimensionPicker, "Warps Dimension Filter",
+				"dimension picker should render its title");
+		assertContains(dimensionPicker, "[All]\n[overworld] [the_end] [the_nether]",
+				"dimension picker should render dimensions present in the current rows");
+		assertContains(commands.dimensionFilterCommand(WaypointPageKind.WARPS, query, "minecraft:overworld"),
+				"filter dimension \"minecraft:overworld\"",
+				"dimension filter commands should quote namespaced dimension IDs");
 	}
 
 	private static void testRegularWarpsHideAdminActions() {
@@ -260,6 +300,12 @@ public final class CliTestSuite {
 	private static String renderPagePicker(WaypointPageRequest request) {
 		try (WaypointPages pages = new WaypointPages()) {
 			return pages.renderPagePicker(request).getString();
+		}
+	}
+
+	private static String renderFilterPicker(WaypointPageRequest request, WaypointFilterPickerKind pickerKind) {
+		try (WaypointPages pages = new WaypointPages()) {
+			return pages.renderFilterPicker(request, pickerKind).getString();
 		}
 	}
 

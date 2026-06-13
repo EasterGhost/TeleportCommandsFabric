@@ -5,27 +5,15 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTel
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.Optional;
 import java.util.Objects;
-import java.util.Set;
 import java.util.SplittableRandom;
 
 public final class RtpPositionFinder {
-	private static final Set<Block> UNSAFE_COLLISION_FREE_BLOCKS = Set.of(
-			Blocks.LAVA,
-			Blocks.END_PORTAL,
-			Blocks.END_GATEWAY,
-			Blocks.FIRE,
-			Blocks.SOUL_FIRE,
-			Blocks.WITHER_ROSE,
-			Blocks.POWDER_SNOW,
-			Blocks.NETHER_PORTAL);
-
 	private RtpPositionFinder() {
 	}
 
@@ -102,12 +90,15 @@ public final class RtpPositionFinder {
 	}
 
 	private static boolean isBodyClear(ServerLevel world, BlockPos pos, BlockState state) {
+		if (state.isAir()) {
+			return true;
+		}
 		if (!state.getFluidState().isEmpty()) {
 			return false;
 		}
 		if (!state.getCollisionShape(world, pos).isEmpty()) {
 			return false;
 		}
-		return !UNSAFE_COLLISION_FREE_BLOCKS.contains(state.getBlock());
+		return !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock());
 	}
 }

@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationVi
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.CommandLinkBuilder;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.FilterPickerRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.PagePickerRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render.PageRenderer;
 
@@ -20,6 +21,7 @@ public final class WaypointPages implements AutoCloseable {
 	private final WaypointPageAssembler assembler;
 	private final PageRenderer renderer;
 	private final PagePickerRenderer pagePickerRenderer;
+	private final FilterPickerRenderer filterPickerRenderer;
 	private final Executor renderExecutor;
 	private final ExecutorService ownedExecutor;
 
@@ -35,15 +37,18 @@ public final class WaypointPages implements AutoCloseable {
 		this(new WaypointPageAssembler(warpListCache),
 				new PageRenderer(new CommandLinkBuilder()),
 				new PagePickerRenderer(new CommandLinkBuilder()),
+				new FilterPickerRenderer(new CommandLinkBuilder()),
 				renderExecutor,
 				ownsExecutor);
 	}
 
 	private WaypointPages(WaypointPageAssembler assembler, PageRenderer renderer,
-			PagePickerRenderer pagePickerRenderer, Executor renderExecutor, boolean ownsExecutor) {
+			PagePickerRenderer pagePickerRenderer, FilterPickerRenderer filterPickerRenderer,
+			Executor renderExecutor, boolean ownsExecutor) {
 		this.assembler = Objects.requireNonNull(assembler, "assembler");
 		this.renderer = Objects.requireNonNull(renderer, "renderer");
 		this.pagePickerRenderer = Objects.requireNonNull(pagePickerRenderer, "pagePickerRenderer");
+		this.filterPickerRenderer = Objects.requireNonNull(filterPickerRenderer, "filterPickerRenderer");
 		this.renderExecutor = Objects.requireNonNull(renderExecutor, "renderExecutor");
 		this.ownedExecutor = ownsExecutor && renderExecutor instanceof ExecutorService executorService ? executorService : null;
 	}
@@ -60,6 +65,11 @@ public final class WaypointPages implements AutoCloseable {
 		Objects.requireNonNull(request, "request");
 		PageView<NamedLocationView> page = assembler.page(request);
 		return pagePickerRenderer.render(request.kind(), request.query(), page.currentPage(), page.totalPages(), request.language());
+	}
+
+	public Component renderFilterPicker(WaypointPageRequest request, WaypointFilterPickerKind pickerKind) {
+		Objects.requireNonNull(request, "request");
+		return filterPickerRenderer.render(request, pickerKind);
 	}
 
 	public List<NamedLocationView> filteredRows(WaypointPageRequest request) {

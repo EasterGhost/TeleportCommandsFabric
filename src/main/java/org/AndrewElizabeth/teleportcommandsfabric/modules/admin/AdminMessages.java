@@ -38,4 +38,10 @@ final class AdminMessages {
 	static void sendError(CommandSourceStack source, MutableComponent message) {
 		source.sendFailure(message.copy().withStyle(ChatFormatting.RED));
 	}
+
+	static MutableComponent enabledText(CommandSourceStack source, boolean enabled) {
+		return t(source, enabled
+				? "commands.teleport_commands.admin.stat.enabled"
+				: "commands.teleport_commands.admin.stat.disabled");
+	}
 }

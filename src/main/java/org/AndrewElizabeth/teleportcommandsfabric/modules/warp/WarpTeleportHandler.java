@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.Tel
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.GlobalWarpSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
@@ -22,7 +23,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -100,10 +100,7 @@ final class WarpTeleportHandler {
 				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
 				.recordPrevious(true)
 				.build();
-		TeleportTarget target = TeleportTarget.of(world, new Vec3(
-				warp.getX() + 0.5D,
-				warp.getYPrecise(),
-				warp.getZ() + 0.5D));
+		TeleportTarget target = WaypointTeleportTargets.toTarget(warp, world);
 		TeleportRequest request = TeleportRequest.resolved(target, options);
 		String forceCommand = "warp " + CommandArgumentUtils.quote(warp.getName()) + " true";
 		try {

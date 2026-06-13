@@ -2,6 +2,9 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testRuntimeOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
+    testRuntimeOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
+    testRuntimeOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
 }
 
 tasks.named("test", Test) {

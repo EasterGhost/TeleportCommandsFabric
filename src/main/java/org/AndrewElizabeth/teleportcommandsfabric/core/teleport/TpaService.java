@@ -101,6 +101,30 @@ public final class TpaService {
 		return sessions.hasOutgoing(senderUuid, targetUuid, Util.getMillis());
 	}
 
+	public boolean hasPendingRequest(UUID senderUuid, UUID targetUuid, Tpa.Type type) {
+		if (senderUuid == null || targetUuid == null || type == null) {
+			return false;
+		}
+		UUID playerToMoveUuid = type == Tpa.Type.TPA ? senderUuid : targetUuid;
+		return operationManager.getCurrentOperation(playerToMoveUuid, TpaTeleportPending.class)
+				.filter(pending -> pending.senderUuid().equals(senderUuid))
+				.filter(pending -> pending.targetUuid().equals(targetUuid))
+				.filter(pending -> pending.type() == type)
+				.isPresent();
+	}
+
+	public CompletableFuture<TeleportStatus> executeTrustedRequest(MinecraftServer server, TpaRequest request) {
+		if (server == null) {
+			return CompletableFuture.completedFuture(TeleportStatus.SERVER_UNAVAILABLE);
+		}
+		if (request == null) {
+			return CompletableFuture.completedFuture(TeleportStatus.TARGET_UNAVAILABLE);
+		}
+		Tpa.Session session = new Tpa.Session(UUID.randomUUID(), request.senderUuid(), request.targetUuid(), request.type(),
+				Long.MAX_VALUE, request.delayTicks(), request.cooldownMillis(), request.recordPrevious());
+		return enqueueAcceptedSession(server, session, false);
+	}
+
 	public CompletableFuture<TeleportStatus> acceptRequest(MinecraftServer server, UUID sessionId) {
 		if (server == null) {
 			return CompletableFuture.completedFuture(TeleportStatus.SERVER_UNAVAILABLE);
@@ -118,17 +142,25 @@ public final class TpaService {
 			remove(sessionId);
 			return CompletableFuture.completedFuture(TeleportStatus.TARGET_UNAVAILABLE);
 		}
+		return enqueueAcceptedSession(server, session, true);
+	}
 
+	private CompletableFuture<TeleportStatus> enqueueAcceptedSession(MinecraftServer server, Tpa.Session session,
+			boolean removeSession) {
 		UUID playerToMoveUuid = session.type() == Tpa.Type.TPA ? session.sender() : session.target();
 		UUID destinationPlayerUuid = session.type() == Tpa.Type.TPA ? session.target() : session.sender();
 		ServerPlayer playerToMove = server.getPlayerList().getPlayer(playerToMoveUuid);
 		ServerPlayer destinationPlayer = server.getPlayerList().getPlayer(destinationPlayerUuid);
 		if (playerToMove == null || destinationPlayer == null) {
-			remove(sessionId);
+			if (removeSession) {
+				remove(session.sessionId());
+			}
 			return CompletableFuture.completedFuture(TeleportStatus.PLAYER_DISCONNECTED);
 		}
 		if (playerToMove.isDeadOrDying() || destinationPlayer.isDeadOrDying()) {
-			remove(sessionId);
+			if (removeSession) {
+				remove(session.sessionId());
+			}
 			return CompletableFuture.completedFuture(TeleportStatus.CANCELLED_BY_EVENT);
 		}
 
@@ -141,7 +173,9 @@ public final class TpaService {
 				currentTick, (sequence, tick) -> TpaTeleportPending.fromSession(session, sequence, tick));
 		createResult.replaced().ifPresent(this::releaseReplacedTargetPreload);
 		acceptedQueue.addLast(new PendingRef(playerToMoveUuid, createResult.pending().pendingSequence()));
-		remove(sessionId);
+		if (removeSession) {
+			remove(session.sessionId());
+		}
 		return createResult.pending().resultFuture();
 	}
 

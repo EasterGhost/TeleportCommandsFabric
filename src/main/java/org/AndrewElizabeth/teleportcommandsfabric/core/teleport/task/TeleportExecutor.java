@@ -39,7 +39,8 @@ public final class TeleportExecutor {
 		}
 
 		if (operation.recordPrevious() && recordedSource != null) {
-			recordedSource.recordPreviousTeleportLocation(player.getUUID(), player.blockPosition(), player.level().dimension())
+			recordedSource.recordPreviousTeleportLocation(player.getUUID(), player.blockPosition(), player.level().dimension(),
+					player.getYRot(), player.getXRot())
 					.whenComplete((ignored, throwable) -> {
 						if (throwable != null) {
 							ModConstants.LOGGER.warn("Failed to record previous teleport location", throwable);
@@ -52,8 +53,10 @@ public final class TeleportExecutor {
 		if (effectsEnabled) {
 			TeleportEffects.playBefore(player);
 		}
+		float yRot = TeleportRotation.isRestoreEnabled() ? target.effectiveYRot(player) : player.getYRot();
+		float xRot = TeleportRotation.isRestoreEnabled() ? target.effectiveXRot(player) : player.getXRot();
 		boolean teleported = player.teleportTo(target.world(), target.position().x(), target.position().y(), target.position().z(),
-				Set.of(), target.effectiveYRot(player), target.effectiveXRot(player), false);
+				Set.of(), yRot, xRot, false);
 		if (!teleported) {
 			return finishOperation(operation, TeleportStatus.FAILED);
 		}
