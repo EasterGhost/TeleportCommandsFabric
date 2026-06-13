@@ -10,6 +10,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 | Mod version     | Config version | Storage version | Data compatibility notes                                                                                                                                                            |
 | --------------- | -------------: | --------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1             |              3 |               1 | Feature update on the 26.1 line. Keeps the v2.0 storage/config schema while adding TPA trust rules and saved rotation fields to stored locations. |
 | 2.0             |              3 |               1 | Core refactoring release. Dynamically applied config and independent storage format. |
 | 1.7             |              2 |               5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
 | 1.6.1/1.5.2     |              2 |               4 | Corrected the declared storage schema for UUID-based home/warp identity,`DefaultHomeUuid`, and `HiddenWarpUuids`; repairs historical files from the earlier `v3` declaration. |
@@ -19,6 +20,27 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.4             |              2 |               2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
 | 1.3             |              2 |               2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |    not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+
+## [2.1] - 2026-06-14
+
+### Added
+
+- Added TPA trust rules, allowing players to set per-player or default behavior for `tpa` and `tpahere` requests.
+- Added clickable filter and sort controls to `/homes` and `/warps` list pages.
+- Added saved teleport rotation support so homes, warps, and recorded teleport targets can preserve facing direction.
+
+### Changed
+
+- Improved target teleport safety block-state reads for lower overhead during safety checks.
+- Improved RTP destination safety handling with shared unsafe-block rules.
+- Improved admin command organization while keeping the external `/tpc` command surface unchanged.
+- Improved Xaero waypoint recognition so TeleportCommandsFabric only handles tagged waypoints created by this mod.
+- Updated README content for the 2.1 feature set and current default teleport behavior.
+
+### Fixed
+
+- Fixed custom Xaero waypoint sets not being recognized correctly for TeleportCommandsFabric home/warp teleport actions.
+- Fixed normal player-created Xaero waypoints being more likely to be mistaken for TeleportCommandsFabric-managed waypoints during map hide/delete flows.
 
 ## [2.0] - 2026-06-03
 
