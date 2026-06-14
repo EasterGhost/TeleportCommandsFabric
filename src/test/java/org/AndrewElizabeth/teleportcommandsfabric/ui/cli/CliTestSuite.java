@@ -264,13 +264,13 @@ public final class CliTestSuite {
 		RecordedLocationView death = recordedLocation(24, 70, -96, NETHER, 180.0F, 0.0F);
 
 		String text = renderer.render("en_us", Optional.of(previous), Optional.of(death)).getString();
-		assertContains(text, "Previous teleport location:\nWorld: minecraft:overworld\nPosition: 120 64 -35\nFacing: West (90.0°)\nPitch: 12.5°\n[Teleport]",
+		assertContains(text, "Back preview:\nPrevious teleport location:\nWorld: minecraft:overworld\nPosition: 120 64 -35\nFacing: West (90.0°)\nPitch: 12.5°\n[Teleport]",
 				"preview should render previous teleport location with west facing and teleport action");
 		assertContains(text, "Previous death location:\nWorld: minecraft:the_nether\nPosition: 24 70 -96\nFacing: North (180.0°)\nPitch: 0.0°\n[Teleport]",
 				"preview should render death location with north facing and teleport action");
 
 		String emptyText = renderer.render("en_us", Optional.empty(), Optional.empty()).getString();
-		assertContains(emptyText, "No back locations have been recorded.",
+		assertContains(emptyText, "Back preview:\nNo back locations have been recorded.",
 				"empty preview should render a plain no-record message");
 	}
 
@@ -307,11 +307,11 @@ public final class CliTestSuite {
 		String zhText = renderer.render(modules, "zh_cn", testRuntimeInfo()).getString();
 		String enText = renderer.render(modules, "en_us", testRuntimeInfo()).getString();
 
-		assertContains(zhText, "版本：test-version\n联动：Xaero 已加载\n模块状态：\n",
+		assertContains(zhText, "TPC 状态：\n版本：test-version\n联动：Xaero 已加载\n模块状态：\n",
 				"admin status should render runtime info and title");
 		assertContains(zhText, "Home 命令：已启用 [禁用]\n", "enabled module should render disable action");
 		assertContains(zhText, "Warp 命令：已禁用 [启用]\n", "disabled module should render enable action");
-		assertContains(enText, "Version: test-version\nIntegrations: Xaero loaded\nModule status:\nHome command: enabled [disable]\nWarp command: disabled [enable]\n",
+		assertContains(enText, "TPC status:\nVersion: test-version\nIntegrations: Xaero loaded\nModule status:\nHome command: enabled [disable]\nWarp command: disabled [enable]\n",
 				"English admin status should render expected text");
 		assertEquals("\n===========================", renderer.renderRefreshDivider().getString(),
 				"refresh divider should match legacy status refresh separator");

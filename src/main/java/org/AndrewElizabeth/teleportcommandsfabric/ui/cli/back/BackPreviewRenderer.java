@@ -38,12 +38,17 @@ public final class BackPreviewRenderer {
 	public MutableComponent render(String language, Optional<RecordedLocationView> previous,
 			Optional<RecordedLocationView> death) {
 		MutableComponent message = Component.empty();
+		message.append(t(language, "commands.teleport_commands.back.preview.title")
+				.withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
 		boolean hasPrevious = previous != null && previous.isPresent();
 		boolean hasDeath = death != null && death.isPresent();
 		if (!hasPrevious && !hasDeath) {
-			return t(language, "commands.teleport_commands.back.preview.none").withStyle(ChatFormatting.YELLOW);
+			message.append("\n");
+			message.append(t(language, "commands.teleport_commands.back.preview.none").withStyle(ChatFormatting.YELLOW));
+			return message;
 		}
 
+		message.append("\n");
 		if (hasPrevious) {
 			appendSection(message, language, "commands.teleport_commands.back.preview.previous",
 					previous.get(), COMMAND_BACK_TP, DISPLAY_COMMAND_BACK_TP);

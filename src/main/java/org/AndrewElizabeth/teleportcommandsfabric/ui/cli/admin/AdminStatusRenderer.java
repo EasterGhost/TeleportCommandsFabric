@@ -18,6 +18,8 @@ public final class AdminStatusRenderer {
 	public Component render(List<AdminModuleStatus> modules, String language, AdminRuntimeInfo runtimeInfo) {
 		String safeLanguage = normalizeLanguage(language);
 		MutableComponent message = Component.empty();
+		message.append(ComponentSupport.translate("commands.teleport_commands.admin.stat.header", safeLanguage)
+				.withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
 		AdminInfoRenderer.append(message, runtimeInfo, safeLanguage);
 		message.append("\n");
 		appendLine(message, ComponentSupport.translate("commands.teleport_commands.admin.stat.title", safeLanguage),
