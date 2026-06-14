@@ -15,9 +15,11 @@ public final class AdminStatusRenderer {
 	private static final String RUN_ROOT_COMMAND = "tpc";
 	private static final String DISPLAY_ROOT_COMMAND = "/tpc";
 
-	public Component render(List<AdminModuleStatus> modules, String language) {
+	public Component render(List<AdminModuleStatus> modules, String language, AdminRuntimeInfo runtimeInfo) {
 		String safeLanguage = normalizeLanguage(language);
 		MutableComponent message = Component.empty();
+		AdminInfoRenderer.append(message, runtimeInfo, safeLanguage);
+		message.append("\n");
 		appendLine(message, ComponentSupport.translate("commands.teleport_commands.admin.stat.title", safeLanguage),
 				ChatFormatting.GOLD, true);
 		for (AdminModuleStatus module : safeModules(modules)) {
