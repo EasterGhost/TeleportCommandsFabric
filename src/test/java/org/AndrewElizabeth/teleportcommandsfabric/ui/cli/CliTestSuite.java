@@ -1,11 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpTopic;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminModuleStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminStatusRenderer;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.back.BackPreviewRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
@@ -22,6 +24,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -32,6 +35,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -73,6 +77,9 @@ public final class CliTestSuite {
 				scenario("Homes render markers and actions",
 						"Verify /homes output shows default and temporary markers and does not show global map controls.",
 						CliTestSuite::testHomesRenderMarkersAndActions),
+				scenario("Back preview render",
+						"Verify /back preview renders previous and death records with facing, pitch, and teleport actions.",
+						CliTestSuite::testBackPreviewRender),
 				scenario("Admin help render",
 						"Verify /tpc help renders topic-driven overview, admin commands, config index, and config module details.",
 						CliTestSuite::testAdminHelpRender),
@@ -249,6 +256,22 @@ public final class CliTestSuite {
 		assertNotContains(text, "[全局地图", "home page should not show global map controls");
 	}
 
+	private static void testBackPreviewRender() {
+		BackPreviewRenderer renderer = new BackPreviewRenderer();
+		RecordedLocationView previous = recordedLocation(120, 64, -35, OVERWORLD, 90.0F, 12.5F);
+		RecordedLocationView death = recordedLocation(24, 70, -96, NETHER, 180.0F, 0.0F);
+
+		String text = renderer.render("en_us", Optional.of(previous), Optional.of(death)).getString();
+		assertContains(text, "Previous teleport location:\nWorld: minecraft:overworld\nPosition: 120 64 -35\nFacing: West (90.0°)\nPitch: 12.5°\n[Teleport]",
+				"preview should render previous teleport location with west facing and teleport action");
+		assertContains(text, "Previous death location:\nWorld: minecraft:the_nether\nPosition: 24 70 -96\nFacing: North (180.0°)\nPitch: 0.0°\n[Teleport]",
+				"preview should render death location with north facing and teleport action");
+
+		String emptyText = renderer.render("en_us", Optional.empty(), Optional.empty()).getString();
+		assertContains(emptyText, "No back locations have been recorded.",
+				"empty preview should render a plain no-record message");
+	}
+
 	private static void testAdminHelpRender() {
 		AdminHelpRenderer renderer = new AdminHelpRenderer();
 		String overview = renderer.render(AdminHelpRequest.overview("en_us", "test-version")).getString();
@@ -334,5 +357,17 @@ public final class CliTestSuite {
 			boolean isVisible,
 			long getExpiredTime,
 			int getSequence) implements NamedLocationView {
+	}
+
+	private static RecordedLocationView recordedLocation(int x, int y, int z, ResourceKey<Level> dimension,
+			Float yRot, Float xRot) {
+		return new TestRecordedLocation(new BlockPos(x, y, z), dimension, yRot, xRot);
+	}
+
+	private record TestRecordedLocation(
+			BlockPos getBlockPos,
+			ResourceKey<Level> getDimension,
+			Float getYRot,
+			Float getXRot) implements RecordedLocationView {
 	}
 }
