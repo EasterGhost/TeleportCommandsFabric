@@ -115,6 +115,7 @@ final class HomeNodeFactory {
 			visibleNode.executes(context -> HomeMutationHandler.setMapVisibility(context, false, null));
 		}
 		if (silent) {
+			visibleNode.executes(context -> HomeMutationHandler.setMapVisibility(context, true, null));
 			visibleNode.then(WaypointQueryNodes.pageArgument(
 					(context, query) -> HomeMutationHandler.setMapVisibility(context, true, query)));
 		}

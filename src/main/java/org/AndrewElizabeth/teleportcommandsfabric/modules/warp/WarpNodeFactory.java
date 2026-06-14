@@ -109,6 +109,7 @@ final class WarpNodeFactory {
 			visibleNode.executes(context -> WarpMutationHandler.setPlayerMapVisibility(context, false, null));
 		}
 		if (silent) {
+			visibleNode.executes(context -> WarpMutationHandler.setPlayerMapVisibility(context, true, null));
 			visibleNode.then(WaypointQueryNodes.pageArgument(
 					(context, query) -> WarpMutationHandler.setPlayerMapVisibility(context, true, query)));
 		}
