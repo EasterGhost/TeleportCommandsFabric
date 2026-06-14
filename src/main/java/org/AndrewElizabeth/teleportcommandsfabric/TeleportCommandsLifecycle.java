@@ -9,7 +9,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.Teleport
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyThreadPool;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBatchDispatcher;
-import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
@@ -44,7 +43,6 @@ final class TeleportCommandsLifecycle {
 		initializeStorageManagers();
 		ConfigManager.initialize();
 		loadStorageManagers();
-		XaeroSyncServer.initialize();
 	}
 
 	static void tick(MinecraftServer server) {
