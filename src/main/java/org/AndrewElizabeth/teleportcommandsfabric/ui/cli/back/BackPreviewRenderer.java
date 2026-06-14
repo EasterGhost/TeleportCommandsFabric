@@ -54,7 +54,7 @@ public final class BackPreviewRenderer {
 					previous.get(), COMMAND_BACK_TP, DISPLAY_COMMAND_BACK_TP);
 		}
 		if (hasDeath) {
-			if (!message.getSiblings().isEmpty()) {
+			if (hasPrevious) {
 				message.append("\n");
 			}
 			appendSection(message, language, "commands.teleport_commands.back.preview.death",
