@@ -1,7 +1,3 @@
-## Release Fixes
-
-- v2.1 released bug: Xaero waypoint deletion builds silent `maphome` / `mapwarp` visibility commands without page arguments, while the hidden command nodes only accepted the page-refresh form. This breaks the "delete synced Xaero waypoint -> hide map visibility" path. Fixed on the active branch; decide whether to backport as `2.1.1` or document as fixed in v2.2.
-
 ## Future Candidates
 
 - JourneyMap 联动
