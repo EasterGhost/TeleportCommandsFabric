@@ -7,6 +7,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyThreadPool;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExecutor;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TargetTeleportProcessor;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportExecution;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportPending;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
@@ -19,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 public final class TeleportService {
 	private final TeleportOperationManager operationManager;
@@ -104,6 +106,12 @@ public final class TeleportService {
 		if (operationManager.cancelPending(playerUuid, pendingSequence, status)) {
 			preloadManager.release(playerUuid, pendingSequence);
 		}
+	}
+
+	public Optional<TeleportOperation> cancelCurrent(UUID playerUuid, TeleportStatus status) {
+		Optional<TeleportOperation> cancelled = operationManager.cancelCurrent(playerUuid, status);
+		cancelled.ifPresent(operation -> preloadManager.release(operation.playerUuid(), operation.pendingSequence()));
+		return cancelled;
 	}
 
 	public void onPlayerDeath(UUID playerUuid) {

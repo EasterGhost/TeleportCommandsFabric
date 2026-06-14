@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "RTP è attualmente disabilitato.",
   "commands.teleport_commands.rtp.go": "Teletrasporto in una posizione casuale",
   "commands.teleport_commands.rtp.invalidRadius": "Il raggio RTP deve essere almeno 1.",
+  "commands.teleport_commands.tpcancel.cancelled": "Teletrasporto in attesa annullato.",
+  "commands.teleport_commands.tpcancel.none": "Non hai teletrasporti in attesa da annullare.",
   "commands.teleport_commands.tpa.accept": "[Accetta]",
   "commands.teleport_commands.tpa.accepted": "Richiesta accettata",
   "commands.teleport_commands.tpa.alreadySent": "Hai già inviato una richiesta a %0%",

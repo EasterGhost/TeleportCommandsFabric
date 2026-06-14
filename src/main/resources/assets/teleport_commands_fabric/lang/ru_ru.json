@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "RTP в данный момент отключён.",
   "commands.teleport_commands.rtp.go": "Телепортация в случайное место",
   "commands.teleport_commands.rtp.invalidRadius": "Радиус RTP должен быть не менее 1.",
+  "commands.teleport_commands.tpcancel.cancelled": "Ожидающая телепортация отменена.",
+  "commands.teleport_commands.tpcancel.none": "Нет ожидающей телепортации для отмены.",
   "commands.teleport_commands.tpa.accept": "[Принять]",
   "commands.teleport_commands.tpa.accepted": "Запрос принят",
   "commands.teleport_commands.tpa.alreadySent": "Запрос уже отправлен %0%",

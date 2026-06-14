@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "RTP is momenteel uitgeschakeld.",
   "commands.teleport_commands.rtp.go": "Teleporteren naar een willekeurige locatie",
   "commands.teleport_commands.rtp.invalidRadius": "RTP-radius moet minimaal 1 zijn.",
+  "commands.teleport_commands.tpcancel.cancelled": "Wachtende teleport geannuleerd.",
+  "commands.teleport_commands.tpcancel.none": "Je hebt geen wachtende teleport om te annuleren.",
   "commands.teleport_commands.tpa.accept": "[Accepteren]",
   "commands.teleport_commands.tpa.accepted": "Verzoek geaccepteerd",
   "commands.teleport_commands.tpa.alreadySent": "Er is al een verzoek verzonden naar %0%",

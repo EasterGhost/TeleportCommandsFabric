@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "随机传送功能目前已禁用。",
   "commands.teleport_commands.rtp.go": "正在随机传送",
   "commands.teleport_commands.rtp.invalidRadius": "随机传送半径必须大于等于 1。",
+  "commands.teleport_commands.tpcancel.cancelled": "已取消等待中的传送。",
+  "commands.teleport_commands.tpcancel.none": "没有可取消的等待传送。",
   "commands.teleport_commands.tpa.accept": "[接受]",
   "commands.teleport_commands.tpa.accepted": "请求已同意",
   "commands.teleport_commands.tpa.alreadySent": "请求已发送至 %0%",

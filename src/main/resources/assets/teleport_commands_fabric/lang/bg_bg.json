@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "RTP в момента е деактивиран.",
   "commands.teleport_commands.rtp.go": "Телепортиране до случайно място",
   "commands.teleport_commands.rtp.invalidRadius": "Радиусът на RTP трябва да бъде поне 1.",
+  "commands.teleport_commands.tpcancel.cancelled": "Чакащата телепортация е отменена.",
+  "commands.teleport_commands.tpcancel.none": "Нямате чакаща телепортация за отмяна.",
   "commands.teleport_commands.tpa.accept": "[Потвърждаване]",
   "commands.teleport_commands.tpa.accepted": "Заявка одобрена.",
   "commands.teleport_commands.tpa.alreadySent": "Вече има изпратена заявка към %0%.",

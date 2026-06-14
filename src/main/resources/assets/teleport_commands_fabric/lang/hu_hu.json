@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "RTP jelenleg le van tiltva.",
   "commands.teleport_commands.rtp.go": "Teleportálás véletlenszerű helyre",
   "commands.teleport_commands.rtp.invalidRadius": "RTP sugár legalább 1 kell legyen.",
+  "commands.teleport_commands.tpcancel.cancelled": "A várakozó teleportálás megszakítva.",
+  "commands.teleport_commands.tpcancel.none": "Nincs megszakítható várakozó teleportálásod.",
   "commands.teleport_commands.tpa.accept": "[Elfogadás]",
   "commands.teleport_commands.tpa.accepted": "Elfogadva",
   "commands.teleport_commands.tpa.alreadySent": "Egy kérés már el lett küldve %0%-nek",

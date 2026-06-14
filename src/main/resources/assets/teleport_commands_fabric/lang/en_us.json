@@ -151,6 +151,8 @@
   "commands.teleport_commands.rtp.disabled": "RTP is currently disabled.",
   "commands.teleport_commands.rtp.go": "Teleporting to a random location",
   "commands.teleport_commands.rtp.invalidRadius": "RTP radius must be at least 1.",
+  "commands.teleport_commands.tpcancel.cancelled": "Pending teleport cancelled.",
+  "commands.teleport_commands.tpcancel.none": "You have no pending teleport to cancel.",
   "commands.teleport_commands.tpa.accept": "[Accept]",
   "commands.teleport_commands.tpa.accepted": "Request accepted",
   "commands.teleport_commands.tpa.alreadySent": "A request has already been sent to %0%",
