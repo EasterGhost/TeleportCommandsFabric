@@ -1,11 +1,15 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpTopic;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminIntegrationStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminModuleStatus;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminRuntimeInfo;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminStatusRenderer;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.back.BackPreviewRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
@@ -22,6 +26,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortKey;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -32,6 +37,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -73,6 +79,9 @@ public final class CliTestSuite {
 				scenario("Homes render markers and actions",
 						"Verify /homes output shows default and temporary markers and does not show global map controls.",
 						CliTestSuite::testHomesRenderMarkersAndActions),
+				scenario("Back preview render",
+						"Verify /back preview renders previous and death records with facing, pitch, and teleport actions.",
+						CliTestSuite::testBackPreviewRender),
 				scenario("Admin help render",
 						"Verify /tpc help renders topic-driven overview, admin commands, config index, and config module details.",
 						CliTestSuite::testAdminHelpRender),
@@ -249,16 +258,33 @@ public final class CliTestSuite {
 		assertNotContains(text, "[全局地图", "home page should not show global map controls");
 	}
 
+	private static void testBackPreviewRender() {
+		BackPreviewRenderer renderer = new BackPreviewRenderer();
+		RecordedLocationView previous = recordedLocation(120, 64, -35, OVERWORLD, 90.0F, 12.5F);
+		RecordedLocationView death = recordedLocation(24, 70, -96, NETHER, 180.0F, 0.0F);
+
+		String text = renderer.render("en_us", Optional.of(previous), Optional.of(death)).getString();
+		assertContains(text, "Back preview:\nPrevious teleport location:\nWorld: minecraft:overworld\nPosition: 120 64 -35\nFacing: West (90.0°)\nPitch: 12.5°\n[Teleport]",
+				"preview should render previous teleport location with west facing and teleport action");
+		assertContains(text, "Previous death location:\nWorld: minecraft:the_nether\nPosition: 24 70 -96\nFacing: North (180.0°)\nPitch: 0.0°\n[Teleport]",
+				"preview should render death location with north facing and teleport action");
+
+		String emptyText = renderer.render("en_us", Optional.empty(), Optional.empty()).getString();
+		assertContains(emptyText, "Back preview:\nNo back locations have been recorded.",
+				"empty preview should render a plain no-record message");
+	}
+
 	private static void testAdminHelpRender() {
 		AdminHelpRenderer renderer = new AdminHelpRenderer();
-		String overview = renderer.render(AdminHelpRequest.overview("en_us", "test-version")).getString();
-		String admin = renderer.render(AdminHelpRequest.admin("en_us", "test-version")).getString();
-		String config = renderer.render(AdminHelpRequest.config("en_us", "test-version")).getString();
-		String homeConfig = renderer.render(AdminHelpRequest.configModule("home", "en_us", "test-version")).getString();
+		AdminRuntimeInfo runtimeInfo = testRuntimeInfo();
+		String overview = renderer.render(AdminHelpRequest.overview("en_us", runtimeInfo)).getString();
+		String admin = renderer.render(AdminHelpRequest.admin("en_us", runtimeInfo)).getString();
+		String config = renderer.render(AdminHelpRequest.config("en_us", runtimeInfo)).getString();
+		String homeConfig = renderer.render(AdminHelpRequest.configModule("home", "en_us", runtimeInfo)).getString();
 		String zhRtpConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
-				"rtp", "zh_cn", "test-version")).getString();
+				"rtp", "zh_cn", runtimeInfo)).getString();
 
-		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
+		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nIntegrations: Xaero loaded\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
 				"overview help should render compact topic and quick command entries");
 		assertContains(admin, "========== TPC Admin Commands ==========", "admin help should render admin title");
 		assertContains(admin, "/tpc enable <module>\n  Enable a command module.",
@@ -278,13 +304,14 @@ public final class CliTestSuite {
 		List<AdminModuleStatus> modules = List.of(
 				new AdminModuleStatus("home", "commands.teleport_commands.admin.module.home", true),
 				new AdminModuleStatus("warp", "commands.teleport_commands.admin.module.warp", false));
-		String zhText = renderer.render(modules, "zh_cn").getString();
-		String enText = renderer.render(modules, "en_us").getString();
+		String zhText = renderer.render(modules, "zh_cn", testRuntimeInfo()).getString();
+		String enText = renderer.render(modules, "en_us", testRuntimeInfo()).getString();
 
-		assertContains(zhText, "模块状态：\n", "admin status should render title");
+		assertContains(zhText, "TPC 状态：\n版本：test-version\n联动：Xaero 已加载\n模块状态：\n",
+				"admin status should render runtime info and title");
 		assertContains(zhText, "Home 命令：已启用 [禁用]\n", "enabled module should render disable action");
 		assertContains(zhText, "Warp 命令：已禁用 [启用]\n", "disabled module should render enable action");
-		assertContains(enText, "Module status:\nHome command: enabled [disable]\nWarp command: disabled [enable]\n",
+		assertContains(enText, "TPC status:\nVersion: test-version\nIntegrations: Xaero loaded\nModule status:\nHome command: enabled [disable]\nWarp command: disabled [enable]\n",
 				"English admin status should render expected text");
 		assertEquals("\n===========================", renderer.renderRefreshDivider().getString(),
 				"refresh divider should match legacy status refresh separator");
@@ -307,6 +334,11 @@ public final class CliTestSuite {
 		try (WaypointPages pages = new WaypointPages()) {
 			return pages.renderFilterPicker(request, pickerKind).getString();
 		}
+	}
+
+	private static AdminRuntimeInfo testRuntimeInfo() {
+		return AdminRuntimeInfo.of("test-version", List.of(new AdminIntegrationStatus(
+				"commands.teleport_commands.admin.info.integration.xaero")));
 	}
 
 	private static TestLocation location(String name, int x, double y, int z, ResourceKey<Level> dimension,
@@ -334,5 +366,17 @@ public final class CliTestSuite {
 			boolean isVisible,
 			long getExpiredTime,
 			int getSequence) implements NamedLocationView {
+	}
+
+	private static RecordedLocationView recordedLocation(int x, int y, int z, ResourceKey<Level> dimension,
+			Float yRot, Float xRot) {
+		return new TestRecordedLocation(new BlockPos(x, y, z), dimension, yRot, xRot);
+	}
+
+	private record TestRecordedLocation(
+			BlockPos getBlockPos,
+			ResourceKey<Level> getDimension,
+			Float getYRot,
+			Float getXRot) implements RecordedLocationView {
 	}
 }

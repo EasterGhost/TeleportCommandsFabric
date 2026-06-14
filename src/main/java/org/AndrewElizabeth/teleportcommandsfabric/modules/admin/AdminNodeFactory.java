@@ -4,7 +4,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
-import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.HomeConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.RtpConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.StorageConfig;
@@ -213,19 +212,19 @@ final class AdminNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildHelpNode() {
 		return Commands.literal("help")
 				.executes(context -> AdminCommandHandler.sendHelp(context.getSource(),
-						AdminHelpRequest.overview(AdminMessages.language(context.getSource()), ModConstants.VERSION)))
+						AdminHelpRequest.overview(AdminMessages.language(context.getSource()), AdminRuntimeInfoProvider.current())))
 				.then(Commands.literal("admin")
 						.executes(context -> AdminCommandHandler.sendHelp(context.getSource(),
-								AdminHelpRequest.admin(AdminMessages.language(context.getSource()), ModConstants.VERSION))))
+								AdminHelpRequest.admin(AdminMessages.language(context.getSource()), AdminRuntimeInfoProvider.current()))))
 				.then(Commands.literal("config")
 						.executes(context -> AdminCommandHandler.sendHelp(context.getSource(),
-								AdminHelpRequest.config(AdminMessages.language(context.getSource()), ModConstants.VERSION)))
+								AdminHelpRequest.config(AdminMessages.language(context.getSource()), AdminRuntimeInfoProvider.current())))
 						.then(Commands.argument("module", StringArgumentType.word())
 								.suggests(CONFIG_MODULE_SUGGESTER)
 								.executes(context -> AdminCommandHandler.sendHelp(context.getSource(),
 										AdminHelpRequest.configModule(
 												StringArgumentType.getString(context, "module"),
-												AdminMessages.language(context.getSource()), ModConstants.VERSION)))));
+												AdminMessages.language(context.getSource()), AdminRuntimeInfoProvider.current())))));
 	}
 
 	private static boolean isOpOrConsole(CommandSourceStack source) {

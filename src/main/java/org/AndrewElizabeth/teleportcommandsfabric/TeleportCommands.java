@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.home.HomeCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.rtp.RtpCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.teleport.TeleportCancelCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.warp.WarpCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.worldspawn.WorldSpawnCommand;
@@ -64,6 +65,7 @@ public class TeleportCommands implements ModInitializer {
 		WarpCommand.register(dispatcher);
 		WorldSpawnCommand.register(dispatcher);
 		RtpCommand.register(dispatcher);
+		TeleportCancelCommand.register(dispatcher);
 	}
 
 	public static void onPlayerDeath(ServerPlayer player) {

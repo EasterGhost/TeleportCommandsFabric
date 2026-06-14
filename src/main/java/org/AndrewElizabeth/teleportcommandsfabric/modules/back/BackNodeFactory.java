@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 final class BackNodeFactory {
 	private static final String COMMAND_BACK = "back";
 	private static final String MODE_DEATH = "death";
+	private static final String MODE_PREVIEW = "preview";
 	private static final String MODE_TP = "tp";
 	private static final String ARG_DISABLE_SAFETY = "disableSafety";
 
@@ -24,6 +25,8 @@ final class BackNodeFactory {
 						.requires(source -> source.getPlayer() != null)
 						.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(),
 								BoolArgumentType.getBool(context, ARG_DISABLE_SAFETY))))
+				.then(Commands.literal(MODE_PREVIEW)
+						.executes(context -> BackTeleportHandler.handlePreview(context.getSource().getPlayerOrException())))
 				.then(buildBackModeNode(MODE_DEATH, BackTeleportHandler::handleBackDeath))
 				.then(buildBackModeNode(MODE_TP, BackTeleportHandler::handleBackTp));
 	}

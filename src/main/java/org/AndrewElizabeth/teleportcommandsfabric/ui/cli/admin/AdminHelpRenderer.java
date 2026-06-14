@@ -87,22 +87,6 @@ public final class AdminHelpRenderer {
 		};
 	}
 
-	public Component renderOverview(String language, String version) {
-		return render(AdminHelpRequest.overview(language, version));
-	}
-
-	public Component renderAdmin(String language, String version) {
-		return render(AdminHelpRequest.admin(language, version));
-	}
-
-	public Component renderConfigIndex(String language, String version) {
-		return render(AdminHelpRequest.config(language, version));
-	}
-
-	public Component renderConfigModule(String module, String language, String version) {
-		return render(AdminHelpRequest.configModule(module, language, version));
-	}
-
 	private MutableComponent renderOverview(AdminHelpRequest request) {
 		MutableComponent message = Component.empty();
 		appendTitle(message, "commands.teleport_commands.admin.help.title", request.language());
@@ -175,8 +159,7 @@ public final class AdminHelpRenderer {
 	}
 
 	private void appendVersion(MutableComponent message, AdminHelpRequest request) {
-		appendLine(message, ComponentSupport.translate("commands.teleport_commands.admin.help.version",
-				request.language(), Component.literal(request.version())).withStyle(ChatFormatting.GRAY));
+		AdminInfoRenderer.append(message, request.runtimeInfo(), request.language());
 	}
 
 	private void appendSection(MutableComponent message, String key, String language) {

@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "org.AndrewElizabeth.teleportcommandsfabric.mixin.xaero",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"GuiMapMixin",
+		"MapWaypointDeleteMixin",
+		"RightClickOptionAccessor",
+		"WaypointDeleteMixin",
+		"WaypointTeleportMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

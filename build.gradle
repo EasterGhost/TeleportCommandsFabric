@@ -5,15 +5,38 @@ plugins {
 
 version = project.mod_version
 group = project.maven_group
+def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
+        .map { it.toBoolean() }
+        .orElse(true)
+def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${project.version}.jar"
+ext.includeXaeroIntegration = includeXaeroIntegration
 
 base {
     archivesName = project.archives_base_name + "-" + project.minecraft_version
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    if (!includeXaeroIntegration.get()) {
+        archiveVersion = "${project.version}-core"
+    }
+}
+
+sourceSets {
+    xaeroIntegration {
+        java.srcDir "src/integrations/xaero/java"
+        resources.srcDir "src/integrations/xaero/resources"
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 loom {
     mods {
         "teleportcommandsfabric" {
             sourceSet sourceSets.main
+        }
+        "teleportcommandsfabric_xaero" {
+            sourceSet sourceSets.xaeroIntegration
         }
     }
 }
@@ -42,9 +65,9 @@ dependencies {
 
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    compileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
-    compileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
-    compileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
+    xaeroIntegrationCompileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
+    xaeroIntegrationCompileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
+    xaeroIntegrationCompileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
 }
 
 apply from: "test.gradle"
@@ -53,12 +76,29 @@ processResources {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
+    inputs.property "included_jars", includeXaeroIntegration.get()
+            ? "[{\"file\":\"META-INF/jars/${xaeroIntegrationJarName}\"}]"
+            : "[]"
     filteringCharset = "UTF-8"
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
                 "minecraft_version": project.minecraft_version,
                 "loader_version": project.loader_version
+        filter { line ->
+            line.contains('"jars": []')
+                    ? line.replace('"jars": []', "\"jars\": ${includeXaeroIntegration.get() ? "[{\"file\":\"META-INF/jars/${xaeroIntegrationJarName}\"}]" : "[]"}")
+                    : line
+        }
+    }
+}
+
+tasks.named("processXaeroIntegrationResources") {
+    inputs.property "version", project.version
+    filteringCharset = "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
     }
 }
 
@@ -86,10 +126,27 @@ java {
 }
 
 jar {
+    if (includeXaeroIntegration.get()) {
+        dependsOn "xaeroIntegrationJar"
+        from({ tasks.named("xaeroIntegrationJar").get().archiveFile.get().asFile }) {
+            into "META-INF/jars"
+        }
+    }
     from("LICENSE.txt") {
         rename { "LICENSE_${project.archives_base_name}" }
     }
 }
+
+tasks.register("xaeroIntegrationJar", Jar) {
+    dependsOn tasks.named("classes"), tasks.named("xaeroIntegrationClasses")
+    archiveFileName = xaeroIntegrationJarName
+    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
+    from sourceSets.xaeroIntegration.output
+    from("LICENSE.txt") {
+        rename { "LICENSE_${project.archives_base_name}_xaero" }
+    }
+}
+
 
 // configure the maven publication
 publishing {

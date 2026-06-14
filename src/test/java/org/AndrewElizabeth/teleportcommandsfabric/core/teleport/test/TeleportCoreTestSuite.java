@@ -196,6 +196,19 @@ public final class TeleportCoreTestSuite {
 		debug("DATA pending.cancel", "sequence=" + second.pending().pendingSequence()
 				+ ", status=" + second.pending().resultFuture().join());
 
+		TeleportOperationManager.PendingCreateResult currentCancel = manager.createPending(playerUuid, request(), 25L);
+		Optional<TeleportOperation> cancelledCurrent = manager.cancelCurrent(playerUuid, TeleportStatus.CANCELLED);
+		assertTrue(cancelledCurrent.isPresent(), "cancelCurrent should return the removed operation");
+		assertEquals(currentCancel.pending().pendingSequence(), cancelledCurrent.get().pendingSequence(),
+				"cancelCurrent should remove the current operation");
+		assertEquals(TeleportStatus.CANCELLED, currentCancel.pending().resultFuture().join(),
+				"cancelCurrent should complete the pending future");
+		assertTrue(manager.cancelCurrent(playerUuid, TeleportStatus.CANCELLED).isEmpty(),
+				"cancelCurrent should be empty when no operation remains");
+		assertFalse(manager.hasCurrentOperations(), "cancelCurrent should leave no active pending");
+		debug("DATA pending.cancelCurrent", "sequence=" + currentCancel.pending().pendingSequence()
+				+ ", status=" + currentCancel.pending().resultFuture().join());
+
 		TeleportOperationManager.PendingCreateResult success = manager.createPending(playerUuid, request(), 30L);
 		manager.markSuccess(playerUuid, success.pending().pendingSequence());
 		assertFalse(manager.isCurrent(playerUuid, success.pending().pendingSequence()), "successful pending should be cleared");
