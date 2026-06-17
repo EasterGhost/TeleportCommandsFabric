@@ -269,6 +269,12 @@ public final class CliTestSuite {
 		assertContains(text, "Previous death location:\nWorld: minecraft:the_nether\nPosition: 24 70 -96\nFacing: North (180.0°)\nPitch: 0.0°\n[Teleport]",
 				"preview should render death location with north facing and teleport action");
 
+		String deathOnlyText = renderer.render("en_us", Optional.empty(), Optional.of(death)).getString();
+		assertContains(deathOnlyText, "Back preview:\nPrevious death location:",
+				"death-only preview should not insert a blank line after the title");
+		assertNotContains(deathOnlyText, "Back preview:\n\nPrevious death location:",
+				"death-only preview should keep the title and first section adjacent");
+
 		String emptyText = renderer.render("en_us", Optional.empty(), Optional.empty()).getString();
 		assertContains(emptyText, "Back preview:\nNo back locations have been recorded.",
 				"empty preview should render a plain no-record message");
