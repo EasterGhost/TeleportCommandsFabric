@@ -22,12 +22,12 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.3             |              2 |               2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |    not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
 
-## [2.2] - 2026-06-14
+## [2.2] - 2026-06-18
 
 ### Added
 
 - Added `/back preview` to show recorded previous-teleport and death locations with facing, pitch, and clickable teleport actions.
-- Added `/tpcancel` to cancel a pending teleport.
+- Added `/tpcancel` so players can cancel their own pending teleport.
 - Added runtime info (version and integration status) to `/tpc help` and `/tpc status` admin pages.
 
 ### Changed
