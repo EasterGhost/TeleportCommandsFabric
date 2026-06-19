@@ -28,7 +28,6 @@ public class PlayerProfileManager {
 	private final ScheduledExecutorService scheduler;
 	private final PlayerProfileIO io;
 	private volatile Duration saveInterval;
-	private volatile boolean deleteInvalidHomes;
 	private final Duration unloadDelay;
 	private ScheduledFuture<?> autoSaveTask;
 
@@ -162,10 +161,6 @@ public class PlayerProfileManager {
 
 	public synchronized void setSaveInterval(Duration saveInterval) {
 		scheduleAutoSave(saveInterval);
-	}
-
-	public void setDeleteInvalidHomes(boolean deleteInvalidHomes) {
-		this.deleteInvalidHomes = deleteInvalidHomes;
 	}
 
 	private CompletableFuture<Void> flushProfile(UUID uuid) {
@@ -305,7 +300,7 @@ public class PlayerProfileManager {
 
 	private PlayerProfile loadIfNeeded(PlayerProfileEntry entry) throws IOException {
 		if (!entry.loaded || entry.profile == null) {
-			PlayerProfileLifecycle.LoadResult loadedProfile = PlayerProfileLifecycle.loadOrCreate(io, entry.playerUuid, deleteInvalidHomes);
+			PlayerProfileLifecycle.LoadResult loadedProfile = PlayerProfileLifecycle.loadOrCreate(io, entry.playerUuid);
 			entry.profile = loadedProfile.profile();
 			entry.loaded = true;
 			entry.dirty |= loadedProfile.changed();

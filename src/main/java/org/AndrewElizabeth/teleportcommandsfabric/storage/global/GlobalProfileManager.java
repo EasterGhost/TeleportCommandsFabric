@@ -27,7 +27,6 @@ public class GlobalProfileManager {
 	private volatile GlobalProfileSnapshot snapshot;
 	private boolean dirty;
 	private boolean saveInProgress;
-	private volatile boolean deleteInvalidWarps;
 	private ScheduledFuture<?> autoSaveTask;
 	private CompletableFuture<Void> tail = CompletableFuture.completedFuture(null);
 	private CompletableFuture<Void> saveCompletion = CompletableFuture.completedFuture(null);
@@ -101,10 +100,6 @@ public class GlobalProfileManager {
 
 	public synchronized void setSaveInterval(Duration saveInterval) {
 		scheduleAutoSave(saveInterval);
-	}
-
-	public void setDeleteInvalidWarps(boolean deleteInvalidWarps) {
-		this.deleteInvalidWarps = deleteInvalidWarps;
 	}
 
 	private CompletableFuture<Void> flushProfile() {
@@ -236,7 +231,7 @@ public class GlobalProfileManager {
 
 	private GlobalProfile loadProfile() {
 		try {
-			GlobalProfileLifecycle.LoadResult loadedProfile = GlobalProfileLifecycle.loadOrCreate(io, deleteInvalidWarps);
+			GlobalProfileLifecycle.LoadResult loadedProfile = GlobalProfileLifecycle.loadOrCreate(io);
 			profile = loadedProfile.profile();
 			dirty = loadedProfile.changed();
 			publishSnapshot();

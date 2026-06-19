@@ -17,7 +17,10 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationNbtCodec;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfile;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileLifecycle;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfile;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileLifecycle;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileNbtCodec;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 
@@ -143,6 +146,14 @@ public final class TeleportCoreTestSuite {
 						"Verify per-player TPA trust overrides default incoming rules and survives NBT round-trip.",
 						"defaultTpa=deny requesterTpa=accept requesterTpahere=deny legacyTrust=absent",
 						TeleportCoreTestSuite::testTpaTrustRules),
+				scenario("Global profile load preserves unavailable-dimension warps",
+						"Verify startup load does not delete global warps just because ServerLevel is not available yet.",
+						"warps=1 dimension=tpc:test_dimension serverLevel=unavailable",
+						TeleportCoreTestSuite::testGlobalProfileLoadPreservesUnavailableDimensionWarps),
+				scenario("Player profile load preserves unavailable-dimension homes",
+						"Verify profile load does not delete homes just because ServerLevel is not available yet.",
+						"homes=1 dimension=tpc:test_dimension serverLevel=unavailable",
+						TeleportCoreTestSuite::testPlayerProfileLoadPreservesUnavailableDimensionHomes),
 				scenario("Recorded target resolver maps empty target",
 						"Verify missing death/previous records map to a failed target result.",
 						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
@@ -691,6 +702,38 @@ public final class TeleportCoreTestSuite {
 				+ ", defaultTpahere=" + decoded.getDefaultTpaHereTrust()
 				+ ", requesterTpa=" + decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA)
 				+ ", requesterTpahere=" + decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE));
+	}
+
+	private static void testGlobalProfileLoadPreservesUnavailableDimensionWarps() {
+		GlobalProfile profile = new GlobalProfile();
+		ResourceKey<Level> unavailableDimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("tpc:test_dimension"));
+		NamedLocation warp = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
+
+		assertTrue(profile.addWarp(warp), "test warp should be accepted");
+		boolean changed = GlobalProfileLifecycle.prepareLoaded(profile);
+
+		assertFalse(changed, "startup prepare should not treat unavailable dimensions as invalid global data");
+		assertEquals(1, profile.getWarpCount(), "startup prepare should preserve global warps");
+		assertTrue(profile.getWarpByName("remote").isPresent(), "preserved warp should remain indexed by name");
+		debug("DATA global.load", "warps=" + profile.getWarpCount()
+				+ ", dimension=" + warp.getDimensionId()
+				+ ", changed=" + changed);
+	}
+
+	private static void testPlayerProfileLoadPreservesUnavailableDimensionHomes() {
+		PlayerProfile profile = new PlayerProfile(UUID.randomUUID());
+		ResourceKey<Level> unavailableDimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("tpc:test_dimension"));
+		NamedLocation home = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
+
+		assertTrue(profile.addHome(home), "test home should be accepted");
+		boolean changed = PlayerProfileLifecycle.prepareLoaded(profile);
+
+		assertFalse(changed, "profile prepare should not treat unavailable dimensions as invalid player data");
+		assertEquals(1, profile.getHomeCount(), "profile prepare should preserve homes");
+		assertTrue(profile.getHomeByName("remote").isPresent(), "preserved home should remain indexed by name");
+		debug("DATA player.load", "homes=" + profile.getHomeCount()
+				+ ", dimension=" + home.getDimensionId()
+				+ ", changed=" + changed);
 	}
 
 	private static void testRecordedTargetEmpty() {

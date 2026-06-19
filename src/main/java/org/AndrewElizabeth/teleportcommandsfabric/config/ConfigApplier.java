@@ -17,11 +17,9 @@ public final class ConfigApplier {
 		DebugLog.setEnabled(policy.debugEnabled());
 		if (TeleportCommands.PLAYER_PROFILE_MANAGER != null) {
 			TeleportCommands.PLAYER_PROFILE_MANAGER.setSaveInterval(policy.storage().saveInterval());
-			TeleportCommands.PLAYER_PROFILE_MANAGER.setDeleteInvalidHomes(policy.storage().deleteInvalidHomes());
 		}
 		if (TeleportCommands.GLOBAL_PROFILE_MANAGER != null) {
 			TeleportCommands.GLOBAL_PROFILE_MANAGER.setSaveInterval(policy.storage().saveInterval());
-			TeleportCommands.GLOBAL_PROFILE_MANAGER.setDeleteInvalidWarps(policy.storage().deleteInvalidWarps());
 		}
 		TeleportEffects.setEnabled(policy.teleportEffects());
 		TeleportRotation.setRestoreEnabled(policy.restoreRotation());
@@ -35,9 +33,7 @@ public final class ConfigApplier {
 		return ConfigManager.query(config -> new RuntimePolicy(
 				config.isDebugEnabled(),
 				new StoragePolicy(
-						Duration.ofSeconds(config.getStorage().getAutoSaveIntervalSeconds()),
-						config.getHome().isDeleteInvalid(),
-						config.getWarp().isDeleteInvalid()),
+						Duration.ofSeconds(config.getStorage().getAutoSaveIntervalSeconds())),
 				config.getTeleporting().isTeleportEffects(),
 				config.getTeleporting().isRestoreRotation(),
 				new PreloadPolicy(
@@ -49,7 +45,7 @@ public final class ConfigApplier {
 			boolean restoreRotation, PreloadPolicy preload) {
 	}
 
-	private record StoragePolicy(Duration saveInterval, boolean deleteInvalidHomes, boolean deleteInvalidWarps) {
+	private record StoragePolicy(Duration saveInterval) {
 	}
 
 	private record PreloadPolicy(boolean enabled, int radiusChunks) {
