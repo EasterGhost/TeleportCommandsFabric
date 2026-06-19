@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.Tar
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.back.BackPreviewRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
@@ -21,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 final class BackTeleportHandler {
 	private static final String COMMAND_BACK = "back";
@@ -28,6 +30,7 @@ final class BackTeleportHandler {
 	private static final String MODE_TP = "tp";
 	private static final String COMMAND_BACK_DEATH_FORCE = COMMAND_BACK + " " + MODE_DEATH + " true";
 	private static final String COMMAND_BACK_TP_FORCE = COMMAND_BACK + " " + MODE_TP + " true";
+	private static final BackPreviewRenderer PREVIEW_RENDERER = new BackPreviewRenderer();
 
 	private BackTeleportHandler() {
 	}
@@ -97,6 +100,36 @@ final class BackTeleportHandler {
 					executeResolved(currentPlayer, location.get(), safetyDisabledOverride, COMMAND_BACK_TP_FORCE, false,
 							"commands.teleport_commands.back.tp.same", "commands.teleport_commands.back.tp.go");
 				}));
+		return 0;
+	}
+
+	static int handlePreview(ServerPlayer player) {
+		if (!ensureEnabled(player)) {
+			return 1;
+		}
+		AsyncRecordedLocationSource source = TeleportCommands.RECORDED_LOCATION_SOURCE;
+		if (source == null) {
+			BackMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return 1;
+		}
+
+		UUID playerUuid = player.getUUID();
+		MinecraftServer server = player.level().getServer();
+		CompletableFuture<PreviewLocations> locations = source.getPreviousTeleportLocation(playerUuid)
+				.thenCombine(source.getDeathLocation(playerUuid), PreviewLocations::new);
+		locations.whenComplete((preview, throwable) -> server.execute(() -> {
+			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
+			if (currentPlayer == null) {
+				return;
+			}
+			if (throwable != null) {
+				ModConstants.LOGGER.error("Error while previewing back locations.", throwable);
+				BackMessages.send(currentPlayer, "commands.teleport_commands.common.error", ChatFormatting.RED,
+						ChatFormatting.BOLD);
+				return;
+			}
+			currentPlayer.sendSystemMessage(PREVIEW_RENDERER.render(currentPlayer, preview.previous(), preview.death()), false);
+		}));
 		return 0;
 	}
 
@@ -195,5 +228,10 @@ final class BackTeleportHandler {
 		private boolean safetyEnabled(Boolean safetyDisabledOverride) {
 			return TargetTeleportSafety.resolveEnabled(defaultSafetyCheck, safetyDisabledOverride);
 		}
+	}
+
+	private record PreviewLocations(
+			Optional<RecordedLocationView> previous,
+			Optional<RecordedLocationView> death) {
 	}
 }

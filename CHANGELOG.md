@@ -10,6 +10,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 | Mod version     | Config version | Storage version | Data compatibility notes                                                                                                                                                            |
 | --------------- | -------------: | --------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.2             |              3 |               1 | Feature update. Keeps the v2.1 config/storage schema. Xaero integration extracted to bundled JAR-in-JAR source set. |
 | 2.1             |              3 |               1 | Feature update on the 26.1 line. Keeps the v2.0 storage/config schema while adding TPA trust rules and saved rotation fields to stored locations. |
 | 2.0             |              3 |               1 | Core refactoring release. Dynamically applied config and independent storage format. |
 | 1.7             |              2 |               5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
@@ -20,6 +21,24 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.4             |              2 |               2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
 | 1.3             |              2 |               2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |    not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+
+## [2.2] - 2026-06-18
+
+### Added
+
+- Added `/back preview` to show recorded previous-teleport and death locations with facing, pitch, and clickable teleport actions.
+- Added `/tpcancel` so players can cancel their own pending teleport.
+- Added runtime info (version and integration status) to `/tpc help` and `/tpc status` admin pages.
+
+### Changed
+
+- Extracted Xaero integration into a separate bundled JAR-in-JAR source set, conditionally included via the `includeXaeroIntegration` Gradle property. The main mod is now Xaero-independent at compile time.
+- Decoupled runtime config application with a `RuntimeConfigHooks` registry so integrations can react to config changes without the core mod importing integration code.
+- Added CLI page headings to admin command output for consistency with other TPC pages.
+
+### Fixed
+
+- Fixed Xaero map visibility commands (`maphome` / `mapwarp`) built without page arguments not being handled when triggered from the silent (waypoint-delete) path.
 
 ## [2.1] - 2026-06-14
 

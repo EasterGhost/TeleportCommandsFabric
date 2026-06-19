@@ -153,6 +153,19 @@ public final class TeleportOperationManager {
 		return true;
 	}
 
+	public Optional<TeleportOperation> cancelCurrent(UUID playerUuid, TeleportStatus status) {
+		PlayerTeleportState state = states.get(playerUuid);
+		if (state == null || state.pending == null) {
+			return Optional.empty();
+		}
+
+		TeleportOperation pending = state.pending;
+		state.pending = null;
+		activePendingPlayers.remove(playerUuid);
+		pending.resultFuture().complete(status);
+		return Optional.of(pending);
+	}
+
 	public boolean markTargetQueuedIfCurrentAndDelayDone(UUID playerUuid, long pendingSequence, long currentTick) {
 		PlayerTeleportState state = states.get(playerUuid);
 		if (state == null) {

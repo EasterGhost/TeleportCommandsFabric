@@ -18,14 +18,12 @@
 	"entrypoints": {
 		"main": [
 			"org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands"
-		],
-		"client": [
-			"org.AndrewElizabeth.teleportcommandsfabric.client.TeleportCommandsClient"
 		]
 	},
 	"mixins": [
 		"teleportcommandsfabric.mixins.json"
 	],
+	"jars": [],
 	"depends": {
 		"fabricloader": ">=0.17.3",
 		"fabric-api": "*",

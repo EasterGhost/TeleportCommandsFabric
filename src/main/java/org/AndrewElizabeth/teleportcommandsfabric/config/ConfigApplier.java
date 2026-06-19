@@ -3,7 +3,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.config;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportEffects;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportRotation;
-import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroSyncServer;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import java.time.Duration;
@@ -29,8 +28,7 @@ public final class ConfigApplier {
 		if (TeleportCommands.TELEPORT_SERVICE != null) {
 			TeleportCommands.TELEPORT_SERVICE.configurePreload(policy.preload().enabled(), policy.preload().radiusChunks());
 		}
-		XaeroSyncServer.applyConfig(policy.xaero().enabled(), policy.xaero().syncIntervalSeconds(),
-				policy.xaero().persistWaypointSets(), policy.xaero().warpSetName(), policy.xaero().homeSetName());
+		RuntimeConfigHooks.applyAll();
 	}
 
 	private static RuntimePolicy runtimePolicy() {
@@ -44,26 +42,16 @@ public final class ConfigApplier {
 				config.getTeleporting().isRestoreRotation(),
 				new PreloadPolicy(
 						config.getTeleporting().isPreloadEnabled(),
-						config.getTeleporting().getPreloadRadiusChunks()),
-				new XaeroPolicy(
-						config.getXaero().isEnabled(),
-						config.getXaero().getSyncIntervalSeconds(),
-						config.getXaero().isPersistWaypointSets(),
-						config.getXaero().getWarpSetName(),
-						config.getXaero().getHomeSetName())));
+						config.getTeleporting().getPreloadRadiusChunks())));
 	}
 
 	private record RuntimePolicy(boolean debugEnabled, StoragePolicy storage, boolean teleportEffects,
-			boolean restoreRotation, PreloadPolicy preload, XaeroPolicy xaero) {
+			boolean restoreRotation, PreloadPolicy preload) {
 	}
 
 	private record StoragePolicy(Duration saveInterval, boolean deleteInvalidHomes, boolean deleteInvalidWarps) {
 	}
 
 	private record PreloadPolicy(boolean enabled, int radiusChunks) {
-	}
-
-	private record XaeroPolicy(boolean enabled, int syncIntervalSeconds, boolean persistWaypointSets,
-			String warpSetName, String homeSetName) {
 	}
 }

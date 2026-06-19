@@ -61,7 +61,8 @@ final class AdminCommandHandler {
 	}
 
 	static int sendStatus(CommandSourceStack source) {
-		source.sendSuccess(() -> STATUS_RENDERER.render(AdminModuleRegistry.statuses(), AdminMessages.language(source)), false);
+		source.sendSuccess(() -> STATUS_RENDERER.render(AdminModuleRegistry.statuses(), AdminMessages.language(source),
+				AdminRuntimeInfoProvider.current()), false);
 		return 0;
 	}
 
