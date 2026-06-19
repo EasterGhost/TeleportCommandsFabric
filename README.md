@@ -45,6 +45,22 @@ By default, extra debug logs are disabled. Target chunk preloading and default t
 
 ---
 
+## Build Variants
+
+TeleportCommandsFabric provides two build variants:
+
+- **Standard build**: includes the core teleport features and bundled Xaero integration. Recommended for most users.
+- **Core build**: includes only the core teleport features, without bundled map integration. Use this if you only need server-side teleport commands or do not use Xaero integration.
+
+Compatibility notes:
+
+- The standard build is affected by both Minecraft/Fabric compatibility and bundled map-integration compatibility.
+- The core build only depends on the core Minecraft/Fabric compatibility of TeleportCommandsFabric, so it is suitable when bundled map integration is temporarily unavailable or not needed.
+
+If you are not sure which one to download, choose the standard build.
+
+---
+
 ## With vs. Without Client Mod
 
 Adding the client mod (optional) improves the experience:
