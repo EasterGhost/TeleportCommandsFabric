@@ -5,12 +5,15 @@ plugins {
 
 version = project.mod_version
 group = project.maven_group
-def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
+def includeMapIntegrations = providers.gradleProperty("includeMapIntegrations")
         .map { it.toBoolean() }
         .orElse(true)
+def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
+        .map { it.toBoolean() }
+        .orElse(includeMapIntegrations)
 def includeJourneyMapIntegration = providers.gradleProperty("includeJourneyMapIntegration")
         .map { it.toBoolean() }
-        .orElse(includeXaeroIntegration)
+        .orElse(includeMapIntegrations)
 def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegrationCommon")
         .map { it.toBoolean() }
         .orElse(false)

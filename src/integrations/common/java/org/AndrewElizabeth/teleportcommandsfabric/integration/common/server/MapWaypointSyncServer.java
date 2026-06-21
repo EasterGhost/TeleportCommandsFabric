@@ -126,12 +126,11 @@ public final class MapWaypointSyncServer {
 			if (player == null || !ServerPlayNetworking.canSend(player, MapWaypointSnapshotPayload.TYPE)) {
 				return;
 			}
-			int snapshotHash = snapshot.hashCode();
-			if (!state.isSnapshotChanged(snapshotHash)) {
+			if (!state.isSnapshotChanged(snapshot)) {
 				return;
 			}
 			ServerPlayNetworking.send(player, new MapWaypointSnapshotPayload(state.protocolVersion(), snapshot));
-			state.updateSnapshotHash(snapshotHash);
+			state.updateSnapshot(snapshot);
 			DebugLog.info("Sending map waypoint sync to {} (waypoints: {}).",
 					player.getName().getString(), snapshot.waypoints().size());
 		} finally {
@@ -222,8 +221,7 @@ public final class MapWaypointSyncServer {
 		private volatile boolean dirty;
 		private volatile boolean flushInProgress;
 		private volatile long lastFlushTimeMillis;
-		private volatile int lastSnapshotHash;
-		private volatile boolean hasSnapshotHash;
+		private volatile MapWaypointSnapshot lastSnapshot;
 
 		private ClientState(int protocolVersion) {
 			this.protocolVersion = protocolVersion;
@@ -246,13 +244,12 @@ public final class MapWaypointSyncServer {
 			dirty = false;
 		}
 
-		private boolean isSnapshotChanged(int snapshotHash) {
-			return !hasSnapshotHash || lastSnapshotHash != snapshotHash;
+		private boolean isSnapshotChanged(MapWaypointSnapshot snapshot) {
+			return !snapshot.equals(lastSnapshot);
 		}
 
-		private void updateSnapshotHash(int snapshotHash) {
-			lastSnapshotHash = snapshotHash;
-			hasSnapshotHash = true;
+		private void updateSnapshot(MapWaypointSnapshot snapshot) {
+			lastSnapshot = snapshot;
 		}
 
 		private void finishFlush(long now) {

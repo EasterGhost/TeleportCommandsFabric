@@ -10,9 +10,6 @@
 	"license": "GPL-3.0-only",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroIntegration"
-		],
 		"client": [
 			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client.XaeroClientIntegration"
 		]
