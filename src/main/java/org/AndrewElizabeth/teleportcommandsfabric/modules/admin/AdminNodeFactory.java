@@ -157,8 +157,8 @@ final class AdminNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildIntegrationConfigNode() {
 		return Commands.literal("integration")
 				.then(AdminConfigNodeFactory.intNode("syncIntervalSeconds", "seconds", 1,
-						config -> config.getXaero().getSyncIntervalSeconds(),
-						(config, value) -> config.getXaero().setSyncIntervalSeconds(value),
+						config -> config.getIntegration().getSyncIntervalSeconds(),
+						(config, value) -> config.getIntegration().setSyncIntervalSeconds(value),
 						"commands.teleport_commands.admin.config.integration.syncIntervalSeconds"));
 	}
 

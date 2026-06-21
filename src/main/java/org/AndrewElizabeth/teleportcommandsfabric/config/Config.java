@@ -13,7 +13,7 @@ public class Config {
 	public WarpConfig warp = new WarpConfig();
 	public WorldSpawnConfig worldSpawn = new WorldSpawnConfig();
 	public RtpConfig rtp = new RtpConfig();
-	public XaeroConfig xaero = new XaeroConfig();
+	public IntegrationConfig xaero = new IntegrationConfig();
 	public StorageConfig storage = new StorageConfig();
 
 	public int getVersion() {
@@ -56,7 +56,7 @@ public class Config {
 		return rtp;
 	}
 
-	public XaeroConfig getXaero() {
+	public IntegrationConfig getIntegration() {
 		return xaero;
 	}
 
@@ -87,7 +87,7 @@ public class Config {
 			rtp = new RtpConfig();
 		}
 		if (xaero == null) {
-			xaero = new XaeroConfig();
+			xaero = new IntegrationConfig();
 		}
 		if (storage == null) {
 			storage = new StorageConfig();

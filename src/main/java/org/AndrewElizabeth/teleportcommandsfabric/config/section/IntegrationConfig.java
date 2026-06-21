@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.config.section;
 
-public final class XaeroConfig {
+public final class IntegrationConfig {
 	private static final String DEFAULT_SET_NAME = "Default";
 	public static final int MIN_SYNC_INTERVAL_SECONDS = 1;
 	private boolean enabled = true;

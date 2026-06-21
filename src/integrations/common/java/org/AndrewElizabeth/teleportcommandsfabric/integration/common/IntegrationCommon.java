@@ -16,11 +16,11 @@ public final class IntegrationCommon implements ModInitializer {
 	private static void applyRuntimeConfig() {
 		ConfigManager.query(config -> {
 			MapWaypointSyncServer.applyConfig(
-					config.getXaero().isEnabled(),
-					config.getXaero().getSyncIntervalSeconds(),
-					config.getXaero().isPersistWaypointSets(),
-					config.getXaero().getWarpSetName(),
-					config.getXaero().getHomeSetName());
+					config.getIntegration().isEnabled(),
+					config.getIntegration().getSyncIntervalSeconds(),
+					config.getIntegration().isPersistWaypointSets(),
+					config.getIntegration().getWarpSetName(),
+					config.getIntegration().getHomeSetName());
 			return null;
 		});
 	}
