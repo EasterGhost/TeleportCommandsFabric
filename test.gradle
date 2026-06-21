@@ -1,6 +1,9 @@
 dependencies {
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"
+    if (project.includeIntegrationCommon.get()) {
+        testImplementation sourceSets.integrationCommon.output
+    }
     if (project.includeXaeroIntegration.get()) {
         testImplementation sourceSets.xaeroIntegration.output
         testCompileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"

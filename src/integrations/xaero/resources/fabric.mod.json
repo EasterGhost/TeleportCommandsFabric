@@ -22,6 +22,7 @@
 	],
 	"depends": {
 		"teleport_commands_fabric": "*",
+		"teleport_commands_fabric_integration_common": "*",
 		"fabricloader": ">=0.17.3",
 		"fabric-api": "*"
 	},

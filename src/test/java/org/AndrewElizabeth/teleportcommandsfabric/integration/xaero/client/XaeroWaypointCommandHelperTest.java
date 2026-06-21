@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client;
 
-import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.network.protocol.XaeroSyncEntry;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -49,7 +50,7 @@ class XaeroWaypointCommandHelperTest {
 			Method method = XaeroCompat.class.getDeclaredMethod("toTaggedWaypoints", List.class, entryTypeClass);
 			method.setAccessible(true);
 			List<?> waypoints = (List<?>) method.invoke(null,
-					List.of(new XaeroSyncEntry("Base", "minecraft:overworld", 1, 64, 2)), homeType);
+					List.of(new SyncedMapWaypoint(SyncedWaypointKind.HOME, "Base", "minecraft:overworld", 1, 64, 2)), homeType);
 			Object waypoint = waypoints.getFirst();
 			Method getName = waypoint.getClass().getMethod("getName");
 			return (String) getName.invoke(waypoint);

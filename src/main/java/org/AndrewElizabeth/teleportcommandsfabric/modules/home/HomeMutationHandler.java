@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.PlayerHomeSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
@@ -134,6 +135,9 @@ final class HomeMutationHandler {
 				}
 				return;
 			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+			}
 			if (!silent) {
 				sendVisibilityResult(currentPlayer, result, visible);
 				return;
@@ -159,6 +163,9 @@ final class HomeMutationHandler {
 				ModConstants.LOGGER.error(logMessage, throwable);
 				HomeMessages.send(currentPlayer, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				return;
+			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 			}
 			sendMutationResult(currentPlayer, result, successKey, maxHomes);
 		}));

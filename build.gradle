@@ -8,7 +8,26 @@ group = project.maven_group
 def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
         .map { it.toBoolean() }
         .orElse(true)
+def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegrationCommon")
+        .map { it.toBoolean() }
+        .orElse(false)
+def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeXaeroIntegration) { common, xaero -> common || xaero }
+def integrationCommonJarName = "teleportcommandsfabric-integration-common-${project.version}.jar"
 def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${project.version}.jar"
+def includedJarsJson = {
+    def jars = []
+    if (includeIntegrationCommon.get()) {
+        jars.add(integrationCommonJarName)
+    }
+    if (includeXaeroIntegration.get()) {
+        jars.add(xaeroIntegrationJarName)
+    }
+    if (jars.isEmpty()) {
+        return "[]"
+    }
+    return "[" + jars.collect { "{\"file\":\"META-INF/jars/${it}\"}" }.join(",") + "]"
+}
+ext.includeIntegrationCommon = includeIntegrationCommon
 ext.includeXaeroIntegration = includeXaeroIntegration
 
 base {
@@ -22,10 +41,16 @@ tasks.withType(AbstractArchiveTask).configureEach {
 }
 
 sourceSets {
+    integrationCommon {
+        java.srcDir "src/integrations/common/java"
+        resources.srcDir "src/integrations/common/resources"
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
     xaeroIntegration {
         java.srcDir "src/integrations/xaero/java"
         resources.srcDir "src/integrations/xaero/resources"
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.integrationCommon.output
         runtimeClasspath += output + compileClasspath
     }
 }
@@ -34,6 +59,9 @@ loom {
     mods {
         "teleportcommandsfabric" {
             sourceSet sourceSets.main
+        }
+        "teleportcommandsfabric_integration_common" {
+            sourceSet sourceSets.integrationCommon
         }
         "teleportcommandsfabric_xaero" {
             sourceSet sourceSets.xaeroIntegration
@@ -76,9 +104,7 @@ processResources {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
-    inputs.property "included_jars", includeXaeroIntegration.get()
-            ? "[{\"file\":\"META-INF/jars/${xaeroIntegrationJarName}\"}]"
-            : "[]"
+    inputs.property "included_jars", includedJarsJson()
     filteringCharset = "UTF-8"
 
     filesMatching("fabric.mod.json") {
@@ -87,9 +113,18 @@ processResources {
                 "loader_version": project.loader_version
         filter { line ->
             line.contains('"jars": []')
-                    ? line.replace('"jars": []', "\"jars\": ${includeXaeroIntegration.get() ? "[{\"file\":\"META-INF/jars/${xaeroIntegrationJarName}\"}]" : "[]"}")
+                    ? line.replace('"jars": []', "\"jars\": ${includedJarsJson()}")
                     : line
         }
+    }
+}
+
+tasks.named("processIntegrationCommonResources") {
+    inputs.property "version", project.version
+    filteringCharset = "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
     }
 }
 
@@ -126,6 +161,12 @@ java {
 }
 
 jar {
+    if (includeIntegrationCommon.get()) {
+        dependsOn "integrationCommonJar"
+        from({ tasks.named("integrationCommonJar").get().archiveFile.get().asFile }) {
+            into "META-INF/jars"
+        }
+    }
     if (includeXaeroIntegration.get()) {
         dependsOn "xaeroIntegrationJar"
         from({ tasks.named("xaeroIntegrationJar").get().archiveFile.get().asFile }) {
@@ -137,8 +178,18 @@ jar {
     }
 }
 
+tasks.register("integrationCommonJar", Jar) {
+    dependsOn tasks.named("classes"), tasks.named("integrationCommonClasses")
+    archiveFileName = integrationCommonJarName
+    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
+    from sourceSets.integrationCommon.output
+    from("LICENSE.txt") {
+        rename { "LICENSE_${project.archives_base_name}_integration_common" }
+    }
+}
+
 tasks.register("xaeroIntegrationJar", Jar) {
-    dependsOn tasks.named("classes"), tasks.named("xaeroIntegrationClasses")
+    dependsOn tasks.named("classes"), tasks.named("integrationCommonClasses"), tasks.named("xaeroIntegrationClasses")
     archiveFileName = xaeroIntegrationJarName
     destinationDirectory = layout.buildDirectory.dir("libs/integrations")
     from sourceSets.xaeroIntegration.output
@@ -146,6 +197,7 @@ tasks.register("xaeroIntegrationJar", Jar) {
         rename { "LICENSE_${project.archives_base_name}_xaero" }
     }
 }
+
 
 
 // configure the maven publication

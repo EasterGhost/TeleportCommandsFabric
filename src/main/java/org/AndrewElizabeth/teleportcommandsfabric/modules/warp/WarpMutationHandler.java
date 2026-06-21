@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.GlobalWarpSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
@@ -110,6 +111,9 @@ final class WarpMutationHandler {
 				}
 				return;
 			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+			}
 			if (!silent) {
 				sendPlayerVisibilityResult(currentPlayer, result, visible);
 				return;
@@ -153,6 +157,9 @@ final class WarpMutationHandler {
 			if (result == WaypointOperationResult.SUCCESS && TeleportCommands.WAYPOINT_PAGES != null) {
 				TeleportCommands.WAYPOINT_PAGES.invalidateWarpCache();
 			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markAllDirty();
+			}
 			sendGlobalVisibilityResult(currentPlayer, result, visible);
 			if (query != null) {
 				WarpListHandler.renderWarps(context.getSource(), currentPlayer, query, false);
@@ -178,6 +185,9 @@ final class WarpMutationHandler {
 			}
 			if (result == WaypointOperationResult.SUCCESS && TeleportCommands.WAYPOINT_PAGES != null) {
 				TeleportCommands.WAYPOINT_PAGES.invalidateWarpCache();
+			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markAllDirty();
 			}
 			sendMutationResult(currentPlayer, result, successKey, maxWarps);
 		}));
