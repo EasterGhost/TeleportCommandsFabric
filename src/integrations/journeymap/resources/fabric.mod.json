@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "teleport_commands_fabric_journeymap",
+	"version": "${version}",
+	"name": "TeleportCommandsFabric JourneyMap Integration",
+	"description": "JourneyMap integration for TeleportCommandsFabric.",
+	"authors": [
+		"Andrew Elizabeth / EasterGhost"
+	],
+	"license": "GPL-3.0-only",
+	"environment": "client",
+	"entrypoints": {
+		"journeymap": [
+			"org.AndrewElizabeth.teleportcommandsfabric.integration.journeymap.JourneyMapIntegrationPlugin"
+		]
+	},
+	"mixins": [
+		"teleportcommandsfabric-journeymap.mixins.json"
+	],
+	"depends": {
+		"teleport_commands_fabric": "*",
+		"teleport_commands_fabric_integration_common": "*",
+		"fabricloader": ">=0.17.3",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"journeymap": "*"
+	}
+}

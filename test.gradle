@@ -21,11 +21,17 @@ dependencies {
 if (!project.includeXaeroIntegration.get()) {
     sourceSets.test.java.exclude "**/integration/xaero/**"
 }
+if (!project.includeJourneyMapIntegration.get()) {
+    sourceSets.test.java.exclude "**/integration/journeymap/**"
+}
 
 tasks.named("test", Test) {
     useJUnitPlatform()
     if (!project.includeXaeroIntegration.get()) {
         exclude "**/integration/xaero/**"
+    }
+    if (!project.includeJourneyMapIntegration.get()) {
+        exclude "**/integration/journeymap/**"
     }
     testLogging {
         events "passed", "skipped", "failed"

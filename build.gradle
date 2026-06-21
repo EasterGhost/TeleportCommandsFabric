@@ -8,12 +8,17 @@ group = project.maven_group
 def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
         .map { it.toBoolean() }
         .orElse(true)
+def includeJourneyMapIntegration = providers.gradleProperty("includeJourneyMapIntegration")
+        .map { it.toBoolean() }
+        .orElse(includeXaeroIntegration)
 def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegrationCommon")
         .map { it.toBoolean() }
         .orElse(false)
-def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeXaeroIntegration) { common, xaero -> common || xaero }
+def includeAnyMapIntegration = includeXaeroIntegration.zip(includeJourneyMapIntegration) { xaero, journeymap -> xaero || journeymap }
+def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeAnyMapIntegration) { common, integration -> common || integration }
 def integrationCommonJarName = "teleportcommandsfabric-integration-common-${project.version}.jar"
 def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${project.version}.jar"
+def journeyMapIntegrationJarName = "teleportcommandsfabric-journeymap-${project.version}.jar"
 def includedJarsJson = {
     def jars = []
     if (includeIntegrationCommon.get()) {
@@ -22,6 +27,9 @@ def includedJarsJson = {
     if (includeXaeroIntegration.get()) {
         jars.add(xaeroIntegrationJarName)
     }
+    if (includeJourneyMapIntegration.get()) {
+        jars.add(journeyMapIntegrationJarName)
+    }
     if (jars.isEmpty()) {
         return "[]"
     }
@@ -29,13 +37,14 @@ def includedJarsJson = {
 }
 ext.includeIntegrationCommon = includeIntegrationCommon
 ext.includeXaeroIntegration = includeXaeroIntegration
+ext.includeJourneyMapIntegration = includeJourneyMapIntegration
 
 base {
     archivesName = project.archives_base_name + "-" + project.minecraft_version
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
-    if (!includeXaeroIntegration.get()) {
+    if (!includeXaeroIntegration.get() && !includeJourneyMapIntegration.get()) {
         archiveVersion = "${project.version}-core"
     }
 }
@@ -53,6 +62,12 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.integrationCommon.output
         runtimeClasspath += output + compileClasspath
     }
+    journeyMapIntegration {
+        java.srcDir "src/integrations/journeymap/java"
+        resources.srcDir "src/integrations/journeymap/resources"
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.integrationCommon.output
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 loom {
@@ -65,6 +80,9 @@ loom {
         }
         "teleportcommandsfabric_xaero" {
             sourceSet sourceSets.xaeroIntegration
+        }
+        "teleportcommandsfabric_journeymap" {
+            sourceSet sourceSets.journeyMapIntegration
         }
     }
 }
@@ -84,6 +102,14 @@ repositories {
     maven {
         url = "https://chocolateminecraft.com/maven/"
     }
+    maven {
+        name = "JourneyMap Maven"
+        url = "https://maven.blamejared.com"
+    }
+    maven {
+        name = "JourneyMap Snapshots"
+        url = "https://jm.gserv.me/repository/maven-snapshots/"
+    }
 }
 
 dependencies {
@@ -96,6 +122,7 @@ dependencies {
     xaeroIntegrationCompileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
     xaeroIntegrationCompileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
     xaeroIntegrationCompileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
+    journeyMapIntegrationCompileOnly "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}"
 }
 
 apply from: "test.gradle"
@@ -129,6 +156,15 @@ tasks.named("processIntegrationCommonResources") {
 }
 
 tasks.named("processXaeroIntegrationResources") {
+    inputs.property "version", project.version
+    filteringCharset = "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.named("processJourneyMapIntegrationResources") {
     inputs.property "version", project.version
     filteringCharset = "UTF-8"
 
@@ -173,6 +209,12 @@ jar {
             into "META-INF/jars"
         }
     }
+    if (includeJourneyMapIntegration.get()) {
+        dependsOn "journeyMapIntegrationJar"
+        from({ tasks.named("journeyMapIntegrationJar").get().archiveFile.get().asFile }) {
+            into "META-INF/jars"
+        }
+    }
     from("LICENSE.txt") {
         rename { "LICENSE_${project.archives_base_name}" }
     }
@@ -195,6 +237,16 @@ tasks.register("xaeroIntegrationJar", Jar) {
     from sourceSets.xaeroIntegration.output
     from("LICENSE.txt") {
         rename { "LICENSE_${project.archives_base_name}_xaero" }
+    }
+}
+
+tasks.register("journeyMapIntegrationJar", Jar) {
+    dependsOn tasks.named("classes"), tasks.named("integrationCommonClasses"), tasks.named("journeyMapIntegrationClasses")
+    archiveFileName = journeyMapIntegrationJarName
+    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
+    from sourceSets.journeyMapIntegration.output
+    from("LICENSE.txt") {
+        rename { "LICENSE_${project.archives_base_name}_journeymap" }
     }
 }
 

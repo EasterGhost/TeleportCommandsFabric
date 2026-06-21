@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.ClientIntegrationHelloPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.MapWaypointSnapshotPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedDeathLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
 
@@ -38,6 +39,10 @@ public final class MapSyncPackets {
 		buf.writeBoolean(snapshot.persistWaypointSets());
 		buf.writeUtf(snapshot.warpGroupName());
 		buf.writeUtf(snapshot.homeGroupName());
+		buf.writeUtf(snapshot.deathLocation().worldId());
+		buf.writeInt(snapshot.deathLocation().x());
+		buf.writeInt(snapshot.deathLocation().y());
+		buf.writeInt(snapshot.deathLocation().z());
 		buf.writeVarInt(snapshot.waypoints().size());
 		for (SyncedMapWaypoint waypoint : snapshot.waypoints()) {
 			buf.writeEnum(waypoint.kind());
@@ -53,6 +58,11 @@ public final class MapSyncPackets {
 		boolean persistWaypointSets = buf.readBoolean();
 		String warpGroupName = buf.readUtf();
 		String homeGroupName = buf.readUtf();
+		SyncedDeathLocation deathLocation = new SyncedDeathLocation(
+				buf.readUtf(),
+				buf.readInt(),
+				buf.readInt(),
+				buf.readInt());
 		int size = buf.readVarInt();
 		List<SyncedMapWaypoint> waypoints = new ArrayList<>(size);
 		for (int i = 0; i < size; i++) {
@@ -64,6 +74,6 @@ public final class MapSyncPackets {
 					buf.readInt(),
 					buf.readInt()));
 		}
-		return new MapWaypointSnapshot(waypoints, persistWaypointSets, warpGroupName, homeGroupName);
+		return new MapWaypointSnapshot(waypoints, persistWaypointSets, warpGroupName, homeGroupName, deathLocation);
 	}
 }

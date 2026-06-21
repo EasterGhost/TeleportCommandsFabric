@@ -295,9 +295,9 @@ public final class CliTestSuite {
 		assertContains(admin, "========== TPC Admin Commands ==========", "admin help should render admin title");
 		assertContains(admin, "/tpc enable <module>\n  Enable a command module.",
 				"admin help should render command usage with description");
-		assertContains(admin, "Modules:\nback home tpa warp worldspawn rtp xaero",
+		assertContains(admin, "Modules:\nback home tpa warp worldspawn rtp integration",
 				"admin help should render module names");
-		assertContains(config, "========== TPC Config Commands ==========\nModules:\n[teleporting] [back] [home] [tpa]\n[warp] [worldspawn] [rtp] [xaero]\n[storage]",
+		assertContains(config, "========== TPC Config Commands ==========\nModules:\n[teleporting] [back] [home] [tpa]\n[warp] [worldspawn] [rtp] [integration]\n[storage]",
 				"config index should render config modules as topic buttons");
 		assertContains(homeConfig, "========== TPC Config: home ==========\n/tpc config home max <count>\n  Set the maximum number of homes per player.\n/tpc config home deleteInvalid <true|false>",
 				"config module help should render home config commands");

@@ -8,11 +8,13 @@ import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.Map
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.ClientIntegrationHelloPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.MapWaypointSnapshotPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedDeathLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
@@ -105,7 +107,8 @@ public final class MapWaypointSyncServer {
 
 	private static void flush(MinecraftServer server, UUID playerUuid, ClientState state, long now) {
 		state.beginFlush();
-		buildSnapshot(playerUuid).whenComplete((snapshot, throwable) -> {
+		SyncedDeathLocation deathLocation = deathLocation(playerUuid);
+		buildSnapshot(playerUuid, deathLocation).whenComplete((snapshot, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Failed to build map waypoint sync snapshot for {}", playerUuid, throwable);
 				state.markDirty();
@@ -136,13 +139,14 @@ public final class MapWaypointSyncServer {
 		}
 	}
 
-	private static CompletableFuture<MapWaypointSnapshot> buildSnapshot(UUID playerUuid) {
+	private static CompletableFuture<MapWaypointSnapshot> buildSnapshot(UUID playerUuid,
+			SyncedDeathLocation deathLocation) {
 		GlobalProfileManager globalManager = TeleportCommands.GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 		RuntimeConfig config = runtimeConfig;
 		if (globalManager == null || playerManager == null) {
 			return CompletableFuture.completedFuture(new MapWaypointSnapshot(List.of(),
-					config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName()));
+					config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName(), deathLocation));
 		}
 
 		CompletableFuture<List<NamedLocationView>> warpsFuture = globalManager.query(profile -> profile.getWarps());
@@ -153,8 +157,23 @@ public final class MapWaypointSyncServer {
 			List<SyncedMapWaypoint> waypoints = new ArrayList<>();
 			addWarps(waypoints, warps, playerData.hiddenWarpUuids());
 			addHomes(waypoints, playerData.homes());
-			return new MapWaypointSnapshot(waypoints, config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName());
+			return new MapWaypointSnapshot(waypoints, config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName(),
+					deathLocation);
 		});
+	}
+
+	private static SyncedDeathLocation deathLocation(UUID playerUuid) {
+		if (TeleportCommands.RECORDED_LOCATION_MANAGER == null) {
+			return SyncedDeathLocation.NONE;
+		}
+		return TeleportCommands.RECORDED_LOCATION_MANAGER.getDeathLocation(playerUuid)
+				.map(MapWaypointSyncServer::syncedDeathLocation)
+				.orElse(SyncedDeathLocation.NONE);
+	}
+
+	private static SyncedDeathLocation syncedDeathLocation(RecordedLocationView location) {
+		return new SyncedDeathLocation(location.getDimensionId(),
+				location.getBlockPos().getX(), location.getBlockPos().getY(), location.getBlockPos().getZ());
 	}
 
 	private static void addWarps(List<SyncedMapWaypoint> waypoints, List<NamedLocationView> warps, Set<UUID> hiddenWarpUuids) {

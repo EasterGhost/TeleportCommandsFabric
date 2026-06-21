@@ -6,10 +6,12 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminRuntimeInfo;
 
 import net.fabricmc.loader.api.FabricLoader;
 
+import java.util.ArrayList;
 import java.util.List;
 
 final class AdminRuntimeInfoProvider {
 	private static final String XAERO_INTEGRATION_MOD_ID = "teleport_commands_fabric_xaero";
+	private static final String JOURNEYMAP_INTEGRATION_MOD_ID = "teleport_commands_fabric_journeymap";
 
 	private AdminRuntimeInfoProvider() {
 	}
@@ -20,9 +22,13 @@ final class AdminRuntimeInfoProvider {
 	}
 
 	private static List<AdminIntegrationStatus> integrations(FabricLoader loader) {
-		if (!loader.isModLoaded(XAERO_INTEGRATION_MOD_ID)) {
-			return List.of();
+		List<AdminIntegrationStatus> integrations = new ArrayList<>();
+		if (loader.isModLoaded(XAERO_INTEGRATION_MOD_ID)) {
+			integrations.add(new AdminIntegrationStatus("commands.teleport_commands.admin.info.integration.xaero"));
 		}
-		return List.of(new AdminIntegrationStatus("commands.teleport_commands.admin.info.integration.xaero"));
+		if (loader.isModLoaded(JOURNEYMAP_INTEGRATION_MOD_ID)) {
+			integrations.add(new AdminIntegrationStatus("commands.teleport_commands.admin.info.integration.journeymap"));
+		}
+		return List.copyOf(integrations);
 	}
 }
