@@ -39,7 +39,11 @@ final class WarpNodeFactory {
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode() {
-		return Commands.literal("warp")
+		return buildTeleportNode("warp");
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode(String literal) {
+		return Commands.literal(literal)
 				.requires(WarpNodeFactory::requiresPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(WARP_SUGGESTIONS)

@@ -18,7 +18,11 @@ final class BackNodeFactory {
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildBackNode() {
-		return Commands.literal(COMMAND_BACK)
+		return buildBackNode(COMMAND_BACK);
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildBackNode(String literal) {
+		return Commands.literal(literal)
 				.requires(source -> source.getPlayer() != null)
 				.executes(context -> BackTeleportHandler.handleBackDeath(context.getSource().getPlayerOrException(), null))
 				.then(Commands.argument(ARG_DISABLE_SAFETY, BoolArgumentType.bool())

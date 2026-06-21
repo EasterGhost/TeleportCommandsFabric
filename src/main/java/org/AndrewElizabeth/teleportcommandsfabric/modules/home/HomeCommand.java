@@ -15,6 +15,7 @@ public final class HomeCommand {
 		dispatcher.register(HomeNodeFactory.buildSetNode("tmphome", true));
 		dispatcher.register(HomeNodeFactory.buildUpdateNode());
 		dispatcher.register(HomeNodeFactory.buildTeleportNode());
+		dispatcher.register(HomeNodeFactory.buildTeleportNode("teleportcommandsfabric:home"));
 		dispatcher.register(HomeNodeFactory.buildDeleteNode());
 		dispatcher.register(HomeNodeFactory.buildRenameNode());
 		dispatcher.register(HomeNodeFactory.buildDefaultNode());

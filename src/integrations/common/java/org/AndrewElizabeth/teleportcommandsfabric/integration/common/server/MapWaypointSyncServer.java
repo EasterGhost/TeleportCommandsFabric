@@ -84,9 +84,11 @@ public final class MapWaypointSyncServer {
 					payload.protocolVersion(), player.getName().getString());
 			return;
 		}
-		ClientState state = new ClientState(payload.protocolVersion());
-		state.markDirty();
-		CLIENTS.put(player.getUUID(), state);
+		CLIENTS.compute(player.getUUID(), (ignored, existing) -> {
+			ClientState state = existing == null ? new ClientState(payload.protocolVersion()) : existing;
+			state.markDirty();
+			return state;
+		});
 	}
 
 	private static void onServerTick(MinecraftServer server) {
@@ -110,13 +112,17 @@ public final class MapWaypointSyncServer {
 		SyncedDeathLocation deathLocation = deathLocation(playerUuid);
 		buildSnapshot(playerUuid, deathLocation).whenComplete((snapshot, throwable) -> {
 			if (throwable != null) {
-				ModConstants.LOGGER.error("Failed to build map waypoint sync snapshot for {}", playerUuid, throwable);
-				state.markDirty();
-				state.finishFlush(now);
+				server.execute(() -> failFlush(playerUuid, state, now, throwable));
 				return;
 			}
 			server.execute(() -> sendIfChanged(server, playerUuid, state, snapshot, now));
 		});
+	}
+
+	private static void failFlush(UUID playerUuid, ClientState state, long now, Throwable throwable) {
+		ModConstants.LOGGER.error("Failed to build map waypoint sync snapshot for {}", playerUuid, throwable);
+		state.markDirty();
+		state.finishFlush(now);
 	}
 
 	private static void sendIfChanged(MinecraftServer server, UUID playerUuid, ClientState state,

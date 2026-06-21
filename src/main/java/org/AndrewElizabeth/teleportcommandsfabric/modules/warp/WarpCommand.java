@@ -14,6 +14,7 @@ public final class WarpCommand {
 		dispatcher.register(WarpNodeFactory.buildSetNode());
 		dispatcher.register(WarpNodeFactory.buildUpdateNode());
 		dispatcher.register(WarpNodeFactory.buildTeleportNode());
+		dispatcher.register(WarpNodeFactory.buildTeleportNode("teleportcommandsfabric:warp"));
 		dispatcher.register(WarpNodeFactory.buildDeleteNode());
 		dispatcher.register(WarpNodeFactory.buildRenameNode());
 		dispatcher.register(WarpNodeFactory.buildListNode("warps", false));

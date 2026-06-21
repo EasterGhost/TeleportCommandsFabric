@@ -30,7 +30,7 @@ public final class XaeroWaypointCommandHelper {
 			return null;
 		}
 		if (waypoint.getPurpose() == WaypointPurpose.DEATH) {
-			return "back death";
+			return "teleportcommandsfabric:back death";
 		}
 		return buildTaggedTeleportCommand(waypoint.getName());
 	}
@@ -74,10 +74,10 @@ public final class XaeroWaypointCommandHelper {
 		}
 
 		if (name.startsWith(XaeroWaypointTags.WARP_PREFIX)) {
-			return "warp " + CommandArgumentUtils.quote(normalizedName);
+			return "teleportcommandsfabric:warp " + CommandArgumentUtils.quote(normalizedName);
 		}
 		if (name.startsWith(XaeroWaypointTags.HOME_PREFIX)) {
-			return "home " + CommandArgumentUtils.quote(normalizedName);
+			return "teleportcommandsfabric:home " + CommandArgumentUtils.quote(normalizedName);
 		}
 		return null;
 	}

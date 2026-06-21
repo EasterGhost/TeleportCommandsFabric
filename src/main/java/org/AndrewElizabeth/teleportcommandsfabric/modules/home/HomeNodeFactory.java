@@ -38,7 +38,11 @@ final class HomeNodeFactory {
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode() {
-		return Commands.literal("home")
+		return buildTeleportNode("home");
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode(String literal) {
+		return Commands.literal(literal)
 				.requires(HomeNodeFactory::requiresPlayer)
 				.executes(context -> HomeTeleportHandler.teleportHome(context.getSource().getPlayerOrException(), null, null))
 				.then(Commands.argument("name", StringArgumentType.string())

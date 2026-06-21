@@ -17,9 +17,9 @@ class XaeroWaypointCommandHelperTest {
 
 	@Test
 	void taggedWaypointNamesProduceTeleportCommands() {
-		assertEquals("home Base", buildTaggedTeleportCommand("TPC-H Base"));
-		assertEquals("warp Spawn", buildTaggedTeleportCommand("TPC-W Spawn"));
-		assertEquals("home \"Main Base\"", buildTaggedTeleportCommand("TPC-H Main Base"));
+		assertEquals("teleportcommandsfabric:home Base", buildTaggedTeleportCommand("TPC-H Base"));
+		assertEquals("teleportcommandsfabric:warp Spawn", buildTaggedTeleportCommand("TPC-W Spawn"));
+		assertEquals("teleportcommandsfabric:home \"Main Base\"", buildTaggedTeleportCommand("TPC-H Main Base"));
 	}
 
 	@Test

@@ -10,6 +10,7 @@ import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.common.event.common.WaypointEvent;
 import journeymap.api.v2.common.waypoint.Waypoint;
 import journeymap.api.v2.common.waypoint.WaypointFactory;
+import journeymap.api.v2.common.waypoint.WaypointGroup;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,8 @@ import java.util.Objects;
 final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 	private static final int WARP_COLOR = 0x55CCFF;
 	private static final int HOME_COLOR = 0x55FF88;
+	private static final String WARP_GROUP_NAME = "TPC Warps";
+	private static final String HOME_GROUP_NAME = "TPC Homes";
 	private final IClientAPI api;
 	private boolean applyingSnapshot;
 	private boolean hasAppliedSnapshot;
@@ -41,7 +44,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		if (api == null) {
 			return false;
 		}
-		if (!hasAppliedSnapshot && snapshot == MapWaypointSnapshot.empty()) {
+		if (!hasAppliedSnapshot && snapshot.equals(MapWaypointSnapshot.empty())) {
 			return true;
 		}
 		int snapshotHash = snapshot.hashCode();
@@ -67,6 +70,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		for (SyncedMapWaypoint waypoint : snapshot.waypoints()) {
 			desired.put(JourneyMapWaypointCommandHelper.key(waypoint), waypoint);
 		}
+		Map<SyncedWaypointKind, WaypointGroup> groups = groups();
 
 		List<? extends Waypoint> existing = api.getWaypoints(ModConstants.MOD_ID);
 		for (Waypoint waypoint : existing) {
@@ -75,7 +79,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 				continue;
 			}
 			SyncedMapWaypoint desiredWaypoint = desired.get(key);
-			if (desiredWaypoint == null || !matches(waypoint, desiredWaypoint)) {
+			if (desiredWaypoint == null || !matches(waypoint, desiredWaypoint, groups.get(desiredWaypoint.kind()))) {
 				api.removeWaypoint(ModConstants.MOD_ID, waypoint);
 			} else {
 				desired.remove(key);
@@ -83,7 +87,8 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		}
 
 		for (SyncedMapWaypoint waypoint : desired.values()) {
-			api.addWaypoint(ModConstants.MOD_ID, createWaypoint(waypoint));
+			api.addWaypoint(ModConstants.MOD_ID,
+					createWaypoint(waypoint, groups.get(waypoint.kind()), snapshot.persistWaypointSets()));
 		}
 	}
 
@@ -97,20 +102,39 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		}
 	}
 
-	private Waypoint createWaypoint(SyncedMapWaypoint synced) {
+	private Waypoint createWaypoint(SyncedMapWaypoint synced, WaypointGroup group, boolean persistent) {
 		Waypoint waypoint = WaypointFactory.createWaypoint(ModConstants.MOD_ID,
-				new BlockPos(synced.x(), synced.y(), synced.z()), synced.name(), synced.worldId(), false);
+				new BlockPos(synced.x(), synced.y(), synced.z()), synced.name(), synced.worldId(), persistent);
 		waypoint.setColor(color(synced.kind()));
 		JourneyMapWaypointCommandHelper.tag(waypoint, synced.kind(), synced.name());
+		group.addWaypoint(waypoint);
 		return waypoint;
 	}
 
-	private boolean matches(Waypoint waypoint, SyncedMapWaypoint synced) {
+	private boolean matches(Waypoint waypoint, SyncedMapWaypoint synced, WaypointGroup group) {
 		return waypoint.getX() == synced.x()
 				&& waypoint.getY() == synced.y()
 				&& waypoint.getZ() == synced.z()
 				&& Objects.equals(waypoint.getName(), synced.name())
-				&& Objects.equals(waypoint.getPrimaryDimension(), synced.worldId());
+				&& Objects.equals(waypoint.getPrimaryDimension(), synced.worldId())
+				&& Objects.equals(waypoint.getGroupId(), group.getGuid());
+	}
+
+	private Map<SyncedWaypointKind, WaypointGroup> groups() {
+		Map<SyncedWaypointKind, WaypointGroup> groups = new LinkedHashMap<>();
+		groups.put(SyncedWaypointKind.WARP, group(WARP_GROUP_NAME));
+		groups.put(SyncedWaypointKind.HOME, group(HOME_GROUP_NAME));
+		return groups;
+	}
+
+	private WaypointGroup group(String name) {
+		WaypointGroup group = api.getWaypointGroupByName(ModConstants.MOD_ID, name);
+		if (group != null) {
+			return group;
+		}
+		group = WaypointFactory.createWaypointGroup(ModConstants.MOD_ID, name);
+		api.addWaypointGroup(group);
+		return group;
 	}
 
 	private int color(SyncedWaypointKind kind) {

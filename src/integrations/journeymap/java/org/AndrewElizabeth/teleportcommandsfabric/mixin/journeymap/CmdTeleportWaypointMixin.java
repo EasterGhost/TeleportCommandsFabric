@@ -11,6 +11,7 @@ import journeymap.api.v2.common.waypoint.Waypoint;
 import net.minecraft.client.Minecraft;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 
 @Mixin(targets = "journeymap.client.command.CmdTeleportWaypoint", remap = false)
 public class CmdTeleportWaypointMixin {
@@ -39,7 +40,7 @@ public class CmdTeleportWaypointMixin {
 			Field field = ((Object) this).getClass().getDeclaredField("waypoint");
 			field.setAccessible(true);
 			return field.get(this);
-		} catch (ReflectiveOperationException exception) {
+		} catch (ReflectiveOperationException | InaccessibleObjectException | SecurityException exception) {
 			return null;
 		}
 	}
