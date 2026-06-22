@@ -24,7 +24,6 @@ final class WarpNodeFactory {
 		return Commands.literal("setwarp")
 				.requires(WarpNodeFactory::requiresAdminPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
-						.suggests(WARP_SUGGESTIONS)
 						.executes(context -> WarpMutationHandler.setWarp(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "name"))));
 	}
