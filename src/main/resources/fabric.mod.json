@@ -35,8 +35,8 @@
 			"badges": [ "${build_variant}" ],
 			"links": {
 				"modmenu.modrinth": "https://modrinth.com/mod/teleportcommandsfabric",
-				"modmenu.github": "https://github.com/EasterGhost/TeleportCommandsFabric",
-				"modmenu.issue_tracker": "https://github.com/EasterGhost/TeleportCommandsFabric/issues"
+				"GitHub": "https://github.com/EasterGhost/TeleportCommandsFabric",
+				"Issue": "https://github.com/EasterGhost/TeleportCommandsFabric/issues"
 			}
 		}
 	},
