@@ -21,9 +21,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class TargetTeleportProcessor {
+	private static final long SAFETY_CHECK_TIMEOUT_MILLIS = 5000L;
+
 	private final TeleportOperationManager operationManager;
 	private final TeleportPreloadManager preloadManager;
 	private final SafetyThreadPool workerPool;
@@ -141,9 +145,19 @@ public final class TargetTeleportProcessor {
 
 	private Optional<BlockPos> joinSafetyCheck(PreparedSafetyCheck safetyCheck) {
 		try {
-			return safetyCheck.safetyFuture().join();
-		} catch (CancellationException | CompletionException exception) {
+			return safetyCheck.safetyFuture().get(SAFETY_CHECK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			ModConstants.LOGGER.warn("Parallel teleport safety check was interrupted; falling back to server thread",
+					exception);
+			return TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world());
+		} catch (CancellationException | ExecutionException exception) {
 			ModConstants.LOGGER.warn("Parallel teleport safety check failed; falling back to server thread", exception);
+			return TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world());
+		} catch (TimeoutException exception) {
+			ModConstants.LOGGER.warn(
+					"Parallel teleport safety check timed out after {} ms; falling back to server thread",
+					SAFETY_CHECK_TIMEOUT_MILLIS, exception);
 			return TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world());
 		}
 	}
