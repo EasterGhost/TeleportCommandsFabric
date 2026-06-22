@@ -17,6 +17,14 @@
 	"mixins": [
 		"teleportcommandsfabric-xaero.mixins.json"
 	],
+	"custom": {
+		"modmenu": {
+			"parent": {
+				"id": "teleport_commands_fabric",
+				"name": "TeleportCommandsFabric"
+			}
+		}
+	},
 	"depends": {
 		"teleport_commands_fabric": "*",
 		"teleport_commands_fabric_integration_common": "*",

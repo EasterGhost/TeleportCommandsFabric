@@ -61,7 +61,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 - Fixed Xaero map visibility commands (`maphome` / `mapwarp`) built without page arguments not being handled when triggered from the silent (waypoint-delete) path.
 
-## [2.1] - 2026-06-14
+## [2.1] - 2026-06-12
 
 ### Added
 
