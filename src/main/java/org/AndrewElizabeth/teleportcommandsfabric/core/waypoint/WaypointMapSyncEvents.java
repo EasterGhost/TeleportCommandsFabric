@@ -1,5 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.waypoint;
 
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,13 +27,29 @@ public final class WaypointMapSyncEvents {
 			return;
 		}
 		for (Consumer<UUID> listener : PLAYER_DIRTY_LISTENERS) {
-			listener.accept(playerUuid);
+			notifyPlayerDirty(listener, playerUuid);
 		}
 	}
 
 	public static void markAllDirty() {
 		for (Runnable listener : ALL_DIRTY_LISTENERS) {
+			notifyAllDirty(listener);
+		}
+	}
+
+	private static void notifyPlayerDirty(Consumer<UUID> listener, UUID playerUuid) {
+		try {
+			listener.accept(playerUuid);
+		} catch (RuntimeException exception) {
+			ModConstants.LOGGER.error("Waypoint map sync player dirty listener failed.", exception);
+		}
+	}
+
+	private static void notifyAllDirty(Runnable listener) {
+		try {
 			listener.run();
+		} catch (RuntimeException exception) {
+			ModConstants.LOGGER.error("Waypoint map sync all dirty listener failed.", exception);
 		}
 	}
 }

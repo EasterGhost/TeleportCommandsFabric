@@ -53,8 +53,9 @@ public final class TeleportExecutor {
 		if (effectsEnabled) {
 			TeleportEffects.playBefore(player);
 		}
-		float yRot = TeleportRotation.isRestoreEnabled() ? target.effectiveYRot(player) : player.getYRot();
-		float xRot = TeleportRotation.isRestoreEnabled() ? target.effectiveXRot(player) : player.getXRot();
+		boolean restoreRotation = TeleportRotation.isRestoreEnabled();
+		float yRot = restoreRotation ? target.effectiveYRot(player) : player.getYRot();
+		float xRot = restoreRotation ? target.effectiveXRot(player) : player.getXRot();
 		boolean teleported = player.teleportTo(target.world(), target.position().x(), target.position().y(), target.position().z(),
 				Set.of(), yRot, xRot, false);
 		if (!teleported) {
