@@ -14,14 +14,19 @@ def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration"
 def includeJourneyMapIntegration = providers.gradleProperty("includeJourneyMapIntegration")
         .map { it.toBoolean() }
         .orElse(includeMapIntegrations)
+def includeBlueMapIntegration = providers.gradleProperty("includeBlueMapIntegration")
+        .map { it.toBoolean() }
+        .orElse(includeMapIntegrations)
 def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegrationCommon")
         .map { it.toBoolean() }
         .orElse(false)
-def includeAnyMapIntegration = includeXaeroIntegration.zip(includeJourneyMapIntegration) { xaero, journeymap -> xaero || journeymap }
-def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeAnyMapIntegration) { common, integration -> common || integration }
+def includeClientMapIntegration = includeXaeroIntegration.zip(includeJourneyMapIntegration) { xaero, journeymap -> xaero || journeymap }
+def includeAnyMapIntegration = includeClientMapIntegration.zip(includeBlueMapIntegration) { clientIntegration, bluemap -> clientIntegration || bluemap }
+def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeClientMapIntegration) { common, integration -> common || integration }
 def integrationCommonJarName = "teleportcommandsfabric-integration-common-${project.version}.jar"
 def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${project.version}.jar"
 def journeyMapIntegrationJarName = "teleportcommandsfabric-journeymap-${project.version}.jar"
+def blueMapIntegrationJarName = "teleportcommandsfabric-bluemap-${project.version}.jar"
 def includedJarsJson = {
     def jars = []
     if (includeIntegrationCommon.get()) {
@@ -33,24 +38,28 @@ def includedJarsJson = {
     if (includeJourneyMapIntegration.get()) {
         jars.add(journeyMapIntegrationJarName)
     }
+    if (includeBlueMapIntegration.get()) {
+        jars.add(blueMapIntegrationJarName)
+    }
     if (jars.isEmpty()) {
         return "[]"
     }
     return "[" + jars.collect { "{\"file\":\"META-INF/jars/${it}\"}" }.join(",") + "]"
 }
 def buildVariantName = {
-    includeMapIntegrations.get() ? "Standard" : "Core"
+    includeAnyMapIntegration.get() ? "Standard" : "Core"
 }
 ext.includeIntegrationCommon = includeIntegrationCommon
 ext.includeXaeroIntegration = includeXaeroIntegration
 ext.includeJourneyMapIntegration = includeJourneyMapIntegration
+ext.includeBlueMapIntegration = includeBlueMapIntegration
 
 base {
     archivesName = project.archives_base_name + "-" + project.minecraft_version
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
-    if (!includeXaeroIntegration.get() && !includeJourneyMapIntegration.get()) {
+    if (!includeXaeroIntegration.get() && !includeJourneyMapIntegration.get() && !includeBlueMapIntegration.get()) {
         archiveVersion = "${project.version}-core"
     }
 }
@@ -74,6 +83,12 @@ sourceSets {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.integrationCommon.output
         runtimeClasspath += output + compileClasspath
     }
+    blueMapIntegration {
+        java.srcDir "src/integrations/bluemap/java"
+        resources.srcDir "src/integrations/bluemap/resources"
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 loom {
@@ -89,6 +104,9 @@ loom {
         }
         "teleportcommandsfabric_journeymap" {
             sourceSet sourceSets.journeyMapIntegration
+        }
+        "teleportcommandsfabric_bluemap" {
+            sourceSet sourceSets.blueMapIntegration
         }
     }
 }
@@ -116,6 +134,10 @@ repositories {
         name = "JourneyMap Snapshots"
         url = "https://jm.gserv.me/repository/maven-snapshots/"
     }
+    maven {
+        name = "BlueMap"
+        url = "https://repo.bluecolored.de/releases"
+    }
 }
 
 dependencies {
@@ -129,6 +151,7 @@ dependencies {
     xaeroIntegrationCompileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
     xaeroIntegrationCompileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
     journeyMapIntegrationCompileOnly "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}"
+    blueMapIntegrationCompileOnly "de.bluecolored:bluemap-api:${project.bluemap_api_version}"
 }
 
 apply from: "test.gradle"
@@ -181,6 +204,15 @@ tasks.named("processJourneyMapIntegrationResources") {
     }
 }
 
+tasks.named("processBlueMapIntegrationResources") {
+    inputs.property "version", project.version
+    filteringCharset = "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
 def targetJavaVersion = 25
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
@@ -223,6 +255,12 @@ jar {
             into "META-INF/jars"
         }
     }
+    if (includeBlueMapIntegration.get()) {
+        dependsOn "blueMapIntegrationJar"
+        from({ tasks.named("blueMapIntegrationJar").get().archiveFile.get().asFile }) {
+            into "META-INF/jars"
+        }
+    }
     from("LICENSE.txt") {
         rename { "LICENSE_${project.archives_base_name}" }
     }
@@ -255,6 +293,16 @@ tasks.register("journeyMapIntegrationJar", Jar) {
     from sourceSets.journeyMapIntegration.output
     from("LICENSE.txt") {
         rename { "LICENSE_${project.archives_base_name}_journeymap" }
+    }
+}
+
+tasks.register("blueMapIntegrationJar", Jar) {
+    dependsOn tasks.named("classes"), tasks.named("blueMapIntegrationClasses")
+    archiveFileName = blueMapIntegrationJarName
+    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
+    from sourceSets.blueMapIntegration.output
+    from("LICENSE.txt") {
+        rename { "LICENSE_${project.archives_base_name}_bluemap" }
     }
 }
 

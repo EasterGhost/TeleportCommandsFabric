@@ -64,6 +64,7 @@
   "commands.teleport_commands.admin.info.integration.unknown": "未知",
   "commands.teleport_commands.admin.info.integration.xaero": "Xaero",
   "commands.teleport_commands.admin.info.integration.journeymap": "JourneyMap",
+  "commands.teleport_commands.admin.info.integration.bluemap": "BlueMap",
   "commands.teleport_commands.admin.info.integrations": "联动：%0%",
   "commands.teleport_commands.admin.info.version": "版本：%0%",
   "commands.teleport_commands.admin.module.back": "Back 命令",
