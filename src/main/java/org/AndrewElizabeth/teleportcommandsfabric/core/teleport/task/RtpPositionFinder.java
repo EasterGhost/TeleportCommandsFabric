@@ -3,13 +3,13 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Objects;
 import java.util.SplittableRandom;
 
@@ -17,22 +17,22 @@ public final class RtpPositionFinder {
 	private RtpPositionFinder() {
 	}
 
-	public static Optional<BlockPos> findSafeRandomPosition(ServerLevel world, RtpTeleportPending pending,
+	static Optional<BlockPos> findSafeRandomPosition(RtpChunkReader reader, RtpTeleportPending pending,
 			int attemptBudget, SplittableRandom random) {
 		if (attemptBudget <= 0) {
 			return Optional.empty();
 		}
 		Objects.requireNonNull(random, "random");
 
-		int minY = world.getMinY() + 1;
-		int maxY = world.getMaxY();
+		int minY = reader.getMinY() + 1;
+		int maxY = reader.getMaxY();
 		int maxR2 = pending.maxRadius() * pending.maxRadius();
 		int minR2 = pending.minRadius() * pending.minRadius();
 		BlockPos center = pending.center();
 		int centerX = center.getX();
 		int centerY = center.getY();
 		int centerZ = center.getZ();
-		boolean restrictNetherRoofBedrock = world.dimension().equals(Level.NETHER) && centerY < 128;
+		boolean restrictNetherRoofBedrock = pending.dimension().equals(Level.NETHER) && centerY < 128;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
 		BlockPos.MutableBlockPos headPos = new BlockPos.MutableBlockPos();
@@ -49,7 +49,11 @@ public final class RtpPositionFinder {
 			int z = centerZ + dz;
 			int yMin = Math.max(minY, centerY - pending.maxRadius() + 1);
 			int yMax = Math.min(maxY, centerY + pending.maxRadius());
-			yMax = Math.min(yMax, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
+			OptionalInt surfaceHeight = reader.getSurfaceHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+			if (surfaceHeight.isEmpty()) {
+				continue;
+			}
+			yMax = Math.min(yMax, surfaceHeight.getAsInt());
 			if (yMin > yMax) {
 				continue;
 			}
@@ -61,7 +65,7 @@ public final class RtpPositionFinder {
 			}
 
 			pos.set(x, centerY + dy, z);
-			if (isSafeTeleportPos(world, pos, belowPos, headPos, restrictNetherRoofBedrock)) {
+			if (isSafeTeleportPos(reader, pos, belowPos, headPos, restrictNetherRoofBedrock)) {
 				return Optional.of(pos.immutable());
 			}
 		}
@@ -69,34 +73,34 @@ public final class RtpPositionFinder {
 		return Optional.empty();
 	}
 
-	private static boolean isSafeTeleportPos(ServerLevel world, BlockPos pos, BlockPos.MutableBlockPos belowPos,
+	private static boolean isSafeTeleportPos(RtpChunkReader reader, BlockPos pos, BlockPos.MutableBlockPos belowPos,
 			BlockPos.MutableBlockPos headPos, boolean restrictNetherRoofBedrock) {
 		belowPos.set(pos.getX(), pos.getY() - 1, pos.getZ());
-		BlockState belowState = world.getBlockState(belowPos);
+		BlockState belowState = reader.getBlockState(belowPos);
 		if (restrictNetherRoofBedrock && belowPos.getY() == 127 && belowState.is(Blocks.BEDROCK)) {
 			return false;
 		}
 		if (belowState.isAir() || !belowState.getFluidState().isEmpty()) {
 			return false;
 		}
-		if (belowState.getCollisionShape(world, belowPos).isEmpty()) {
+		if (belowState.getCollisionShape(reader, belowPos).isEmpty()) {
 			return false;
 		}
 
-		BlockState feetState = world.getBlockState(pos);
+		BlockState feetState = reader.getBlockState(pos);
 		headPos.set(pos.getX(), pos.getY() + 1, pos.getZ());
-		BlockState headState = world.getBlockState(headPos);
-		return isBodyClear(world, pos, feetState) && isBodyClear(world, headPos, headState);
+		BlockState headState = reader.getBlockState(headPos);
+		return isBodyClear(reader, pos, feetState) && isBodyClear(reader, headPos, headState);
 	}
 
-	private static boolean isBodyClear(ServerLevel world, BlockPos pos, BlockState state) {
+	private static boolean isBodyClear(RtpChunkReader reader, BlockPos pos, BlockState state) {
 		if (state.isAir()) {
 			return true;
 		}
 		if (!state.getFluidState().isEmpty()) {
 			return false;
 		}
-		if (!state.getCollisionShape(world, pos).isEmpty()) {
+		if (!state.getCollisionShape(reader, pos).isEmpty()) {
 			return false;
 		}
 		return !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock());

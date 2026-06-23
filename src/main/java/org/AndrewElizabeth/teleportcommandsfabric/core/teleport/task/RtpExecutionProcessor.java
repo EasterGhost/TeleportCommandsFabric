@@ -103,7 +103,8 @@ public final class RtpExecutionProcessor {
 			int budget = operation.consumeAttempts(ATTEMPTS_PER_TICK);
 			Optional<BlockPos> safePos;
 			try {
-				safePos = RtpPositionFinder.findSafeRandomPosition(world, operation, budget, operation.random());
+				RtpChunkReader reader = RtpChunkReader.create(world, operation.center(), operation.maxRadius());
+				safePos = RtpPositionFinder.findSafeRandomPosition(reader, operation, budget, operation.random());
 			} catch (RuntimeException exception) {
 				executor.finishOperation(operation, TeleportStatus.FAILED);
 				continue;
@@ -150,10 +151,18 @@ public final class RtpExecutionProcessor {
 				executor.finishOperation(pending, TeleportStatus.TARGET_UNAVAILABLE);
 				continue;
 			}
+			RtpChunkReader reader;
+			try {
+				reader = RtpChunkReader.create(world, pending.center(), pending.maxRadius());
+			} catch (RuntimeException exception) {
+				executor.finishOperation(pending, TeleportStatus.FAILED);
+				continue;
+			}
 			int budget = pending.consumeAttempts(pending.remainingAttempts());
 			futures.add(CompletableFuture.supplyAsync(() -> {
 				try {
-					return new ParallelResult(pending, RtpPositionFinder.findSafeRandomPosition(world, pending, budget, pending.random()), null);
+					return new ParallelResult(pending, RtpPositionFinder.findSafeRandomPosition(reader, pending, budget,
+							pending.random()), null);
 				} catch (RuntimeException exception) {
 					return new ParallelResult(pending, Optional.empty(), TeleportStatus.FAILED);
 				}

@@ -11,7 +11,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.Tar
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.GlobalWarpSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
@@ -73,9 +75,11 @@ final class WarpTeleportHandler {
 			if (settings.deleteInvalidWarps()) {
 				AsyncWaypointSource source = source();
 				if (source != null) {
-					WaypointCrudService.delete(warp.getName(), source).whenComplete((ignored, throwable) -> server.execute(() -> {
-						if (throwable == null) {
-							ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
+					UUID playerUuid = player.getUUID();
+					WaypointCrudService.delete(warp.getName(), source).whenComplete((result, throwable) -> server.execute(() -> {
+						if (throwable == null && result == WaypointOperationResult.SUCCESS) {
+							WaypointMapSyncEvents.markAllDirty();
+							ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 							if (currentPlayer == null) {
 								return;
 							}

@@ -11,7 +11,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.Tar
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.PlayerHomeSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
@@ -74,9 +76,13 @@ final class HomeTeleportHandler {
 					player.getName().getString(), home.getDimensionId());
 			HomeMessages.send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
 			if (settings.deleteInvalidHomes()) {
-				WaypointCrudService.delete(home.getName(), source).whenComplete((ignored, throwable) -> server.execute(() -> {
-					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
-					if (throwable == null && currentPlayer != null) {
+				UUID playerUuid = player.getUUID();
+				WaypointCrudService.delete(home.getName(), source).whenComplete((result, throwable) -> server.execute(() -> {
+					if (throwable == null && result == WaypointOperationResult.SUCCESS) {
+						WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+					}
+					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
+					if (throwable == null && result == WaypointOperationResult.SUCCESS && currentPlayer != null) {
 						HomeMessages.send(currentPlayer, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
 					}
 				}));
