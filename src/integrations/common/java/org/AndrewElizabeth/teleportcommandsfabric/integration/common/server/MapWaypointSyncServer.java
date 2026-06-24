@@ -97,9 +97,13 @@ public final class MapWaypointSyncServer {
 		}
 
 		long now = Util.getMillis();
+		long wallNow = System.currentTimeMillis();
 		long intervalMs = runtimeConfig.syncIntervalMillis();
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			ClientState state = CLIENTS.get(player.getUUID());
+			if (state != null) {
+				state.markDirtyIfHomeExpired(wallNow);
+			}
 			if (state == null || !state.shouldFlush(now, intervalMs)) {
 				continue;
 			}
@@ -110,12 +114,12 @@ public final class MapWaypointSyncServer {
 	private static void flush(MinecraftServer server, UUID playerUuid, ClientState state, long now) {
 		state.beginFlush();
 		SyncedDeathLocation deathLocation = deathLocation(playerUuid);
-		buildSnapshot(playerUuid, deathLocation).whenComplete((snapshot, throwable) -> {
+		buildSnapshot(playerUuid, deathLocation).whenComplete((result, throwable) -> {
 			if (throwable != null) {
 				server.execute(() -> failFlush(playerUuid, state, now, throwable));
 				return;
 			}
-			server.execute(() -> sendIfChanged(server, playerUuid, state, snapshot, now));
+			server.execute(() -> sendIfChanged(server, playerUuid, state, result, now));
 		});
 	}
 
@@ -126,8 +130,10 @@ public final class MapWaypointSyncServer {
 	}
 
 	private static void sendIfChanged(MinecraftServer server, UUID playerUuid, ClientState state,
-			MapWaypointSnapshot snapshot, long now) {
+			SnapshotBuildResult result, long now) {
 		try {
+			MapWaypointSnapshot snapshot = result.snapshot();
+			state.updateNextHomeExpiry(result.nextHomeExpiryMillis());
 			ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
 			if (player == null || !ServerPlayNetworking.canSend(player, MapWaypointSnapshotPayload.TYPE)) {
 				return;
@@ -144,14 +150,14 @@ public final class MapWaypointSyncServer {
 		}
 	}
 
-	private static CompletableFuture<MapWaypointSnapshot> buildSnapshot(UUID playerUuid,
+	private static CompletableFuture<SnapshotBuildResult> buildSnapshot(UUID playerUuid,
 			SyncedDeathLocation deathLocation) {
 		GlobalProfileManager globalManager = TeleportCommands.GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 		RuntimeConfig config = runtimeConfig;
 		if (globalManager == null || playerManager == null) {
-			return CompletableFuture.completedFuture(new MapWaypointSnapshot(List.of(),
-					config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName(), deathLocation));
+			return CompletableFuture.completedFuture(new SnapshotBuildResult(new MapWaypointSnapshot(List.of(),
+					config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName(), deathLocation), 0L));
 		}
 
 		CompletableFuture<List<NamedLocationView>> warpsFuture = globalManager.query(profile -> profile.getWarps());
@@ -162,8 +168,9 @@ public final class MapWaypointSyncServer {
 			List<SyncedMapWaypoint> waypoints = new ArrayList<>();
 			addWarps(waypoints, warps, playerData.hiddenWarpUuids());
 			addHomes(waypoints, playerData.homes());
-			return new MapWaypointSnapshot(waypoints, config.persistWaypointSets(), config.warpGroupName(), config.homeGroupName(),
-					deathLocation);
+			MapWaypointSnapshot snapshot = new MapWaypointSnapshot(waypoints, config.persistWaypointSets(),
+					config.warpGroupName(), config.homeGroupName(), deathLocation);
+			return new SnapshotBuildResult(snapshot, nextHomeExpiryMillis(playerData.homes()));
 		});
 	}
 
@@ -199,6 +206,20 @@ public final class MapWaypointSyncServer {
 		}
 	}
 
+	private static long nextHomeExpiryMillis(List<NamedLocationView> homes) {
+		long nextExpiry = 0L;
+		for (NamedLocationView home : homes) {
+			if (!home.isVisible() || !home.isTemporary() || home.isExpired()) {
+				continue;
+			}
+			long expiredTime = home.getExpiredTime();
+			if (nextExpiry == 0L || expiredTime < nextExpiry) {
+				nextExpiry = expiredTime;
+			}
+		}
+		return nextExpiry;
+	}
+
 	private static void addWaypoint(List<SyncedMapWaypoint> waypoints, SyncedWaypointKind kind, NamedLocationView location) {
 		String worldId = location.getDimensionId();
 		if (worldId == null || worldId.isBlank()) {
@@ -215,6 +236,9 @@ public final class MapWaypointSyncServer {
 	private record PlayerWaypointData(List<NamedLocationView> homes, Set<UUID> hiddenWarpUuids) {
 	}
 
+	private record SnapshotBuildResult(MapWaypointSnapshot snapshot, long nextHomeExpiryMillis) {
+	}
+
 	private record RuntimeConfig(boolean enabled, long syncIntervalMillis, boolean persistWaypointSets,
 			String warpGroupName, String homeGroupName) {
 		private static RuntimeConfig defaults() {
@@ -228,6 +252,7 @@ public final class MapWaypointSyncServer {
 		private volatile boolean flushInProgress;
 		private volatile long lastFlushTimeMillis;
 		private volatile MapWaypointSnapshot lastSnapshot;
+		private volatile long nextHomeExpiryMillis;
 
 		private ClientState(int protocolVersion) {
 			this.protocolVersion = protocolVersion;
@@ -239,6 +264,15 @@ public final class MapWaypointSyncServer {
 
 		private void markDirty() {
 			dirty = true;
+		}
+
+		private void markDirtyIfHomeExpired(long nowMillis) {
+			long expiryMillis = nextHomeExpiryMillis;
+			if (expiryMillis <= 0L || nowMillis < expiryMillis) {
+				return;
+			}
+			nextHomeExpiryMillis = 0L;
+			markDirty();
 		}
 
 		private boolean shouldFlush(long now, long intervalMs) {
@@ -256,6 +290,10 @@ public final class MapWaypointSyncServer {
 
 		private void updateSnapshot(MapWaypointSnapshot snapshot) {
 			lastSnapshot = snapshot;
+		}
+
+		private void updateNextHomeExpiry(long expiryMillis) {
+			nextHomeExpiryMillis = expiryMillis;
 		}
 
 		private void finishFlush(long now) {

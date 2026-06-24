@@ -27,8 +27,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 	private static final String HOME_GROUP_NAME = "TPC Homes";
 	private final IClientAPI api;
 	private boolean applyingSnapshot;
-	private boolean hasAppliedSnapshot;
-	private int lastSnapshotHash;
+	private MapWaypointSnapshot lastSnapshot;
 
 	JourneyMapWaypointAdapter(IClientAPI api) {
 		this.api = api;
@@ -44,18 +43,17 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		if (api == null) {
 			return false;
 		}
-		if (!hasAppliedSnapshot && snapshot.equals(MapWaypointSnapshot.empty())) {
+		MapWaypointSnapshot safeSnapshot = snapshot == null ? MapWaypointSnapshot.empty() : snapshot;
+		if (lastSnapshot == null && safeSnapshot.equals(MapWaypointSnapshot.empty())) {
 			return true;
 		}
-		int snapshotHash = snapshot.hashCode();
-		if (hasAppliedSnapshot && snapshotHash == lastSnapshotHash) {
+		if (safeSnapshot.equals(lastSnapshot)) {
 			return true;
 		}
 		applyingSnapshot = true;
 		try {
-			applyIncremental(snapshot);
-			hasAppliedSnapshot = true;
-			lastSnapshotHash = snapshotHash;
+			applyIncremental(safeSnapshot);
+			lastSnapshot = safeSnapshot;
 			return true;
 		} catch (RuntimeException exception) {
 			ModConstants.LOGGER.error("Failed to apply JourneyMap waypoint snapshot.", exception);
