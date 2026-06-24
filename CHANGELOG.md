@@ -10,7 +10,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 | Mod version     | Config version |       Storage version | Data compatibility notes                                                                                                                                                            |
 | --------------- | -------------: | --------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.3             |              3 |                     1 | Map integration update. Keeps the v2.2 config/storage schema. Adds JourneyMap and BlueMap integrations and preserves invalid-dimension home/warp entries during profile load.        |
+| 2.3             |              3 |                     1 | Map integration update. Keeps the v2.2 config/storage schema. Adds JourneyMap and BlueMap integrations and preserves invalid-dimension home/warp entries during profile load.       |
 | 2.2             |              3 |                     1 | Feature update. Keeps the v2.1 config/storage schema. Xaero integration extracted to bundled JAR-in-JAR source set.                                                                 |
 | 2.1             |              3 |                     1 | Feature update on the 26.1 line. Keeps the v2.0 storage/config schema while adding TPA trust rules and saved rotation fields to stored locations.                                   |
 | 2.0             |              3 |                     1 | Core refactoring release. Dynamically applied config and independent storage format.                                                                                                |
@@ -36,7 +36,6 @@ The config and storage schema versions are tracked separately from the mod relea
 - Updated map integration admin commands and descriptions to use the `integration` module name instead of the old Xaero-specific module name.
 - Kept the existing `xaero` config section name for backward compatibility, while treating it as the map integration config group at runtime.
 - Updated standard build packaging to bundle BlueMap support alongside Xaero and JourneyMap, while keeping the core build free of bundled map integrations.
-- Updated admin runtime integration status to report BlueMap when the bundled BlueMap integration is loaded.
 - Changed invalid-dimension cleanup behavior for homes and warps: storage loading now preserves entries even if a dimension is not available yet, and `deleteInvalid` cleanup happens only when a teleport attempt finds that the target world is unavailable.
 - Improved map waypoint synchronization so clients only receive changed waypoint snapshots instead of repeated unchanged data.
 - Added a defensive timeout fallback for parallel target teleport safety checks.

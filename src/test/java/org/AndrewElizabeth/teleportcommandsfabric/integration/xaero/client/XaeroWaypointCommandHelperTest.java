@@ -9,7 +9,9 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class XaeroWaypointCommandHelperTest {
 	private static final Method BUILD_TAGGED_TELEPORT_COMMAND = taggedTeleportMethod();
@@ -39,24 +41,34 @@ class XaeroWaypointCommandHelperTest {
 
 	@Test
 	void syncedWaypointCreationAddsTeleportTags() {
-		assertEquals("TPC-H Base", taggedWaypointName());
+		TaggedWaypoint temporaryWaypoint = taggedWaypoint(true);
+		TaggedWaypoint persistentWaypoint = taggedWaypoint(false);
+		assertEquals("TPC-H Base", temporaryWaypoint.name());
+		assertTrue(temporaryWaypoint.temporary());
+		assertFalse(persistentWaypoint.temporary());
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private static String taggedWaypointName() {
+	private static TaggedWaypoint taggedWaypoint(boolean temporary) {
 		try {
 			Class<?> entryTypeClass = Class.forName(XaeroCompat.class.getName() + "$EntryType");
 			Object homeType = Enum.valueOf((Class<Enum>) entryTypeClass.asSubclass(Enum.class), "HOME");
-			Method method = XaeroCompat.class.getDeclaredMethod("toTaggedWaypoints", List.class, entryTypeClass);
+			Method method = XaeroCompat.class.getDeclaredMethod("toTaggedWaypoints", List.class, entryTypeClass,
+					boolean.class);
 			method.setAccessible(true);
 			List<?> waypoints = (List<?>) method.invoke(null,
-					List.of(new SyncedMapWaypoint(SyncedWaypointKind.HOME, "Base", "minecraft:overworld", 1, 64, 2)), homeType);
+					List.of(new SyncedMapWaypoint(SyncedWaypointKind.HOME, "Base", "minecraft:overworld", 1, 64, 2)),
+					homeType, temporary);
 			Object waypoint = waypoints.getFirst();
 			Method getName = waypoint.getClass().getMethod("getName");
-			return (String) getName.invoke(waypoint);
+			Method isTemporary = waypoint.getClass().getMethod("isTemporary");
+			return new TaggedWaypoint((String) getName.invoke(waypoint), (boolean) isTemporary.invoke(waypoint));
 		} catch (ReflectiveOperationException exception) {
 			throw new AssertionError("Unable to inspect Xaero waypoint creation", exception);
 		}
+	}
+
+	private record TaggedWaypoint(String name, boolean temporary) {
 	}
 
 	private static String buildTaggedTeleportCommand(String name) {

@@ -70,7 +70,8 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		for (SyncedMapWaypoint waypoint : snapshot.waypoints()) {
 			desired.put(JourneyMapWaypointCommandHelper.key(waypoint), waypoint);
 		}
-		Map<SyncedWaypointKind, WaypointGroup> groups = groups();
+		boolean persistent = snapshot.persistWaypointSets();
+		Map<SyncedWaypointKind, WaypointGroup> groups = groups(persistent);
 
 		List<? extends Waypoint> existing = api.getWaypoints(ModConstants.MOD_ID);
 		for (Waypoint waypoint : existing) {
@@ -79,7 +80,8 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 				continue;
 			}
 			SyncedMapWaypoint desiredWaypoint = desired.get(key);
-			if (desiredWaypoint == null || !matches(waypoint, desiredWaypoint, groups.get(desiredWaypoint.kind()))) {
+			if (desiredWaypoint == null
+					|| !matches(waypoint, desiredWaypoint, groups.get(desiredWaypoint.kind()), persistent)) {
 				api.removeWaypoint(ModConstants.MOD_ID, waypoint);
 			} else {
 				desired.remove(key);
@@ -88,7 +90,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 
 		for (SyncedMapWaypoint waypoint : desired.values()) {
 			api.addWaypoint(ModConstants.MOD_ID,
-					createWaypoint(waypoint, groups.get(waypoint.kind()), snapshot.persistWaypointSets()));
+					createWaypoint(waypoint, groups.get(waypoint.kind()), persistent));
 		}
 	}
 
@@ -111,29 +113,30 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		return waypoint;
 	}
 
-	private boolean matches(Waypoint waypoint, SyncedMapWaypoint synced, WaypointGroup group) {
+	private boolean matches(Waypoint waypoint, SyncedMapWaypoint synced, WaypointGroup group, boolean persistent) {
 		return waypoint.getX() == synced.x()
 				&& waypoint.getY() == synced.y()
 				&& waypoint.getZ() == synced.z()
 				&& Objects.equals(waypoint.getName(), synced.name())
 				&& Objects.equals(waypoint.getPrimaryDimension(), synced.worldId())
-				&& Objects.equals(waypoint.getGroupId(), group.getGuid());
+				&& Objects.equals(waypoint.getGroupId(), group.getGuid())
+				&& waypoint.isPersistent() == persistent;
 	}
 
-	private Map<SyncedWaypointKind, WaypointGroup> groups() {
+	private Map<SyncedWaypointKind, WaypointGroup> groups(boolean persistent) {
 		Map<SyncedWaypointKind, WaypointGroup> groups = new LinkedHashMap<>();
-		groups.put(SyncedWaypointKind.WARP, group(WARP_GROUP_NAME));
-		groups.put(SyncedWaypointKind.HOME, group(HOME_GROUP_NAME));
+		groups.put(SyncedWaypointKind.WARP, group(WARP_GROUP_NAME, persistent));
+		groups.put(SyncedWaypointKind.HOME, group(HOME_GROUP_NAME, persistent));
 		return groups;
 	}
 
-	private WaypointGroup group(String name) {
+	private WaypointGroup group(String name, boolean persistent) {
 		WaypointGroup group = api.getWaypointGroupByName(ModConstants.MOD_ID, name);
-		if (group != null) {
-			return group;
+		if (group == null) {
+			group = WaypointFactory.createWaypointGroup(ModConstants.MOD_ID, name);
+			api.addWaypointGroup(group);
 		}
-		group = WaypointFactory.createWaypointGroup(ModConstants.MOD_ID, name);
-		api.addWaypointGroup(group);
+		group.setPersistent(persistent);
 		return group;
 	}
 

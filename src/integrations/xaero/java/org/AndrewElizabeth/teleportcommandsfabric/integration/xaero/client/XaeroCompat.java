@@ -79,7 +79,7 @@ public final class XaeroCompat {
 				continue;
 			}
 
-			persistWaypoints(world, entry.getValue(), type, persist, warpSetName, homeSetName);
+			applyWaypoints(world, entry.getValue(), type, persist, warpSetName, homeSetName);
 			markWorldSynced(worldId, type);
 		}
 
@@ -99,7 +99,7 @@ public final class XaeroCompat {
 				trackedWorlds.remove(worldId);
 				continue;
 			}
-			persistWaypoints(world, List.of(), type, persist, warpSetName, homeSetName);
+			applyWaypoints(world, List.of(), type, persist, warpSetName, homeSetName);
 			trackedWorlds.remove(worldId);
 		}
 	}
@@ -133,7 +133,8 @@ public final class XaeroCompat {
 		return null;
 	}
 
-	private static List<Waypoint> toTaggedWaypoints(List<SyncedMapWaypoint> entries, EntryType type) {
+	private static List<Waypoint> toTaggedWaypoints(List<SyncedMapWaypoint> entries, EntryType type,
+			boolean temporary) {
 		List<Waypoint> waypoints = new ArrayList<>(entries.size());
 		WaypointColor color = type == EntryType.WARP ? WaypointColor.BLUE : WaypointColor.GREEN;
 		String symbol = type == EntryType.WARP ? "W" : "H";
@@ -143,36 +144,34 @@ public final class XaeroCompat {
 			Waypoint waypoint = new Waypoint(entry.x(), entry.y(), entry.z(),
 					prefix + entry.name(), symbol, color, WaypointPurpose.NORMAL);
 			waypoint.setYIncluded(true);
+			waypoint.setTemporary(temporary);
 			waypoints.add(waypoint);
 		}
 		return waypoints;
 	}
 
-	private static void persistWaypoints(MinimapWorld world, List<SyncedMapWaypoint> entries, EntryType type,
+	private static void applyWaypoints(MinimapWorld world, List<SyncedMapWaypoint> entries, EntryType type,
 			boolean persist, String warpSetName, String homeSetName) {
+		String setName = type == EntryType.WARP ? warpSetName : homeSetName;
+		boolean useDefaultSet = isDefaultSet(setName);
+		WaypointSet currentSet = world.getCurrentWaypointSet();
 		if (!persist) {
+			if (!useDefaultSet) {
+				removeTaggedWaypoints(world.getWaypointSet(setName), type);
+			}
+			replaceTaggedWaypoints(currentSet, entries, type, true);
 			return;
 		}
 
-		String setName = type == EntryType.WARP ? warpSetName : homeSetName;
-		boolean useDefaultSet = isDefaultSet(setName);
-		WaypointSet set = useDefaultSet ? world.getCurrentWaypointSet() : world.getWaypointSet(setName);
+		WaypointSet set = useDefaultSet ? currentSet : world.getWaypointSet(setName);
+		if (!useDefaultSet && currentSet != null) {
+			removeTaggedWaypoints(currentSet, type);
+		}
 		if (set == null && !useDefaultSet) {
 			world.addWaypointSet(setName);
 			set = world.getWaypointSet(setName);
 		}
-		if (set == null) {
-			return;
-		}
-
-		if (useDefaultSet) {
-			removeTaggedWaypoints(set, type);
-			set.addAll(toTaggedWaypoints(entries, type));
-			return;
-		}
-
-		set.clear();
-		set.addAll(toTaggedWaypoints(entries, type));
+		replaceTaggedWaypoints(set, entries, type, false);
 	}
 
 	private static void markWorldSynced(String worldId, EntryType type) {
@@ -184,6 +183,10 @@ public final class XaeroCompat {
 	}
 
 	private static void removeTaggedWaypoints(WaypointSet set, EntryType type) {
+		if (set == null) {
+			return;
+		}
+
 		String prefix = XaeroWaypointTags.prefix(type == EntryType.WARP);
 		List<Waypoint> toRemove = new ArrayList<>();
 		for (Waypoint waypoint : set.getWaypoints()) {
@@ -195,6 +198,16 @@ public final class XaeroCompat {
 		if (!toRemove.isEmpty()) {
 			set.removeAll(toRemove);
 		}
+	}
+
+	private static void replaceTaggedWaypoints(WaypointSet set, List<SyncedMapWaypoint> entries, EntryType type,
+			boolean temporary) {
+		if (set == null) {
+			return;
+		}
+
+		removeTaggedWaypoints(set, type);
+		set.addAll(toTaggedWaypoints(entries, type, temporary));
 	}
 
 	private static boolean isDefaultSet(String setName) {
