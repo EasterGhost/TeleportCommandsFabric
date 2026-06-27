@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.common;
 
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
@@ -47,6 +48,31 @@ public final class MessageSupport {
 						.withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD)
 						.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command))))
 				.append("\n"), false);
+	}
+
+	public static void sendTeleportStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds,
+			String forceCommand, String targetUnavailableKey, ChatFormatting... targetUnavailableFormatting) {
+		if (player == null || status == null || status == TeleportStatus.SUCCESS || status == TeleportStatus.CANCELLED) {
+			return;
+		}
+		switch (status) {
+		case COOLDOWN -> sendCooldown(player, cooldownSeconds);
+		case NO_SAFE_POSITION -> {
+			if (forceCommand == null || forceCommand.isBlank()) {
+				send(player, "commands.teleport_commands.common.noSafeLocation", ChatFormatting.RED);
+			} else {
+				sendUnsafeTeleportPrompt(player, forceCommand);
+			}
+		}
+		case TARGET_UNAVAILABLE -> {
+			if (targetUnavailableKey != null && !targetUnavailableKey.isBlank()) {
+				send(player, targetUnavailableKey, targetUnavailableFormatting);
+			}
+		}
+		case PLAYER_DISCONNECTED -> {
+		}
+		default -> send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+		}
 	}
 
 	public static MutableComponent translated(ServerPlayer player, String key, MutableComponent... args) {

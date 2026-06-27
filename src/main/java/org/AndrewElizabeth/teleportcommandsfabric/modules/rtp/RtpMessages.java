@@ -19,15 +19,6 @@ public final class RtpMessages {
 	}
 
 	public static void sendStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds) {
-		if (player == null || status == null || status == TeleportStatus.SUCCESS || status == TeleportStatus.CANCELLED) {
-			return;
-		}
-		switch (status) {
-		case COOLDOWN -> MessageSupport.sendCooldown(player, cooldownSeconds);
-		case NO_SAFE_POSITION -> send(player, "commands.teleport_commands.common.noSafeLocation", ChatFormatting.RED);
-		case PLAYER_DISCONNECTED -> {
-		}
-		default -> send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-		}
+		MessageSupport.sendTeleportStatus(player, status, cooldownSeconds, null, null);
 	}
 }
