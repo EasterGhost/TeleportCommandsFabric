@@ -49,6 +49,7 @@ public final class TeleportExecutor {
 		}
 
 		boolean flying = player.getAbilities().flying;
+		stopFallFlying(player);
 		boolean effectsEnabled = TeleportEffects.isEnabled();
 		if (effectsEnabled) {
 			TeleportEffects.playBefore(player);
@@ -64,6 +65,7 @@ public final class TeleportExecutor {
 		if (effectsEnabled) {
 			TeleportEffects.playAfter(player);
 		}
+		stopFallFlying(player);
 		if (flying) {
 			player.getAbilities().flying = true;
 			player.onUpdateAbilities();
@@ -72,6 +74,12 @@ public final class TeleportExecutor {
 		operationManager.markSuccess(operation.playerUuid(), operation.pendingSequence());
 		operation.resultFuture().complete(TeleportStatus.SUCCESS);
 		return TeleportStatus.SUCCESS;
+	}
+
+	private static void stopFallFlying(ServerPlayer player) {
+		if (player.isFallFlying()) {
+			player.stopFallFlying();
+		}
 	}
 
 	public TeleportStatus finishOperation(TeleportOperation operation, TeleportStatus status) {
