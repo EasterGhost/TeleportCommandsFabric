@@ -72,8 +72,7 @@ public class TeleportCommands implements ModInitializer {
 		try {
 			if (RECORDED_LOCATION_SOURCE != null) {
 				RECORDED_LOCATION_SOURCE.recordDeathLocation(player.getUUID(), player.blockPosition(), player.level().dimension(),
-						player.getYRot(), player.getXRot())
-						.whenComplete((ignored, throwable) -> {
+						player.getYRot(), player.getXRot()).whenComplete((ignored, throwable) -> {
 							if (throwable != null) {
 								ModConstants.LOGGER.warn("Failed to record death location", throwable);
 							}

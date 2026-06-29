@@ -52,8 +52,7 @@ public final class WorldSpawnCommand {
 		MinecraftServer server = player.level().getServer();
 		ServerLevel world = resolveWorld(server, settings.worldId());
 		if (world == null) {
-			WorldSpawnMessages.send(player, "commands.teleport_commands.common.worldNotFound",
-					ChatFormatting.RED, ChatFormatting.BOLD);
+			WorldSpawnMessages.send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
 			return 1;
 		}
 
@@ -64,8 +63,7 @@ public final class WorldSpawnCommand {
 		}
 
 		boolean submitted = TargetTeleportCommandSupport.submit(player, TeleportTarget.centered(world, spawnPos),
-				new TargetTeleportCommandSupport.Settings(settings.delaySeconds(), settings.delayTicks(),
-						settings.cooldownSeconds(), settings.cooldownMillis(),
+				new TargetTeleportCommandSupport.Settings(settings.delaySeconds(), settings.delayTicks(), settings.cooldownSeconds(), settings.cooldownMillis(),
 						settings.safetyEnabled(safetyDisabledOverride), true),
 				"commands.teleport_commands.worldspawn.go", "commands.teleport_commands.common.error",
 				"Error while going to the worldspawn.", null,

@@ -17,9 +17,8 @@ public final class TargetTeleportCommandSupport {
 	private TargetTeleportCommandSupport() {
 	}
 
-	public static boolean submit(ServerPlayer player, TeleportTarget target, Settings settings,
-			String startedKey, String errorKey, String errorLogMessage, String forceCommand,
-			StatusSender statusSender) {
+	public static boolean submit(ServerPlayer player, TeleportTarget target, Settings settings, String startedKey, String errorKey, String errorLogMessage,
+			String forceCommand, StatusSender statusSender) {
 		TeleportService service = TeleportCommands.TELEPORT_SERVICE;
 		if (service == null) {
 			MessageSupport.send(player, errorKey, ChatFormatting.RED, ChatFormatting.BOLD);
@@ -61,8 +60,7 @@ public final class TargetTeleportCommandSupport {
 		}
 	}
 
-	public record Settings(int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis,
-			boolean safetyEnabled, boolean recordPrevious) {
+	public record Settings(int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis, boolean safetyEnabled, boolean recordPrevious) {
 	}
 
 	@FunctionalInterface

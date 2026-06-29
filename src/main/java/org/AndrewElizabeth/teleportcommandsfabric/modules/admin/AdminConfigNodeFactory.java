@@ -100,8 +100,7 @@ final class AdminConfigNodeFactory {
 			ModConstants.LOGGER.error("Failed to update admin config.", exception);
 			throw new SimpleCommandExceptionType(AdminMessages.t(context.getSource(),
 					"commands.teleport_commands.admin.save.error",
-					Component.literal(String.valueOf(exception.getMessage()))).withStyle(ChatFormatting.RED))
-							.create();
+					Component.literal(String.valueOf(exception.getMessage()))).withStyle(ChatFormatting.RED)).create();
 		}
 	}
 
