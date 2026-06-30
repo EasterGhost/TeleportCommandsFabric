@@ -134,7 +134,7 @@ public final class TeleportSafety {
         }
 
         private byte createMask(BlockState state) {
-            if (state.isAir()) {
+            if (state.isAir() || TeleportSafetyRules.isDoor(state.getBlock())) {
                 return MASK_BODY_CLEAR;
             }
             if (state.is(Blocks.WATER)) {
@@ -144,7 +144,7 @@ public final class TeleportSafety {
             boolean collisionEmpty = state.getCollisionShape(world, mutablePos).isEmpty();
             byte mask = 0;
 
-            if (!collisionEmpty) {
+            if (!collisionEmpty && !TeleportSafetyRules.isUnsafeSupport(state.getBlock())) {
                 mask |= MASK_SUPPORT;
             }
             if (collisionEmpty && !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock())) {
