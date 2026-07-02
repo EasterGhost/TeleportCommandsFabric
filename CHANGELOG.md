@@ -38,11 +38,15 @@ The config and storage schema versions are tracked separately from the mod relea
 - Updated standard build packaging to bundle BlueMap support alongside Xaero and JourneyMap, while keeping the core build free of bundled map integrations.
 - Changed invalid-dimension cleanup behavior for homes and warps: storage loading now preserves entries even if a dimension is not available yet, and `deleteInvalid` cleanup happens only when a teleport attempt finds that the target world is unavailable.
 - Improved map waypoint synchronization so clients only receive changed waypoint snapshots instead of repeated unchanged data.
+- Improved map integrations so synced waypoints respect the configured waypoint persistence behavior.
+- Improved teleport execution state handling so previous-location records are captured before teleport and saved only after successful teleport execution.
+- Improved target teleport safety checks for special collision blocks: doors are treated as passable space, while fences, walls, and fence gates are no longer accepted as safe standing support.
 - Added a defensive timeout fallback for parallel target teleport safety checks.
 
 ### Fixed
 
 - Fixed a data-loss risk where enabling `deleteInvalid` could remove valid warp data during server startup before all dimensions were available.
+- Fixed creative/fall-flying state and camera reset edge cases after teleport, especially around cross-dimension teleport behavior.
 
 ## [2.2] - 2026-06-18
 
