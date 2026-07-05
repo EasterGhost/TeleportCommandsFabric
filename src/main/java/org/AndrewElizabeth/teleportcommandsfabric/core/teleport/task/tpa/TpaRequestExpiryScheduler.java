@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.tpa;
 
 import java.time.Duration;
 import java.util.HashMap;

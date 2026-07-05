@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.WallBlock;
 
 import java.util.Set;
 
-final class TeleportSafetyRules {
+public final class SafetyBlockRules {
 	private static final Set<Block> UNSAFE_COLLISION_FREE_BLOCKS = Set.of(
 			Blocks.LAVA,
 			Blocks.END_PORTAL,
@@ -20,18 +20,18 @@ final class TeleportSafetyRules {
 			Blocks.POWDER_SNOW,
 			Blocks.NETHER_PORTAL);
 
-	private TeleportSafetyRules() {
+	private SafetyBlockRules() {
 	}
 
-	static boolean isUnsafeCollisionFreeBlock(Block block) {
+	public static boolean isUnsafeCollisionFreeBlock(Block block) {
 		return UNSAFE_COLLISION_FREE_BLOCKS.contains(block);
 	}
 
-	static boolean isDoor(Block block) {
+	public static boolean isDoor(Block block) {
 		return block instanceof DoorBlock;
 	}
 
-	static boolean isUnsafeSupport(Block block) {
+	public static boolean isUnsafeSupport(Block block) {
 		return block instanceof FenceBlock || block instanceof FenceGateBlock || block instanceof WallBlock;
 	}
 }

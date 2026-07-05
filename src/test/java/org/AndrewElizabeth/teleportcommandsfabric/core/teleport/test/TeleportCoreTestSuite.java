@@ -5,7 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.RecordedLocationTeleportTargets;

@@ -1,5 +1,6 @@
-package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.rtp;
 
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyBlockRules;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 
 import net.minecraft.core.BlockPos;
@@ -13,7 +14,7 @@ import java.util.OptionalInt;
 import java.util.Objects;
 import java.util.SplittableRandom;
 
-public final class RtpPositionFinder {
+final class RtpPositionFinder {
 	private RtpPositionFinder() {
 	}
 
@@ -103,6 +104,6 @@ public final class RtpPositionFinder {
 		if (!state.getCollisionShape(reader, pos).isEmpty()) {
 			return false;
 		}
-		return !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock());
+		return !SafetyBlockRules.isUnsafeCollisionFreeBlock(state.getBlock());
 	}
 }

@@ -1,4 +1,6 @@
-package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target;
+
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyBlockRules;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -11,7 +13,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public final class TeleportSafety {
+final class TeleportSafety {
     static final int SEARCH_RADIUS = 3;
     private static final int CACHE_X_SIZE = SEARCH_RADIUS * 2 + 1;
     private static final int CACHE_Y_SIZE = SEARCH_RADIUS * 2 + 3;
@@ -134,7 +136,7 @@ public final class TeleportSafety {
         }
 
         private byte createMask(BlockState state) {
-            if (state.isAir() || TeleportSafetyRules.isDoor(state.getBlock())) {
+            if (state.isAir() || SafetyBlockRules.isDoor(state.getBlock())) {
                 return MASK_BODY_CLEAR;
             }
             if (state.is(Blocks.WATER)) {
@@ -144,10 +146,10 @@ public final class TeleportSafety {
             boolean collisionEmpty = state.getCollisionShape(world, mutablePos).isEmpty();
             byte mask = 0;
 
-            if (!collisionEmpty && !TeleportSafetyRules.isUnsafeSupport(state.getBlock())) {
+            if (!collisionEmpty && !SafetyBlockRules.isUnsafeSupport(state.getBlock())) {
                 mask |= MASK_SUPPORT;
             }
-            if (collisionEmpty && !TeleportSafetyRules.isUnsafeCollisionFreeBlock(state.getBlock())) {
+            if (collisionEmpty && !SafetyBlockRules.isUnsafeCollisionFreeBlock(state.getBlock())) {
                 mask |= MASK_BODY_CLEAR;
             }
 

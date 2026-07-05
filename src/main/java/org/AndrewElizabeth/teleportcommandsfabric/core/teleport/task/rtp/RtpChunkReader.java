@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task;
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.rtp;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
