@@ -68,9 +68,8 @@ final class RtpHandler {
 	private static RtpCommandSettings settingsFrom(Config config) {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
-		return new RtpCommandSettings(config.getRtp().isEnabled(), config.getRtp().getMinRadius(),
-				config.getRtp().getMaxRadius(), delaySeconds, TimeUtils.secondsToTicks(delaySeconds),
-				cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds));
+		return new RtpCommandSettings(config.getRtp().isEnabled(), config.getRtp().getMinRadius(), config.getRtp().getMaxRadius(), delaySeconds,
+				TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds));
 	}
 
 	private record RtpCommandSettings(boolean enabled, int minRadius, int maxRadius, int delaySeconds, int delayTicks,

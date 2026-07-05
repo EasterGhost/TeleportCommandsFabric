@@ -42,13 +42,11 @@ final class WorldSpawnTeleportHandler {
 		}
 
 		boolean submitted = TargetTeleportCommandSupport.submit(player, TeleportTarget.centered(world, spawnPos),
-				new TargetTeleportCommandSupport.Settings(settings.delaySeconds(), settings.delayTicks(),
-						settings.cooldownSeconds(), settings.cooldownMillis(),
+				new TargetTeleportCommandSupport.Settings(settings.delaySeconds(), settings.delayTicks(), settings.cooldownSeconds(), settings.cooldownMillis(),
 						settings.safetyEnabled(safetyDisabledOverride), true),
 				"commands.teleport_commands.worldspawn.go", "commands.teleport_commands.common.error",
 				"Error while going to the worldspawn.", null,
-				(currentPlayer, status, cooldownSeconds, ignored) ->
-						WorldSpawnMessages.sendStatus(currentPlayer, status, cooldownSeconds));
+				(currentPlayer, status, cooldownSeconds, ignored) -> WorldSpawnMessages.sendStatus(currentPlayer, status, cooldownSeconds));
 		return submitted ? 0 : 1;
 	}
 
@@ -64,13 +62,13 @@ final class WorldSpawnTeleportHandler {
 	private static WorldSpawnCommandSettings settingsFrom(Config config) {
 		int delaySeconds = config.getTeleporting().getDelay();
 		int cooldownSeconds = config.getTeleporting().getCooldown();
-		return new WorldSpawnCommandSettings(config.getWorldSpawn().isEnabled(), config.getWorldSpawn().getWorld_id(),
-				delaySeconds, TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds,
-				TimeUtils.secondsToMillis(cooldownSeconds), config.getTeleporting().isDefaultSafetyCheck());
+		return new WorldSpawnCommandSettings(config.getWorldSpawn().isEnabled(), config.getWorldSpawn().getWorld_id(), delaySeconds,
+				TimeUtils.secondsToTicks(delaySeconds), cooldownSeconds, TimeUtils.secondsToMillis(cooldownSeconds),
+				config.getTeleporting().isDefaultSafetyCheck());
 	}
 
-	private record WorldSpawnCommandSettings(boolean enabled, String worldId, int delaySeconds, int delayTicks,
-			int cooldownSeconds, long cooldownMillis, boolean defaultSafetyCheck) {
+	private record WorldSpawnCommandSettings(boolean enabled, String worldId, int delaySeconds, int delayTicks, int cooldownSeconds, long cooldownMillis,
+			boolean defaultSafetyCheck) {
 		private boolean safetyEnabled(Boolean safetyDisabledOverride) {
 			return TargetTeleportSafety.resolveEnabled(defaultSafetyCheck, safetyDisabledOverride);
 		}
