@@ -41,8 +41,7 @@ public final class ConfigApplier {
 						config.getTeleporting().getPreloadRadiusChunks())));
 	}
 
-	private record RuntimePolicy(boolean debugEnabled, StoragePolicy storage, boolean teleportEffects,
-			boolean restoreRotation, PreloadPolicy preload) {
+	private record RuntimePolicy(boolean debugEnabled, StoragePolicy storage, boolean teleportEffects, boolean restoreRotation, PreloadPolicy preload) {
 	}
 
 	private record StoragePolicy(Duration saveInterval) {

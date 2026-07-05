@@ -46,8 +46,7 @@ public final class TpaSessionRegistry {
 		if (incoming == null || incoming.isEmpty()) {
 			return List.of();
 		}
-		return incoming.stream()
-				.map(sessions::get)
+		return incoming.stream().map(sessions::get)
 				.filter(Objects::nonNull)
 				.filter(session -> !session.isExpired(now))
 				.toList();

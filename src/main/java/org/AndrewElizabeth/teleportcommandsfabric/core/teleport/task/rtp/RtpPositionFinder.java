@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyBlock
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,9 +35,9 @@ final class RtpPositionFinder {
 		int centerY = center.getY();
 		int centerZ = center.getZ();
 		boolean restrictNetherRoofBedrock = pending.dimension().equals(Level.NETHER) && centerY < 128;
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
-		BlockPos.MutableBlockPos headPos = new BlockPos.MutableBlockPos();
+		MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
+		MutableBlockPos headPos = new BlockPos.MutableBlockPos();
 
 		for (int attempt = 0; attempt < attemptBudget; attempt++) {
 			int dx = random.nextInt(pending.maxRadius() * 2 + 1) - pending.maxRadius();
@@ -74,8 +75,8 @@ final class RtpPositionFinder {
 		return Optional.empty();
 	}
 
-	private static boolean isSafeTeleportPos(RtpChunkReader reader, BlockPos pos, BlockPos.MutableBlockPos belowPos,
-			BlockPos.MutableBlockPos headPos, boolean restrictNetherRoofBedrock) {
+	private static boolean isSafeTeleportPos(RtpChunkReader reader, BlockPos pos, MutableBlockPos belowPos, MutableBlockPos headPos,
+			boolean restrictNetherRoofBedrock) {
 		belowPos.set(pos.getX(), pos.getY() - 1, pos.getZ());
 		BlockState belowState = reader.getBlockState(belowPos);
 		if (restrictNetherRoofBedrock && belowPos.getY() == 127 && belowState.is(Blocks.BEDROCK)) {

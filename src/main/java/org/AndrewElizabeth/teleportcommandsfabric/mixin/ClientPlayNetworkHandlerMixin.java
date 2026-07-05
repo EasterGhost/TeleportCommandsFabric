@@ -18,8 +18,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
 	public abstract void sendCommand(String command);
 
 	@Inject(method = "sendUnattendedCommand", at = @At("HEAD"), cancellable = true)
-	private void teleportcommandsfabric$bypassConfirmForTrustedCommands(String command, Screen afterActionScreen,
-			CallbackInfo ci) {
+	private void teleportcommandsfabric$bypassConfirmForTrustedCommands(String command, Screen afterActionScreen, CallbackInfo ci) {
 		if (!isTrustedTeleportCommand(command)) {
 			return;
 		}

@@ -23,8 +23,7 @@ final class RtpChunkReader implements BlockGetter {
 	private final int chunkZCount;
 	private final LevelChunk[] chunks;
 
-	private RtpChunkReader(int minY, int height, int minChunkX, int minChunkZ, int chunkXCount, int chunkZCount,
-			LevelChunk[] chunks) {
+	private RtpChunkReader(int minY, int height, int minChunkX, int minChunkZ, int chunkXCount, int chunkZCount, LevelChunk[] chunks) {
 		this.minY = minY;
 		this.height = height;
 		this.minChunkX = minChunkX;
@@ -45,13 +44,11 @@ final class RtpChunkReader implements BlockGetter {
 
 		for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
 			for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-				chunks[(chunkZ - minChunkZ) * chunkXCount + chunkX - minChunkX] =
-						world.getChunkSource().getChunkNow(chunkX, chunkZ);
+				chunks[(chunkZ - minChunkZ) * chunkXCount + chunkX - minChunkX] = world.getChunkSource().getChunkNow(chunkX, chunkZ);
 			}
 		}
 
-		return new RtpChunkReader(world.getMinY(), world.getHeight(), minChunkX, minChunkZ, chunkXCount, chunkZCount,
-				chunks);
+		return new RtpChunkReader(world.getMinY(), world.getHeight(), minChunkX, minChunkZ, chunkXCount, chunkZCount, chunks);
 	}
 
 	OptionalInt getSurfaceHeight(Heightmap.Types type, int blockX, int blockZ) {

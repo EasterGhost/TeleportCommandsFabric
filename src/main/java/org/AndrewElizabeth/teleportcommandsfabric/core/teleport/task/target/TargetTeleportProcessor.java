@@ -34,8 +34,8 @@ public final class TargetTeleportProcessor {
 	private final SafetyThreadPool workerPool;
 	private final TeleportExecutor executor;
 
-	public TargetTeleportProcessor(TeleportOperationManager operationManager, TeleportPreloadManager preloadManager,
-			SafetyThreadPool workerPool, TeleportExecutor executor) {
+	public TargetTeleportProcessor(TeleportOperationManager operationManager, TeleportPreloadManager preloadManager, SafetyThreadPool workerPool,
+			TeleportExecutor executor) {
 		this.operationManager = operationManager;
 		this.preloadManager = preloadManager;
 		this.workerPool = workerPool;
@@ -52,8 +52,7 @@ public final class TargetTeleportProcessor {
 		TeleportTarget target = prepared.target();
 		if (shouldCheckSafety(entry)) {
 			BlockPos basePos = BlockPos.containing(target.position());
-			Optional<BlockPos> safePos = TeleportSafety.getSafeBlockPos(basePos, target.world(),
-					createBlockStateReader(target.world(), basePos));
+			Optional<BlockPos> safePos = TeleportSafety.getSafeBlockPos(basePos, target.world(), createBlockStateReader(target.world(), basePos));
 			if (safePos.isEmpty()) {
 				return finishEntry(entry, TeleportStatus.NO_SAFE_POSITION);
 			}

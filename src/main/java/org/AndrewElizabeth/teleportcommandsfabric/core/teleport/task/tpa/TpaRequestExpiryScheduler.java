@@ -30,8 +30,7 @@ public final class TpaRequestExpiryScheduler {
 		}
 		cancel(sessionId);
 		long delayMillis = Math.max(0L, expiry == null ? 0L : expiry.toMillis());
-		ScheduledFuture<?> future = scheduler.schedule(() -> expiredSessionIds.add(sessionId),
-				delayMillis, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> future = scheduler.schedule(() -> expiredSessionIds.add(sessionId), delayMillis, TimeUnit.MILLISECONDS);
 		tasks.put(sessionId, future);
 	}
 

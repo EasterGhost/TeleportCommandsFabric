@@ -118,8 +118,7 @@ public class ConfigMigrator {
 
 	private static void writeAtomically(Path configFile, byte[] json) throws IOException {
 		Path tempFile = configFile.resolveSibling(configFile.getFileName() + ".tmp");
-		Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-				StandardOpenOption.CREATE);
+		Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 
 		try {
 			Files.move(tempFile, configFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);

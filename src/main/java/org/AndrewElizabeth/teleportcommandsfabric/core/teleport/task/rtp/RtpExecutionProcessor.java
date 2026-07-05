@@ -162,8 +162,7 @@ public final class RtpExecutionProcessor {
 			int budget = pending.consumeAttempts(pending.remainingAttempts());
 			futures.add(CompletableFuture.supplyAsync(() -> {
 				try {
-					return new ParallelResult(pending, RtpPositionFinder.findSafeRandomPosition(reader, pending, budget,
-							pending.random()), null);
+					return new ParallelResult(pending, RtpPositionFinder.findSafeRandomPosition(reader, pending, budget, pending.random()), null);
 				} catch (RuntimeException exception) {
 					return new ParallelResult(pending, Optional.empty(), TeleportStatus.FAILED);
 				}

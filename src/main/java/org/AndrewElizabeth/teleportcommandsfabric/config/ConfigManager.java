@@ -110,8 +110,7 @@ public class ConfigManager {
 
 		try {
 			Path tempFile = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json.tmp");
-			Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-					StandardOpenOption.CREATE);
+			Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 			Files.move(tempFile, CONFIG_FILE, StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
 			ModConstants.LOGGER.error("Error while saving the config file! => ", e);
@@ -126,8 +125,7 @@ public class ConfigManager {
 
 			try {
 				Path tempFile = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json.tmp");
-				Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING,
-						StandardOpenOption.CREATE);
+				Files.write(tempFile, json, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 				Files.move(tempFile, CONFIG_FILE, StandardCopyOption.REPLACE_EXISTING);
 			} catch (Exception e) {
 				ModConstants.LOGGER.error("Error while saving the config file asynchronously! => ", e);

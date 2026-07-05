@@ -17,15 +17,13 @@ public final class RecordedLocationTeleportTargets {
 	private RecordedLocationTeleportTargets() {
 	}
 
-	public static CompletableFuture<TeleportTargetResult> resolveDeath(UUID playerUuid, AsyncRecordedLocationSource source,
-			MinecraftServer server) {
+	public static CompletableFuture<TeleportTargetResult> resolveDeath(UUID playerUuid, AsyncRecordedLocationSource source, MinecraftServer server) {
 		return source.getDeathLocation(playerUuid)
 				.thenCompose(location -> server.submit(() -> toTargetResult(location, server)))
 				.exceptionally(throwable -> TeleportTargetResult.failed(TeleportStatus.FAILED));
 	}
 
-	public static CompletableFuture<TeleportTargetResult> resolvePrevious(UUID playerUuid, AsyncRecordedLocationSource source,
-			MinecraftServer server) {
+	public static CompletableFuture<TeleportTargetResult> resolvePrevious(UUID playerUuid, AsyncRecordedLocationSource source, MinecraftServer server) {
 		return source.getPreviousTeleportLocation(playerUuid)
 				.thenCompose(location -> server.submit(() -> toTargetResult(location, server)))
 				.exceptionally(throwable -> TeleportTargetResult.failed(TeleportStatus.FAILED));
