@@ -196,7 +196,7 @@ final class AdminNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildDisableNode() {
 		return Commands.literal("disable")
 				.requires(AdminNodeFactory::isOpOrConsole)
-				.then(Commands.argument("command", StringArgumentType.word())
+				.then(Commands.argument("module", StringArgumentType.word())
 						.suggests(ENABLED_SUGGESTER)
 						.executes(context -> AdminCommandHandler.toggleModule(context, false)));
 	}
@@ -204,7 +204,7 @@ final class AdminNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildEnableNode() {
 		return Commands.literal("enable")
 				.requires(AdminNodeFactory::isOpOrConsole)
-				.then(Commands.argument("command", StringArgumentType.word())
+				.then(Commands.argument("module", StringArgumentType.word())
 						.suggests(DISABLED_SUGGESTER)
 						.executes(context -> AdminCommandHandler.toggleModule(context, true)));
 	}
