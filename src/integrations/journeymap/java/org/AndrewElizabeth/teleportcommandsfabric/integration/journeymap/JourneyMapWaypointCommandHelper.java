@@ -43,12 +43,16 @@ public final class JourneyMapWaypointCommandHelper {
 	public static String buildTeleportCommand(Waypoint waypoint) {
 		WaypointCommandTarget target = target(waypoint);
 		if (target == null) {
-			return matchesCurrentDeathLocation(waypoint) ? "teleportcommandsfabric:back death" : null;
+			return matchesCurrentDeathLocation(waypoint) ? command("back") + " death" : null;
 		}
 		return switch (target.kind()) {
-		case HOME -> "teleportcommandsfabric:home " + CommandArgumentUtils.quote(target.name());
-		case WARP -> "teleportcommandsfabric:warp " + CommandArgumentUtils.quote(target.name());
+		case HOME -> command("home") + " " + CommandArgumentUtils.quote(target.name());
+		case WARP -> command("warp") + " " + CommandArgumentUtils.quote(target.name());
 		};
+	}
+
+	private static String command(String root) {
+		return ClientMapWaypointSnapshots.latestFromLegacyXaero() ? root : "teleportcommandsfabric:" + root;
 	}
 
 	private static boolean isDeathWaypoint(Waypoint waypoint) {

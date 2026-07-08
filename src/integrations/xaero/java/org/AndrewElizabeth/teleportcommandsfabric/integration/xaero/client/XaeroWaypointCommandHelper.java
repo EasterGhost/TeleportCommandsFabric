@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client;
 
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.client.ClientMapWaypointSnapshots;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import xaero.common.minimap.waypoints.Waypoint;
@@ -30,7 +31,7 @@ public final class XaeroWaypointCommandHelper {
 			return null;
 		}
 		if (waypoint.getPurpose() == WaypointPurpose.DEATH) {
-			return "teleportcommandsfabric:back death";
+			return command("back") + " death";
 		}
 		return buildTaggedTeleportCommand(waypoint.getName());
 	}
@@ -74,12 +75,16 @@ public final class XaeroWaypointCommandHelper {
 		}
 
 		if (name.startsWith(XaeroWaypointTags.WARP_PREFIX)) {
-			return "teleportcommandsfabric:warp " + CommandArgumentUtils.quote(normalizedName);
+			return command("warp") + " " + CommandArgumentUtils.quote(normalizedName);
 		}
 		if (name.startsWith(XaeroWaypointTags.HOME_PREFIX)) {
-			return "teleportcommandsfabric:home " + CommandArgumentUtils.quote(normalizedName);
+			return command("home") + " " + CommandArgumentUtils.quote(normalizedName);
 		}
 		return null;
+	}
+
+	private static String command(String root) {
+		return ClientMapWaypointSnapshots.latestFromLegacyXaero() ? root : "teleportcommandsfabric:" + root;
 	}
 
 }

@@ -5,6 +5,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.IntegrationProtocol;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.MapSyncPackets;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.legacy.LegacyXaeroSyncDataPayload;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.legacy.LegacyXaeroSyncRequestPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.ClientIntegrationHelloPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.MapWaypointSnapshotPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
@@ -58,6 +60,8 @@ public final class MapWaypointSyncServer {
 		MapSyncPackets.registerPayloadTypes();
 		ServerPlayNetworking.registerGlobalReceiver(ClientIntegrationHelloPayload.TYPE,
 				(payload, context) -> handleHello(context.player(), payload));
+		ServerPlayNetworking.registerGlobalReceiver(LegacyXaeroSyncRequestPayload.TYPE,
+				(payload, context) -> handleLegacyXaeroRequest(context.player()));
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> CLIENTS.remove(handler.player.getUUID()));
 		ServerTickEvents.END_SERVER_TICK.register(MapWaypointSyncServer::onServerTick);
 
@@ -85,7 +89,24 @@ public final class MapWaypointSyncServer {
 			return;
 		}
 		CLIENTS.compute(player.getUUID(), (ignored, existing) -> {
-			ClientState state = existing == null ? new ClientState(payload.protocolVersion()) : existing;
+			ClientState state = existing == null
+					? new ClientState(SyncMode.COMMON, payload.protocolVersion())
+					: existing;
+			state.useCommon(payload.protocolVersion());
+			state.markDirty();
+			return state;
+		});
+	}
+
+	private static void handleLegacyXaeroRequest(ServerPlayer player) {
+		CLIENTS.compute(player.getUUID(), (ignored, existing) -> {
+			if (existing != null && existing.syncMode() == SyncMode.COMMON) {
+				return existing;
+			}
+			ClientState state = existing == null
+					? new ClientState(SyncMode.LEGACY_XAERO, IntegrationProtocol.PROTOCOL_VERSION)
+					: existing;
+			state.useLegacyXaero();
 			state.markDirty();
 			return state;
 		});
@@ -135,19 +156,36 @@ public final class MapWaypointSyncServer {
 			MapWaypointSnapshot snapshot = result.snapshot();
 			state.updateNextHomeExpiry(result.nextHomeExpiryMillis());
 			ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
-			if (player == null || !ServerPlayNetworking.canSend(player, MapWaypointSnapshotPayload.TYPE)) {
+			if (player == null) {
 				return;
 			}
 			if (!state.isSnapshotChanged(snapshot)) {
 				return;
 			}
-			ServerPlayNetworking.send(player, new MapWaypointSnapshotPayload(state.protocolVersion(), snapshot));
+			if (!sendSnapshot(player, state, snapshot)) {
+				return;
+			}
 			state.updateSnapshot(snapshot);
-			DebugLog.info("Sending map waypoint sync to {} (waypoints: {}).",
-					player.getName().getString(), snapshot.waypoints().size());
+			DebugLog.info("Sending {} map waypoint sync to {} (waypoints: {}).",
+					state.syncMode().logName(), player.getName().getString(), snapshot.waypoints().size());
 		} finally {
 			state.finishFlush(now);
 		}
+	}
+
+	private static boolean sendSnapshot(ServerPlayer player, ClientState state, MapWaypointSnapshot snapshot) {
+		if (state.syncMode() == SyncMode.LEGACY_XAERO) {
+			if (!ServerPlayNetworking.canSend(player, LegacyXaeroSyncDataPayload.TYPE)) {
+				return false;
+			}
+			ServerPlayNetworking.send(player, new LegacyXaeroSyncDataPayload(snapshot));
+			return true;
+		}
+		if (!ServerPlayNetworking.canSend(player, MapWaypointSnapshotPayload.TYPE)) {
+			return false;
+		}
+		ServerPlayNetworking.send(player, new MapWaypointSnapshotPayload(state.protocolVersion(), snapshot));
+		return true;
 	}
 
 	private static CompletableFuture<SnapshotBuildResult> buildSnapshot(UUID playerUuid,
@@ -239,6 +277,21 @@ public final class MapWaypointSyncServer {
 	private record SnapshotBuildResult(MapWaypointSnapshot snapshot, long nextHomeExpiryMillis) {
 	}
 
+	private enum SyncMode {
+		COMMON("common"),
+		LEGACY_XAERO("legacy Xaero");
+
+		private final String logName;
+
+		SyncMode(String logName) {
+			this.logName = logName;
+		}
+
+		private String logName() {
+			return logName;
+		}
+	}
+
 	private record RuntimeConfig(boolean enabled, long syncIntervalMillis, boolean persistWaypointSets,
 			String warpGroupName, String homeGroupName) {
 		private static RuntimeConfig defaults() {
@@ -247,19 +300,36 @@ public final class MapWaypointSyncServer {
 	}
 
 	private static final class ClientState {
-		private final int protocolVersion;
+		private volatile SyncMode syncMode;
+		private volatile int protocolVersion;
 		private volatile boolean dirty;
 		private volatile boolean flushInProgress;
 		private volatile long lastFlushTimeMillis;
 		private volatile MapWaypointSnapshot lastSnapshot;
 		private volatile long nextHomeExpiryMillis;
 
-		private ClientState(int protocolVersion) {
+		private ClientState(SyncMode syncMode, int protocolVersion) {
+			this.syncMode = syncMode;
 			this.protocolVersion = protocolVersion;
+		}
+
+		private SyncMode syncMode() {
+			return syncMode;
 		}
 
 		private int protocolVersion() {
 			return protocolVersion;
+		}
+
+		private void useCommon(int protocolVersion) {
+			this.syncMode = SyncMode.COMMON;
+			this.protocolVersion = protocolVersion;
+		}
+
+		private void useLegacyXaero() {
+			if (syncMode != SyncMode.COMMON) {
+				syncMode = SyncMode.LEGACY_XAERO;
+			}
 		}
 
 		private void markDirty() {

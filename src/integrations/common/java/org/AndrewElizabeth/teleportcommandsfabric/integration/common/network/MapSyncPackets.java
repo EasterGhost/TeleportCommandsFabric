@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.integration.common.network;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.legacy.LegacyXaeroSyncPackets;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.ClientIntegrationHelloPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.MapWaypointSnapshotPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
@@ -32,6 +33,7 @@ public final class MapSyncPackets {
 		}
 		PayloadTypeRegistry.serverboundPlay().register(ClientIntegrationHelloPayload.TYPE, ClientIntegrationHelloPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(MapWaypointSnapshotPayload.TYPE, MapWaypointSnapshotPayload.CODEC);
+		LegacyXaeroSyncPackets.registerPayloadTypes();
 		payloadTypesRegistered = true;
 	}
 

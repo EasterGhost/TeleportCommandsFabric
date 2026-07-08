@@ -2,6 +2,8 @@ package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client;
 
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.client.ClientMapWaypointSnapshots;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +24,15 @@ class XaeroWaypointCommandHelperTest {
 		assertEquals("teleportcommandsfabric:home Base", buildTaggedTeleportCommand("TPC-H Base"));
 		assertEquals("teleportcommandsfabric:warp Spawn", buildTaggedTeleportCommand("TPC-W Spawn"));
 		assertEquals("teleportcommandsfabric:home \"Main Base\"", buildTaggedTeleportCommand("TPC-H Main Base"));
+	}
+
+	@Test
+	void legacyXaeroSnapshotsUseLegacyTeleportCommands() {
+		withLegacyXaeroSnapshot(() -> {
+			assertEquals("home Base", buildTaggedTeleportCommand("TPC-H Base"));
+			assertEquals("warp Spawn", buildTaggedTeleportCommand("TPC-W Spawn"));
+			assertEquals("home \"Main Base\"", buildTaggedTeleportCommand("TPC-H Main Base"));
+		});
 	}
 
 	@Test
@@ -93,6 +104,21 @@ class XaeroWaypointCommandHelperTest {
 				throw error;
 			}
 			throw new AssertionError(description + " failed", cause);
+		}
+	}
+
+	private static void withLegacyXaeroSnapshot(Runnable action) {
+		try {
+			Method update = ClientMapWaypointSnapshots.class.getDeclaredMethod("updateLegacyXaero",
+					MapWaypointSnapshot.class);
+			Method clear = ClientMapWaypointSnapshots.class.getDeclaredMethod("clear");
+			update.setAccessible(true);
+			clear.setAccessible(true);
+			update.invoke(null, MapWaypointSnapshot.empty());
+			action.run();
+			clear.invoke(null);
+		} catch (ReflectiveOperationException exception) {
+			throw new AssertionError("Unable to set legacy Xaero snapshot state", exception);
 		}
 	}
 
