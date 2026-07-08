@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client;
+package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero;
 
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
@@ -62,9 +62,9 @@ class XaeroWaypointCommandHelperTest {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static TaggedWaypoint taggedWaypoint(boolean temporary) {
 		try {
-			Class<?> entryTypeClass = Class.forName(XaeroCompat.class.getName() + "$EntryType");
-			Object homeType = Enum.valueOf((Class<Enum>) entryTypeClass.asSubclass(Enum.class), "HOME");
-			Method method = XaeroCompat.class.getDeclaredMethod("toTaggedWaypoints", List.class, entryTypeClass,
+			Object homeType = Enum.valueOf((Class<Enum>) XaeroWaypointType.class.asSubclass(Enum.class), "HOME");
+			Method method = XaeroWaypointWriter.class.getDeclaredMethod("toTaggedWaypoints", List.class,
+					XaeroWaypointType.class,
 					boolean.class);
 			method.setAccessible(true);
 			List<?> waypoints = (List<?>) method.invoke(null,

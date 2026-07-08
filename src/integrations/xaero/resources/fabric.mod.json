@@ -11,7 +11,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"client": [
-			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client.XaeroClientIntegration"
+			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroClientIntegration"
 		]
 	},
 	"mixins": [

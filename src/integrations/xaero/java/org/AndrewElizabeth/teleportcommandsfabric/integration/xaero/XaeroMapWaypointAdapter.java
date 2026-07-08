@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client;
+package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero;
 
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.client.MapWaypointAdapter;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;

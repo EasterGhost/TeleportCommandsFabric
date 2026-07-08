@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client;
+package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero;
 
 final class XaeroWaypointTags {
 	static final String WARP_PREFIX = "TPC-W ";
