@@ -24,6 +24,9 @@ if (!project.includeXaeroIntegration.get()) {
 if (!project.includeJourneyMapIntegration.get()) {
     sourceSets.test.java.exclude "**/integration/journeymap/**"
 }
+if (!project.includeIntegrationCommon.get()) {
+    sourceSets.test.java.exclude "**/integration/common/**"
+}
 
 tasks.named("test", Test) {
     useJUnitPlatform()
@@ -32,6 +35,9 @@ tasks.named("test", Test) {
     }
     if (!project.includeJourneyMapIntegration.get()) {
         exclude "**/integration/journeymap/**"
+    }
+    if (!project.includeIntegrationCommon.get()) {
+        exclude "**/integration/common/**"
     }
     testLogging {
         events "passed", "skipped", "failed"

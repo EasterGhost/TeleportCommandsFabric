@@ -9,111 +9,14 @@ def modVersion = project.version.toString()
 def minecraftVersion = project.minecraft_version
 def loaderVersion = project.loader_version
 def archiveBaseName = project.archives_base_name
-def includeMapIntegrations = providers.gradleProperty("includeMapIntegrations")
-        .map { it.toBoolean() }
-        .orElse(true)
-def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
-        .map { it.toBoolean() }
-        .orElse(includeMapIntegrations)
-def includeJourneyMapIntegration = providers.gradleProperty("includeJourneyMapIntegration")
-        .map { it.toBoolean() }
-        .orElse(includeMapIntegrations)
-def includeBlueMapIntegration = providers.gradleProperty("includeBlueMapIntegration")
-        .map { it.toBoolean() }
-        .orElse(includeMapIntegrations)
-def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegrationCommon")
-        .map { it.toBoolean() }
-        .orElse(false)
-def includeClientMapIntegration = includeXaeroIntegration.zip(includeJourneyMapIntegration) { xaero, journeymap -> xaero || journeymap }
-def includeAnyMapIntegration = includeClientMapIntegration.zip(includeBlueMapIntegration) { clientIntegration, bluemap -> clientIntegration || bluemap }
-def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeClientMapIntegration) { common, integration -> common || integration }
-def integrationCommonJarName = "teleportcommandsfabric-integration-common-${modVersion}.jar"
-def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${modVersion}.jar"
-def journeyMapIntegrationJarName = "teleportcommandsfabric-journeymap-${modVersion}.jar"
-def blueMapIntegrationJarName = "teleportcommandsfabric-bluemap-${modVersion}.jar"
-def includedJarsJson = {
-    def jars = []
-    if (includeIntegrationCommon.get()) {
-        jars.add(integrationCommonJarName)
-    }
-    if (includeXaeroIntegration.get()) {
-        jars.add(xaeroIntegrationJarName)
-    }
-    if (includeJourneyMapIntegration.get()) {
-        jars.add(journeyMapIntegrationJarName)
-    }
-    if (includeBlueMapIntegration.get()) {
-        jars.add(blueMapIntegrationJarName)
-    }
-    if (jars.isEmpty()) {
-        return "[]"
-    }
-    return "[" + jars.collect { "{\"file\":\"META-INF/jars/${it}\"}" }.join(",") + "]"
-}
-def buildVariantName = {
-    includeAnyMapIntegration.get() ? "Standard" : "Core"
-}
-ext.includeIntegrationCommon = includeIntegrationCommon
-ext.includeXaeroIntegration = includeXaeroIntegration
-ext.includeJourneyMapIntegration = includeJourneyMapIntegration
-ext.includeBlueMapIntegration = includeBlueMapIntegration
+ext.modVersion = modVersion
+ext.archiveBaseName = archiveBaseName
 
 base {
     archivesName = archiveBaseName + "-" + minecraftVersion
 }
 
-tasks.withType(AbstractArchiveTask).configureEach {
-    if (!includeXaeroIntegration.get() && !includeJourneyMapIntegration.get() && !includeBlueMapIntegration.get()) {
-        archiveVersion = "${modVersion}-core"
-    }
-}
-
-sourceSets {
-    integrationCommon {
-        java.srcDir "src/integrations/common/java"
-        resources.srcDir "src/integrations/common/resources"
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-        runtimeClasspath += output + compileClasspath
-    }
-    xaeroIntegration {
-        java.srcDir "src/integrations/xaero/java"
-        resources.srcDir "src/integrations/xaero/resources"
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.integrationCommon.output
-        runtimeClasspath += output + compileClasspath
-    }
-    journeyMapIntegration {
-        java.srcDir "src/integrations/journeymap/java"
-        resources.srcDir "src/integrations/journeymap/resources"
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.integrationCommon.output
-        runtimeClasspath += output + compileClasspath
-    }
-    blueMapIntegration {
-        java.srcDir "src/integrations/bluemap/java"
-        resources.srcDir "src/integrations/bluemap/resources"
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-        runtimeClasspath += output + compileClasspath
-    }
-}
-
-loom {
-    mods {
-        "teleportcommandsfabric" {
-            sourceSet sourceSets.main
-        }
-        "teleportcommandsfabric_integration_common" {
-            sourceSet sourceSets.integrationCommon
-        }
-        "teleportcommandsfabric_xaero" {
-            sourceSet sourceSets.xaeroIntegration
-        }
-        "teleportcommandsfabric_journeymap" {
-            sourceSet sourceSets.journeyMapIntegration
-        }
-        "teleportcommandsfabric_bluemap" {
-            sourceSet sourceSets.blueMapIntegration
-        }
-    }
-}
+apply from: "gradle/integrations.gradle"
 
 fabricApi {
     configureDataGeneration {
@@ -183,42 +86,6 @@ processResources {
     }
 }
 
-tasks.named("processIntegrationCommonResources") {
-    inputs.property "version", modVersion
-    filteringCharset = "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": modVersion
-    }
-}
-
-tasks.named("processXaeroIntegrationResources") {
-    inputs.property "version", modVersion
-    filteringCharset = "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": modVersion
-    }
-}
-
-tasks.named("processJourneyMapIntegrationResources") {
-    inputs.property "version", modVersion
-    filteringCharset = "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": modVersion
-    }
-}
-
-tasks.named("processBlueMapIntegrationResources") {
-    inputs.property "version", modVersion
-    filteringCharset = "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": modVersion
-    }
-}
-
 def targetJavaVersion = 25
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
@@ -243,76 +110,10 @@ java {
 }
 
 jar {
-    if (includeIntegrationCommon.get()) {
-        dependsOn "integrationCommonJar"
-        from({ tasks.named("integrationCommonJar").get().archiveFile.get().asFile }) {
-            into "META-INF/jars"
-        }
-    }
-    if (includeXaeroIntegration.get()) {
-        dependsOn "xaeroIntegrationJar"
-        from({ tasks.named("xaeroIntegrationJar").get().archiveFile.get().asFile }) {
-            into "META-INF/jars"
-        }
-    }
-    if (includeJourneyMapIntegration.get()) {
-        dependsOn "journeyMapIntegrationJar"
-        from({ tasks.named("journeyMapIntegrationJar").get().archiveFile.get().asFile }) {
-            into "META-INF/jars"
-        }
-    }
-    if (includeBlueMapIntegration.get()) {
-        dependsOn "blueMapIntegrationJar"
-        from({ tasks.named("blueMapIntegrationJar").get().archiveFile.get().asFile }) {
-            into "META-INF/jars"
-        }
-    }
     from("LICENSE.txt") {
         rename { "LICENSE_${archiveBaseName}" }
     }
 }
-
-tasks.register("integrationCommonJar", Jar) {
-    dependsOn tasks.named("classes"), tasks.named("integrationCommonClasses")
-    archiveFileName = integrationCommonJarName
-    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
-    from sourceSets.integrationCommon.output
-    from("LICENSE.txt") {
-        rename { "LICENSE_${archiveBaseName}_integration_common" }
-    }
-}
-
-tasks.register("xaeroIntegrationJar", Jar) {
-    dependsOn tasks.named("classes"), tasks.named("integrationCommonClasses"), tasks.named("xaeroIntegrationClasses")
-    archiveFileName = xaeroIntegrationJarName
-    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
-    from sourceSets.xaeroIntegration.output
-    from("LICENSE.txt") {
-        rename { "LICENSE_${archiveBaseName}_xaero" }
-    }
-}
-
-tasks.register("journeyMapIntegrationJar", Jar) {
-    dependsOn tasks.named("classes"), tasks.named("integrationCommonClasses"), tasks.named("journeyMapIntegrationClasses")
-    archiveFileName = journeyMapIntegrationJarName
-    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
-    from sourceSets.journeyMapIntegration.output
-    from("LICENSE.txt") {
-        rename { "LICENSE_${archiveBaseName}_journeymap" }
-    }
-}
-
-tasks.register("blueMapIntegrationJar", Jar) {
-    dependsOn tasks.named("classes"), tasks.named("blueMapIntegrationClasses")
-    archiveFileName = blueMapIntegrationJarName
-    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
-    from sourceSets.blueMapIntegration.output
-    from("LICENSE.txt") {
-        rename { "LICENSE_${archiveBaseName}_bluemap" }
-    }
-}
-
-
 
 // configure the maven publication
 publishing {
