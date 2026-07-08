@@ -10,5 +10,6 @@ public final class BackCommand {
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(BackNodeFactory.buildBackNode());
+		dispatcher.register(BackNodeFactory.buildBackNode("teleportcommandsfabric:back"));
 	}
 }

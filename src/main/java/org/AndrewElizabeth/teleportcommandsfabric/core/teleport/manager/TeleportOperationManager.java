@@ -30,8 +30,7 @@ public final class TeleportOperationManager {
 		return new PendingCreateResult(result.pending(), result.replaced());
 	}
 
-	public <T extends TeleportOperation> OperationCreateResult<T> createOperation(UUID playerUuid, long currentTick,
-			OperationFactory<T> factory) {
+	public <T extends TeleportOperation> OperationCreateResult<T> createOperation(UUID playerUuid, long currentTick, OperationFactory<T> factory) {
 		Objects.requireNonNull(playerUuid, "playerUuid");
 		Objects.requireNonNull(factory, "factory");
 

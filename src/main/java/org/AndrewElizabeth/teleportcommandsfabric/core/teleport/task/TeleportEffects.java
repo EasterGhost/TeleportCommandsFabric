@@ -35,10 +35,8 @@ public final class TeleportEffects {
 	}
 
 	private static void playParticles(ServerLevel world, double x, double y, double z, boolean beforeTeleport) {
-		world.sendParticles(ParticleTypes.SNOWFLAKE, x, y + (beforeTeleport ? 1.0D : 0.0D), z, 20,
-				0.0D, beforeTeleport ? 0.0D : 1.0D, 0.0D, 0.01D);
-		world.sendParticles(ParticleTypes.WHITE_SMOKE, x, y, z, 15,
-				0.0D, beforeTeleport ? 1.0D : 0.0D, 0.0D, 0.03D);
+		world.sendParticles(ParticleTypes.SNOWFLAKE, x, y + (beforeTeleport ? 1.0D : 0.0D), z, 20, 0.0D, beforeTeleport ? 0.0D : 1.0D, 0.0D, 0.01D);
+		world.sendParticles(ParticleTypes.WHITE_SMOKE, x, y, z, 15, 0.0D, beforeTeleport ? 1.0D : 0.0D, 0.0D, 0.03D);
 	}
 
 	private static void playSound(ServerLevel world, ServerPlayer player) {

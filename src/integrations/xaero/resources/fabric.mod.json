@@ -10,18 +10,24 @@
 	"license": "GPL-3.0-only",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroIntegration"
-		],
 		"client": [
-			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client.XaeroClientIntegration"
+			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroClientIntegration"
 		]
 	},
 	"mixins": [
 		"teleportcommandsfabric-xaero.mixins.json"
 	],
+	"custom": {
+		"modmenu": {
+			"parent": {
+				"id": "teleport_commands_fabric",
+				"name": "TeleportCommandsFabric"
+			}
+		}
+	},
 	"depends": {
 		"teleport_commands_fabric": "*",
+		"teleport_commands_fabric_integration_common": "*",
 		"fabricloader": ">=0.17.3",
 		"fabric-api": "*"
 	},

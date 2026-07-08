@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.record;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedLocationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -33,13 +34,14 @@ public class PlayerRecordedLocationSource implements AsyncRecordedLocationSource
 	@Override
 	public CompletableFuture<Void> recordDeathLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension) {
 		recordManager.recordDeathLocation(playerUuid, pos, dimension);
+		WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 		return CompletableFuture.completedFuture(null);
 	}
 
 	@Override
-	public CompletableFuture<Void> recordDeathLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension,
-			float yRot, float xRot) {
+	public CompletableFuture<Void> recordDeathLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension, float yRot, float xRot) {
 		recordManager.recordDeathLocation(playerUuid, pos, dimension, yRot, xRot);
+		WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 		return CompletableFuture.completedFuture(null);
 	}
 
@@ -50,8 +52,7 @@ public class PlayerRecordedLocationSource implements AsyncRecordedLocationSource
 	}
 
 	@Override
-	public CompletableFuture<Void> recordPreviousTeleportLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension,
-			float yRot, float xRot) {
+	public CompletableFuture<Void> recordPreviousTeleportLocation(UUID playerUuid, BlockPos pos, ResourceKey<Level> dimension, float yRot, float xRot) {
 		recordManager.recordPreviousTeleportLocation(playerUuid, pos, dimension, yRot, xRot);
 		return CompletableFuture.completedFuture(null);
 	}
@@ -59,6 +60,7 @@ public class PlayerRecordedLocationSource implements AsyncRecordedLocationSource
 	@Override
 	public CompletableFuture<Void> removeDeathLocation(UUID playerUuid) {
 		recordManager.removeDeathLocation(playerUuid);
+		WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 		return CompletableFuture.completedFuture(null);
 	}
 

@@ -20,7 +20,7 @@ import java.util.List;
 
 final class AdminNodeFactory {
 	private static final List<String> CONFIG_MODULES = List.of(
-			"teleporting", "back", "home", "tpa", "warp", "worldspawn", "rtp", "xaero", "storage");
+			"teleporting", "back", "home", "tpa", "warp", "worldspawn", "rtp", "integration", "storage");
 	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER = (context,
 			builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
 	private static final SuggestionProvider<CommandSourceStack> DISABLED_SUGGESTER = (context,
@@ -52,7 +52,7 @@ final class AdminNodeFactory {
 				.then(buildWarpConfigNode())
 				.then(buildWorldSpawnConfigNode())
 				.then(buildRtpConfigNode())
-				.then(buildXaeroConfigNode())
+				.then(buildIntegrationConfigNode())
 				.then(buildStorageConfigNode());
 	}
 
@@ -154,12 +154,12 @@ final class AdminNodeFactory {
 						"commands.teleport_commands.admin.config.rtp.minRadius"));
 	}
 
-	private static LiteralArgumentBuilder<CommandSourceStack> buildXaeroConfigNode() {
-		return Commands.literal("xaero")
+	private static LiteralArgumentBuilder<CommandSourceStack> buildIntegrationConfigNode() {
+		return Commands.literal("integration")
 				.then(AdminConfigNodeFactory.intNode("syncIntervalSeconds", "seconds", 1,
-						config -> config.getXaero().getSyncIntervalSeconds(),
-						(config, value) -> config.getXaero().setSyncIntervalSeconds(value),
-						"commands.teleport_commands.admin.config.xaero.syncIntervalSeconds"));
+						config -> config.getIntegration().getSyncIntervalSeconds(),
+						(config, value) -> config.getIntegration().setSyncIntervalSeconds(value),
+						"commands.teleport_commands.admin.config.integration.syncIntervalSeconds"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildStorageConfigNode() {
@@ -196,7 +196,7 @@ final class AdminNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildDisableNode() {
 		return Commands.literal("disable")
 				.requires(AdminNodeFactory::isOpOrConsole)
-				.then(Commands.argument("command", StringArgumentType.word())
+				.then(Commands.argument("module", StringArgumentType.word())
 						.suggests(ENABLED_SUGGESTER)
 						.executes(context -> AdminCommandHandler.toggleModule(context, false)));
 	}
@@ -204,7 +204,7 @@ final class AdminNodeFactory {
 	private static LiteralArgumentBuilder<CommandSourceStack> buildEnableNode() {
 		return Commands.literal("enable")
 				.requires(AdminNodeFactory::isOpOrConsole)
-				.then(Commands.argument("command", StringArgumentType.word())
+				.then(Commands.argument("module", StringArgumentType.word())
 						.suggests(DISABLED_SUGGESTER)
 						.executes(context -> AdminCommandHandler.toggleModule(context, true)));
 	}

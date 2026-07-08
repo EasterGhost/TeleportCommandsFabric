@@ -5,7 +5,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.RecordedLocationTeleportTargets;
@@ -17,7 +17,10 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationNbtCodec;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfile;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileLifecycle;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfile;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileLifecycle;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileNbtCodec;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 
@@ -32,6 +35,10 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -64,8 +71,8 @@ import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.ScenarioTes
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class TeleportCoreTestSuite {
-	private static final TeleportTarget DUMMY_TARGET = createDummyTarget();
-	private static final ServerLevel DUMMY_WORLD = createDummyWorld();
+	private static TeleportTarget dummyTarget;
+	private static ServerLevel dummyWorld;
 
 	TeleportCoreTestSuite() {
 	}
@@ -74,6 +81,8 @@ public final class TeleportCoreTestSuite {
 	static void bootstrapMinecraft() {
 		SharedConstants.tryDetectVersion();
 		Bootstrap.bootStrap();
+		dummyTarget = createDummyTarget();
+		dummyWorld = createDummyWorld();
 		debug("GLOBAL PARAMS", "fastPathThreshold=" + TeleportServiceSettings.FAST_PATH_THRESHOLD
 				+ ", maxBatchSize=" + TeleportServiceSettings.MAX_BATCH_SIZE_PER_TICK
 				+ ", admissionRamp=[" + TeleportServiceSettings.READY_ADMISSION_FIRST_TICK_LIMIT
@@ -131,6 +140,10 @@ public final class TeleportCoreTestSuite {
 								+ " safetyBatchSize=" + TeleportServiceSettings.SAFETY_BATCH_SIZE
 								+ " admissionRamp=16/128 worldPattern=lateSafeOffset(3,-3,3)",
 						TeleportCoreTestSuite::testFabricatedSafetyWorkerWorkload),
+				scenario("TeleportSafety rejects tall support collision blocks",
+						"Verify fences, walls, and fence gates are not accepted as standing support.",
+						"targetBelow=oak_fence fallbackBelow=stone",
+						TeleportCoreTestSuite::testSafetyRejectsTallSupportCollisionBlocks),
 				scenario("RecordedLocationSnapshot is detached",
 						"Verify recorded location snapshots do not expose mutable storage objects.",
 						"initialPos=(1,2,3) mutatedSourcePos=(4,5,6) dimension=minecraft:overworld",
@@ -143,6 +156,14 @@ public final class TeleportCoreTestSuite {
 						"Verify per-player TPA trust overrides default incoming rules and survives NBT round-trip.",
 						"defaultTpa=deny requesterTpa=accept requesterTpahere=deny legacyTrust=absent",
 						TeleportCoreTestSuite::testTpaTrustRules),
+				scenario("Global profile load preserves unavailable-dimension warps",
+						"Verify startup load does not delete global warps just because ServerLevel is not available yet.",
+						"warps=1 dimension=tpc:test_dimension serverLevel=unavailable",
+						TeleportCoreTestSuite::testGlobalProfileLoadPreservesUnavailableDimensionWarps),
+				scenario("Player profile load preserves unavailable-dimension homes",
+						"Verify profile load does not delete homes just because ServerLevel is not available yet.",
+						"homes=1 dimension=tpc:test_dimension serverLevel=unavailable",
+						TeleportCoreTestSuite::testPlayerProfileLoadPreservesUnavailableDimensionHomes),
 				scenario("Recorded target resolver maps empty target",
 						"Verify missing death/previous records map to a failed target result.",
 						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
@@ -588,6 +609,26 @@ public final class TeleportCoreTestSuite {
 				+ ", first20TickNanos=[" + formatLongArray(firstTwentyTickNanos) + "]");
 	}
 
+	private static void testSafetyRejectsTallSupportCollisionBlocks() {
+		FakeSafetyWorld world = new FakeSafetyWorld(Blocks.AIR.defaultBlockState());
+		BlockPos base = new BlockPos(0, 64, 0);
+		BlockPos fallback = base.offset(-1, 0, 0);
+		world.setBlock(base.below(), Blocks.OAK_FENCE.defaultBlockState());
+		world.setBlock(base.offset(1, -1, 0), Blocks.COBBLESTONE_WALL.defaultBlockState());
+		world.setBlock(base.offset(0, -1, 1), Blocks.OAK_FENCE_GATE.defaultBlockState());
+		world.setBlock(fallback.below(), Blocks.STONE.defaultBlockState());
+
+		Optional<BlockPos> result = TestTeleportSafety.getSafeBlockPos(base, world);
+
+		assertEquals(fallback, result.orElseThrow(),
+				"safety should skip tall collision supports and choose the stone fallback");
+		debug("DATA safety.tallSupport", "baseBelow=oak_fence"
+				+ ", wallBelowOffset=(1,-1,0)"
+				+ ", gateBelowOffset=(0,-1,1)"
+				+ ", fallback=" + fallback
+				+ ", result=" + result.orElse(null));
+	}
+
 	private record SafetyTaskResult(Optional<BlockPos> safePos, long elapsedNanos) {
 	}
 
@@ -612,7 +653,7 @@ public final class TeleportCoreTestSuite {
 		assertEquals(25.0F, snapshot.get().getXRot(), "snapshot should keep original pitch");
 
 		RecordedLocation decoded = RecordedLocationNbtCodec.fromNbt(RecordedLocationNbtCodec.toNbt(RecordedLocation.copyOf(snapshot.get())));
-		TeleportTarget target = RecordedLocationTeleportTargets.toTarget(decoded, DUMMY_WORLD);
+		TeleportTarget target = RecordedLocationTeleportTargets.toTarget(decoded, dummyWorld);
 		assertEquals(180.0F, target.yRot(), "recorded target should use stored yaw");
 		assertEquals(25.0F, target.xRot(), "recorded target should use stored pitch");
 		debug("DATA record.snapshot", "sourcePos=" + location.getBlockPos()
@@ -629,7 +670,7 @@ public final class TeleportCoreTestSuite {
 		assertEquals(12.5F, decoded.getXRot(), "pitch should survive NBT round trip");
 
 		NamedLocationSnapshot snapshot = NamedLocationSnapshot.from(decoded);
-		TeleportTarget target = WaypointTeleportTargets.toTarget(snapshot, DUMMY_WORLD);
+		TeleportTarget target = WaypointTeleportTargets.toTarget(snapshot, dummyWorld);
 		assertEquals(90.0F, target.yRot(), "target should use stored yaw");
 		assertEquals(12.5F, target.xRot(), "target should use stored pitch");
 
@@ -640,7 +681,7 @@ public final class TeleportCoreTestSuite {
 		assertNull(legacyDecoded.getYRot(), "legacy data should load without yaw");
 		assertNull(legacyDecoded.getXRot(), "legacy data should load without pitch");
 
-		TeleportTarget legacyTarget = WaypointTeleportTargets.toTarget(legacyDecoded, DUMMY_WORLD);
+		TeleportTarget legacyTarget = WaypointTeleportTargets.toTarget(legacyDecoded, dummyWorld);
 		assertNull(legacyTarget.yRot(), "legacy target should keep current player yaw at execution time");
 		assertNull(legacyTarget.xRot(), "legacy target should keep current player pitch at execution time");
 		debug("DATA named.rotation", "decodedYaw=" + decoded.getYRot()
@@ -693,6 +734,38 @@ public final class TeleportCoreTestSuite {
 				+ ", requesterTpahere=" + decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE));
 	}
 
+	private static void testGlobalProfileLoadPreservesUnavailableDimensionWarps() {
+		GlobalProfile profile = new GlobalProfile();
+		ResourceKey<Level> unavailableDimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("tpc:test_dimension"));
+		NamedLocation warp = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
+
+		assertTrue(profile.addWarp(warp), "test warp should be accepted");
+		boolean changed = GlobalProfileLifecycle.prepareLoaded(profile);
+
+		assertFalse(changed, "startup prepare should not treat unavailable dimensions as invalid global data");
+		assertEquals(1, profile.getWarpCount(), "startup prepare should preserve global warps");
+		assertTrue(profile.getWarpByName("remote").isPresent(), "preserved warp should remain indexed by name");
+		debug("DATA global.load", "warps=" + profile.getWarpCount()
+				+ ", dimension=" + warp.getDimensionId()
+				+ ", changed=" + changed);
+	}
+
+	private static void testPlayerProfileLoadPreservesUnavailableDimensionHomes() {
+		PlayerProfile profile = new PlayerProfile(UUID.randomUUID());
+		ResourceKey<Level> unavailableDimension = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse("tpc:test_dimension"));
+		NamedLocation home = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
+
+		assertTrue(profile.addHome(home), "test home should be accepted");
+		boolean changed = PlayerProfileLifecycle.prepareLoaded(profile);
+
+		assertFalse(changed, "profile prepare should not treat unavailable dimensions as invalid player data");
+		assertEquals(1, profile.getHomeCount(), "profile prepare should preserve homes");
+		assertTrue(profile.getHomeByName("remote").isPresent(), "preserved home should remain indexed by name");
+		debug("DATA player.load", "homes=" + profile.getHomeCount()
+				+ ", dimension=" + home.getDimensionId()
+				+ ", changed=" + changed);
+	}
+
 	private static void testRecordedTargetEmpty() {
 		TeleportTargetResult result = RecordedLocationTeleportTargets.toTargetResult(Optional.empty(), null);
 		assertTrue(result instanceof TeleportTargetResult.Failed, "empty record target should fail");
@@ -710,8 +783,8 @@ public final class TeleportCoreTestSuite {
 	private static TargetTeleportExecution entry(int id) {
 		UUID playerUuid = new UUID(0L, id);
 		TargetTeleportPending pending = new TargetTeleportPending(playerUuid, id,
-				TeleportRequest.resolved(DUMMY_TARGET, TargetTeleportOptions.DEFAULT), 0L);
-		return new TargetTeleportExecution(pending, DUMMY_TARGET);
+				TeleportRequest.resolved(dummyTarget, TargetTeleportOptions.DEFAULT), 0L);
+		return new TargetTeleportExecution(pending, dummyTarget);
 	}
 
 	private static TeleportTarget createDummyTarget() {
@@ -884,10 +957,18 @@ public final class TeleportCoreTestSuite {
 			}
 
 			private byte createMask(BlockState state) {
+				if (state.isAir() || state.getBlock() instanceof DoorBlock) {
+					return MASK_BODY_CLEAR;
+				}
+
 				boolean collisionEmpty = state.getCollisionShape(world, mutablePos).isEmpty();
 				byte mask = 0;
 
-				if (state.is(Blocks.WATER) || !collisionEmpty) {
+				if (state.is(Blocks.WATER)) {
+					return MASK_SUPPORT | MASK_BODY_CLEAR;
+				}
+
+				if (!collisionEmpty && !isUnsafeSupport(state.getBlock())) {
 					mask |= MASK_SUPPORT;
 				}
 				if (collisionEmpty && !UNSAFE_COLLISION_FREE_BLOCKS.contains(state.getBlock())) {
@@ -895,6 +976,10 @@ public final class TeleportCoreTestSuite {
 				}
 
 				return mask;
+			}
+
+			private boolean isUnsafeSupport(Block block) {
+				return block instanceof FenceBlock || block instanceof FenceGateBlock || block instanceof WallBlock;
 			}
 
 			private int cacheIndex(int relativeX, int relativeY, int relativeZ) {

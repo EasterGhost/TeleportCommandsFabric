@@ -24,7 +24,6 @@ final class WarpNodeFactory {
 		return Commands.literal("setwarp")
 				.requires(WarpNodeFactory::requiresAdminPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
-						.suggests(WARP_SUGGESTIONS)
 						.executes(context -> WarpMutationHandler.setWarp(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "name"))));
 	}
@@ -39,7 +38,11 @@ final class WarpNodeFactory {
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode() {
-		return Commands.literal("warp")
+		return buildTeleportNode("warp");
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildTeleportNode(String literal) {
+		return Commands.literal(literal)
 				.requires(WarpNodeFactory::requiresPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(WARP_SUGGESTIONS)

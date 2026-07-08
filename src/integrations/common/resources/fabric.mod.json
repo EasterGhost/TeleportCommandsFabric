@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "teleport_commands_fabric_integration_common",
+	"version": "${version}",
+	"name": "TeleportCommandsFabric Integration Common",
+	"description": "Shared client integration protocol for TeleportCommandsFabric.",
+	"authors": [
+		"Andrew Elizabeth / EasterGhost"
+	],
+	"license": "GPL-3.0-only",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"org.AndrewElizabeth.teleportcommandsfabric.integration.common.IntegrationCommon"
+		],
+		"client": [
+			"org.AndrewElizabeth.teleportcommandsfabric.integration.common.client.IntegrationCommonClient"
+		]
+	},
+	"custom": {
+		"modmenu": {
+			"parent": {
+				"id": "teleport_commands_fabric",
+				"name": "TeleportCommandsFabric"
+			}
+		}
+	},
+	"depends": {
+		"teleport_commands_fabric": "*",
+		"fabricloader": ">=0.17.3",
+		"fabric-api": "*"
+	}
+}

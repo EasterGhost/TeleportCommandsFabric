@@ -10,7 +10,7 @@ import xaero.hud.minimap.module.MinimapSession;
 import xaero.hud.minimap.waypoint.render.WaypointDeleter;
 import xaero.hud.minimap.world.MinimapWorld;
 
-import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client.XaeroWaypointCommandHelper;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroWaypointCommandHelper;
 
 import net.minecraft.client.Minecraft;
 

@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.mixin.xaero;
 
-import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client.XaeroWaypointCommandHelper;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroWaypointCommandHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

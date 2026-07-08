@@ -10,7 +10,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.PlayerHomeSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
@@ -122,17 +124,17 @@ final class HomeMutationHandler {
 		boolean visible = BoolArgumentType.getBool(context, "visible");
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		WaypointCrudService.updateVisibility(name, visible, source).whenComplete((result, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+				WaypointCrudService.updateVisibility(name, visible, source), (currentPlayer, result, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while updating home map visibility.", throwable);
 				if (!silent) {
 					HomeMessages.send(currentPlayer, "commands.teleport_commands.homes.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				}
 				return;
+			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 			}
 			if (!silent) {
 				sendVisibilityResult(currentPlayer, result, visible);
@@ -141,7 +143,7 @@ final class HomeMutationHandler {
 			if (query != null) {
 				HomeListHandler.renderHomes(currentPlayer, query, false);
 			}
-		}));
+		});
 		return 0;
 	}
 
@@ -150,18 +152,17 @@ final class HomeMutationHandler {
 		int maxHomes = ConfigManager.query(config -> config.getHome().getPlayerMaximum());
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		future.whenComplete((result, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid, future, (currentPlayer, result, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error(logMessage, throwable);
 				HomeMessages.send(currentPlayer, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				return;
 			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+			}
 			sendMutationResult(currentPlayer, result, successKey, maxHomes);
-		}));
+		});
 	}
 
 	private static void sendMutationResult(ServerPlayer player, WaypointOperationResult result, String successKey, int maxHomes) {

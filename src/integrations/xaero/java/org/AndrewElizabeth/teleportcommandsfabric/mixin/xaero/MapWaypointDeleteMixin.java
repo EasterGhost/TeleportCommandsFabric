@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xaero.map.mods.SupportXaeroMinimap;
 
-import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.client.XaeroWaypointCommandHelper;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroWaypointCommandHelper;
 
 import net.minecraft.client.Minecraft;
 

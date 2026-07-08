@@ -4,7 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportExecutor;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TpaRequestExpiryScheduler;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.tpa.TpaRequestExpiryScheduler;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportOperation;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;

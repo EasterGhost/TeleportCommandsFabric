@@ -9,8 +9,10 @@ import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.GlobalWarpSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
@@ -98,17 +100,17 @@ final class WarpMutationHandler {
 		boolean visible = BoolArgumentType.getBool(context, "visible");
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		updatePlayerMapVisibility(player, name, visible).whenComplete((result, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+				updatePlayerMapVisibility(player, name, visible), (currentPlayer, result, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while updating warp map visibility.", throwable);
 				if (!silent) {
 					WarpMessages.send(currentPlayer, "commands.teleport_commands.warps.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				}
 				return;
+			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 			}
 			if (!silent) {
 				sendPlayerVisibilityResult(currentPlayer, result, visible);
@@ -117,7 +119,7 @@ final class WarpMutationHandler {
 			if (query != null) {
 				WarpListHandler.renderWarps(context.getSource(), currentPlayer, query, false);
 			}
-		}));
+		});
 		return 0;
 	}
 
@@ -140,11 +142,8 @@ final class WarpMutationHandler {
 		boolean visible = BoolArgumentType.getBool(context, "visible");
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		WaypointCrudService.updateVisibility(name, visible, source).whenComplete((result, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+				WaypointCrudService.updateVisibility(name, visible, source), (currentPlayer, result, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while updating global warp map visibility.", throwable);
 				WarpMessages.send(currentPlayer, "commands.teleport_commands.gwarpmap.error", ChatFormatting.RED, ChatFormatting.BOLD);
@@ -153,11 +152,14 @@ final class WarpMutationHandler {
 			if (result == WaypointOperationResult.SUCCESS && TeleportCommands.WAYPOINT_PAGES != null) {
 				TeleportCommands.WAYPOINT_PAGES.invalidateWarpCache();
 			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markAllDirty();
+			}
 			sendGlobalVisibilityResult(currentPlayer, result, visible);
 			if (query != null) {
 				WarpListHandler.renderWarps(context.getSource(), currentPlayer, query, false);
 			}
-		}));
+		});
 		return 0;
 	}
 
@@ -166,11 +168,7 @@ final class WarpMutationHandler {
 		int maxWarps = ConfigManager.query(config -> config.getWarp().getMaximum());
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		future.whenComplete((result, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid, future, (currentPlayer, result, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error(logMessage, throwable);
 				WarpMessages.send(currentPlayer, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
@@ -179,8 +177,11 @@ final class WarpMutationHandler {
 			if (result == WaypointOperationResult.SUCCESS && TeleportCommands.WAYPOINT_PAGES != null) {
 				TeleportCommands.WAYPOINT_PAGES.invalidateWarpCache();
 			}
+			if (result == WaypointOperationResult.SUCCESS) {
+				WaypointMapSyncEvents.markAllDirty();
+			}
 			sendMutationResult(currentPlayer, result, successKey, maxWarps);
-		}));
+		});
 	}
 
 	private static void sendMutationResult(ServerPlayer player, WaypointOperationResult result, String successKey, int maxWarps) {

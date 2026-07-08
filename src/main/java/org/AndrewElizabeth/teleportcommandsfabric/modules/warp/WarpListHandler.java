@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.modules.warp;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
@@ -55,12 +56,8 @@ final class WarpListHandler {
 		boolean admin = isAdmin(source);
 		CompletableFuture<List<NamedLocationView>> warpsFuture = globalManager.query(profile -> profile.getWarps());
 		CompletableFuture<Set<UUID>> hiddenFuture = hiddenWarps(playerUuid);
-		warpsFuture.thenCombine(hiddenFuture, WarpPageData::new)
-				.whenComplete((data, throwable) -> server.execute(() -> {
-					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-					if (currentPlayer == null) {
-						return;
-					}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+				warpsFuture.thenCombine(hiddenFuture, WarpPageData::new), (currentPlayer, data, throwable) -> {
 					if (throwable != null) {
 						ModConstants.LOGGER.error("Error while rendering warps.", throwable);
 						WarpMessages.send(currentPlayer, "commands.teleport_commands.warps.error", ChatFormatting.RED,
@@ -90,11 +87,8 @@ final class WarpListHandler {
 								false);
 						return;
 					}
-					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> server.execute(() -> {
-						ServerPlayer target = server.getPlayerList().getPlayer(playerUuid);
-						if (target == null) {
-							return;
-						}
+					CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+							TeleportCommands.WAYPOINT_PAGES.render(request), (target, component, renderThrowable) -> {
 						if (renderThrowable != null) {
 							ModConstants.LOGGER.error("Error while rendering warps page.", renderThrowable);
 							WarpMessages.send(target, "commands.teleport_commands.warps.error", ChatFormatting.RED,
@@ -102,8 +96,8 @@ final class WarpListHandler {
 							return;
 						}
 						target.sendSystemMessage(component, false);
-					}));
-				}));
+					});
+				});
 		return 0;
 	}
 

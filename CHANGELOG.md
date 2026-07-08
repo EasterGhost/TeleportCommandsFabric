@@ -8,19 +8,45 @@ Version history below is based on the repository tag history, local commit histo
 
 The config and storage schema versions are tracked separately from the mod release version.
 
-| Mod version     | Config version | Storage version | Data compatibility notes                                                                                                                                                            |
-| --------------- | -------------: | --------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.2             |              3 |               1 | Feature update. Keeps the v2.1 config/storage schema. Xaero integration extracted to bundled JAR-in-JAR source set. |
-| 2.1             |              3 |               1 | Feature update on the 26.1 line. Keeps the v2.0 storage/config schema while adding TPA trust rules and saved rotation fields to stored locations. |
-| 2.0             |              3 |               1 | Core refactoring release. Dynamically applied config and independent storage format. |
-| 1.7             |              2 |               5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
-| 1.6.1/1.5.2     |              2 |               4 | Corrected the declared storage schema for UUID-based home/warp identity,`DefaultHomeUuid`, and `HiddenWarpUuids`; repairs historical files from the earlier `v3` declaration. |
-| 1.6             |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                  |
-| 1.5.1           |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                  |
-| 1.5             |              2 |               3 | Storage `v3` is the intended `1.5` baseline for Xaero visibility and named-location metadata before the UUID-based layout correction.                                      |
-| 1.4             |              2 |               2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
-| 1.3             |              2 |               2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
-| 1.2 and earlier |   not embedded |    not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+| Mod version     | Config version |       Storage version | Data compatibility notes                                                                                                                                                            |
+| --------------- | -------------: | --------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.3             |              3 |                     1 | Map integration update. Keeps the v2.2 config/storage schema. Adds JourneyMap and BlueMap integrations and preserves invalid-dimension home/warp entries during profile load.       |
+| 2.2             |              3 |                     1 | Feature update. Keeps the v2.1 config/storage schema. Xaero integration extracted to bundled JAR-in-JAR source set.                                                                 |
+| 2.1             |              3 |                     1 | Feature update on the 26.1 line. Keeps the v2.0 storage/config schema while adding TPA trust rules and saved rotation fields to stored locations.                                   |
+| 2.0             |              3 |                     1 | Core refactoring release. Dynamically applied config and independent storage format.                                                                                                |
+| 1.7             |              2 |                     5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
+| 1.6.1/1.5.2     |              2 |                     4 | Corrected the declared storage schema for UUID-based home/warp identity,`DefaultHomeUuid`, and `HiddenWarpUuids`; repairs historical files from the earlier `v3` declaration. |
+| 1.6             |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                   |
+| 1.5.1           |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                   |
+| 1.5             |              2 |                     3 | Storage `v3` is the intended `1.5` baseline for Xaero visibility and named-location metadata before the UUID-based layout correction.                                           |
+| 1.4             |              2 |                     2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
+| 1.3             |              2 |                     2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
+| 1.2 and earlier |   not embedded |          not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+
+## [2.3] - 2026-06-24
+
+### Added
+
+- Added JourneyMap integration for synced TeleportCommandsFabric homes, warps, and death-location teleport handling.
+- Added BlueMap integration for publishing server-side warp markers to BlueMap web maps.
+- Added a shared map integration sync protocol used by bundled map integrations, allowing map support to be coordinated through the common `integration` module.
+
+### Changed
+
+- Updated map integration admin commands and descriptions to use the `integration` module name instead of the old Xaero-specific module name.
+- Kept the existing `xaero` config section name for backward compatibility, while treating it as the map integration config group at runtime.
+- Updated standard build packaging to bundle BlueMap support alongside Xaero and JourneyMap, while keeping the core build free of bundled map integrations.
+- Changed invalid-dimension cleanup behavior for homes and warps: storage loading now preserves entries even if a dimension is not available yet, and `deleteInvalid` cleanup happens only when a teleport attempt finds that the target world is unavailable.
+- Improved map waypoint synchronization so clients only receive changed waypoint snapshots instead of repeated unchanged data.
+- Improved map integrations so synced waypoints respect the configured waypoint persistence behavior.
+- Improved teleport execution state handling so previous-location records are captured before teleport and saved only after successful teleport execution.
+- Improved target teleport safety checks for special collision blocks: doors are treated as passable space, while fences, walls, and fence gates are no longer accepted as safe standing support.
+- Added a defensive timeout fallback for parallel target teleport safety checks.
+
+### Fixed
+
+- Fixed a data-loss risk where enabling `deleteInvalid` could remove valid warp data during server startup before all dimensions were available.
+- Fixed creative/fall-flying state and camera reset edge cases after teleport, especially around cross-dimension teleport behavior.
 
 ## [2.2] - 2026-06-18
 
@@ -40,7 +66,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 - Fixed Xaero map visibility commands (`maphome` / `mapwarp`) built without page arguments not being handled when triggered from the silent (waypoint-delete) path.
 
-## [2.1] - 2026-06-14
+## [2.1] - 2026-06-12
 
 ### Added
 

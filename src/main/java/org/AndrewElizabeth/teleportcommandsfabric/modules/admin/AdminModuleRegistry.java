@@ -32,9 +32,9 @@ final class AdminModuleRegistry {
 		MODULES.put("rtp", new ModuleToggle(config -> config.getRtp().isEnabled(),
 				(config, enabled) -> config.getRtp().setEnabled(enabled),
 				"commands.teleport_commands.admin.module.rtp"));
-		MODULES.put("xaero", new ModuleToggle(config -> config.getXaero().isEnabled(),
-				(config, enabled) -> config.getXaero().setEnabled(enabled),
-				"commands.teleport_commands.admin.module.xaero"));
+		MODULES.put("integration", new ModuleToggle(config -> config.getIntegration().isEnabled(),
+				(config, enabled) -> config.getIntegration().setEnabled(enabled),
+				"commands.teleport_commands.admin.module.integration"));
 	}
 
 	private AdminModuleRegistry() {

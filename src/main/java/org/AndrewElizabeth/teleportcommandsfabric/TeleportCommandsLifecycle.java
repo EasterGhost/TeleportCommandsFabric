@@ -7,8 +7,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyThreadPool;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.TeleportBatchDispatcher;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.SafetyThreadPool;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.TeleportBatchDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
@@ -64,8 +64,7 @@ final class TeleportCommandsLifecycle {
 
 	private static void initializeStorageManagers() {
 		TeleportCommands.RECORDED_LOCATION_MANAGER = new PlayerRecordedLocationManager();
-		TeleportCommands.RECORDED_LOCATION_SOURCE = new PlayerRecordedLocationSource(
-				TeleportCommands.RECORDED_LOCATION_MANAGER);
+		TeleportCommands.RECORDED_LOCATION_SOURCE = new PlayerRecordedLocationSource(TeleportCommands.RECORDED_LOCATION_MANAGER);
 		TeleportOperationManager teleportOperationManager = new TeleportOperationManager();
 		TeleportPreloadManager teleportPreloadManager = new TeleportPreloadManager();
 		TeleportCommands.TELEPORT_SERVICE = new TeleportService(TeleportCommands.RECORDED_LOCATION_SOURCE,
@@ -89,8 +88,7 @@ final class TeleportCommandsLifecycle {
 
 	private static void loadStorageManagers() {
 		CompletableFuture<?> globalLoad = TeleportCommands.GLOBAL_PROFILE_MANAGER.load();
-		CompletableFuture<Void> recordLoad = CompletableFuture
-				.runAsync(() -> TeleportCommands.RECORDED_LOCATION_MANAGER.loadRecords());
+		CompletableFuture<Void> recordLoad = CompletableFuture.runAsync(() -> TeleportCommands.RECORDED_LOCATION_MANAGER.loadRecords());
 		CompletableFuture.allOf(globalLoad, recordLoad).join();
 	}
 

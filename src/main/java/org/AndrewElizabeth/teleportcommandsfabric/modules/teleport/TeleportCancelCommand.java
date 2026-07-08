@@ -35,6 +35,6 @@ public final class TeleportCancelCommand {
 		} else {
 			MessageSupport.send(player, "commands.teleport_commands.tpcancel.none", ChatFormatting.YELLOW);
 		}
-		return cancelled ? 1 : 0;
+		return 0;
 	}
 }

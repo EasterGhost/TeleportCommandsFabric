@@ -1,6 +1,9 @@
 dependencies {
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"
+    if (project.includeIntegrationCommon.get()) {
+        testImplementation sourceSets.integrationCommon.output
+    }
     if (project.includeXaeroIntegration.get()) {
         testImplementation sourceSets.xaeroIntegration.output
         testCompileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
@@ -18,11 +21,23 @@ dependencies {
 if (!project.includeXaeroIntegration.get()) {
     sourceSets.test.java.exclude "**/integration/xaero/**"
 }
+if (!project.includeJourneyMapIntegration.get()) {
+    sourceSets.test.java.exclude "**/integration/journeymap/**"
+}
+if (!project.includeIntegrationCommon.get()) {
+    sourceSets.test.java.exclude "**/integration/common/**"
+}
 
 tasks.named("test", Test) {
     useJUnitPlatform()
     if (!project.includeXaeroIntegration.get()) {
         exclude "**/integration/xaero/**"
+    }
+    if (!project.includeJourneyMapIntegration.get()) {
+        exclude "**/integration/journeymap/**"
+    }
+    if (!project.includeIntegrationCommon.get()) {
+        exclude "**/integration/common/**"
     }
     testLogging {
         events "passed", "skipped", "failed"

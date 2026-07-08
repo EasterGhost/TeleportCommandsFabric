@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.modules.home;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
@@ -47,12 +48,9 @@ final class HomeListHandler {
 		}
 		UUID playerUuid = player.getUUID();
 		MinecraftServer server = player.level().getServer();
-		manager.query(playerUuid, profile -> new HomePageData(profile.getHomes(), profile.getDefaultHomeUuid()))
-				.whenComplete((data, throwable) -> server.execute(() -> {
-					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-					if (currentPlayer == null) {
-						return;
-					}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+				manager.query(playerUuid, profile -> new HomePageData(profile.getHomes(), profile.getDefaultHomeUuid())),
+				(currentPlayer, data, throwable) -> {
 					if (throwable != null) {
 						ModConstants.LOGGER.error("Error while rendering homes.", throwable);
 						HomeMessages.send(currentPlayer, "commands.teleport_commands.homes.error", ChatFormatting.RED,
@@ -82,11 +80,8 @@ final class HomeListHandler {
 								false);
 						return;
 					}
-					TeleportCommands.WAYPOINT_PAGES.render(request).whenComplete((component, renderThrowable) -> server.execute(() -> {
-						ServerPlayer target = server.getPlayerList().getPlayer(playerUuid);
-						if (target == null) {
-							return;
-						}
+					CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid,
+							TeleportCommands.WAYPOINT_PAGES.render(request), (target, component, renderThrowable) -> {
 						if (renderThrowable != null) {
 							ModConstants.LOGGER.error("Error while rendering homes page.", renderThrowable);
 							HomeMessages.send(target, "commands.teleport_commands.homes.error", ChatFormatting.RED,
@@ -94,8 +89,8 @@ final class HomeListHandler {
 							return;
 						}
 						target.sendSystemMessage(component, false);
-					}));
-				}));
+					});
+				});
 		return 0;
 	}
 

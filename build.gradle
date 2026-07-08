@@ -5,41 +5,18 @@ plugins {
 
 version = project.mod_version
 group = project.maven_group
-def includeXaeroIntegration = providers.gradleProperty("includeXaeroIntegration")
-        .map { it.toBoolean() }
-        .orElse(true)
-def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${project.version}.jar"
-ext.includeXaeroIntegration = includeXaeroIntegration
+def modVersion = project.version.toString()
+def minecraftVersion = project.minecraft_version
+def loaderVersion = project.loader_version
+def archiveBaseName = project.archives_base_name
+ext.modVersion = modVersion
+ext.archiveBaseName = archiveBaseName
 
 base {
-    archivesName = project.archives_base_name + "-" + project.minecraft_version
+    archivesName = archiveBaseName + "-" + minecraftVersion
 }
 
-tasks.withType(AbstractArchiveTask).configureEach {
-    if (!includeXaeroIntegration.get()) {
-        archiveVersion = "${project.version}-core"
-    }
-}
-
-sourceSets {
-    xaeroIntegration {
-        java.srcDir "src/integrations/xaero/java"
-        resources.srcDir "src/integrations/xaero/resources"
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-        runtimeClasspath += output + compileClasspath
-    }
-}
-
-loom {
-    mods {
-        "teleportcommandsfabric" {
-            sourceSet sourceSets.main
-        }
-        "teleportcommandsfabric_xaero" {
-            sourceSet sourceSets.xaeroIntegration
-        }
-    }
-}
+apply from: "gradle/integrations.gradle"
 
 fabricApi {
     configureDataGeneration {
@@ -56,6 +33,18 @@ repositories {
     maven {
         url = "https://chocolateminecraft.com/maven/"
     }
+    maven {
+        name = "JourneyMap Maven"
+        url = "https://maven.blamejared.com"
+    }
+    maven {
+        name = "JourneyMap Snapshots"
+        url = "https://jm.gserv.me/repository/maven-snapshots/"
+    }
+    maven {
+        name = "BlueMap"
+        url = "https://repo.bluecolored.de/releases"
+    }
 }
 
 dependencies {
@@ -68,37 +57,32 @@ dependencies {
     xaeroIntegrationCompileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
     xaeroIntegrationCompileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
     xaeroIntegrationCompileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
+    journeyMapIntegrationCompileOnly "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}"
+    blueMapIntegrationCompileOnly "de.bluecolored:bluemap-api:${project.bluemap_api_version}"
 }
 
 apply from: "test.gradle"
 
 processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
-    inputs.property "included_jars", includeXaeroIntegration.get()
-            ? "[{\"file\":\"META-INF/jars/${xaeroIntegrationJarName}\"}]"
-            : "[]"
+    def includedJars = includedJarsJson()
+    def buildVariant = buildVariantName()
+    inputs.property "version", modVersion
+    inputs.property "minecraft_version", minecraftVersion
+    inputs.property "loader_version", loaderVersion
+    inputs.property "included_jars", includedJars
+    inputs.property "build_variant", buildVariant
     filteringCharset = "UTF-8"
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+        expand "version": modVersion,
+                "minecraft_version": minecraftVersion,
+                "loader_version": loaderVersion,
+                "build_variant": buildVariant
         filter { line ->
             line.contains('"jars": []')
-                    ? line.replace('"jars": []', "\"jars\": ${includeXaeroIntegration.get() ? "[{\"file\":\"META-INF/jars/${xaeroIntegrationJarName}\"}]" : "[]"}")
+                    ? line.replace('"jars": []', "\"jars\": ${includedJars}")
                     : line
         }
-    }
-}
-
-tasks.named("processXaeroIntegrationResources") {
-    inputs.property "version", project.version
-    filteringCharset = "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
     }
 }
 
@@ -126,33 +110,16 @@ java {
 }
 
 jar {
-    if (includeXaeroIntegration.get()) {
-        dependsOn "xaeroIntegrationJar"
-        from({ tasks.named("xaeroIntegrationJar").get().archiveFile.get().asFile }) {
-            into "META-INF/jars"
-        }
-    }
     from("LICENSE.txt") {
-        rename { "LICENSE_${project.archives_base_name}" }
+        rename { "LICENSE_${archiveBaseName}" }
     }
 }
-
-tasks.register("xaeroIntegrationJar", Jar) {
-    dependsOn tasks.named("classes"), tasks.named("xaeroIntegrationClasses")
-    archiveFileName = xaeroIntegrationJarName
-    destinationDirectory = layout.buildDirectory.dir("libs/integrations")
-    from sourceSets.xaeroIntegration.output
-    from("LICENSE.txt") {
-        rename { "LICENSE_${project.archives_base_name}_xaero" }
-    }
-}
-
 
 // configure the maven publication
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
+            artifactId = archiveBaseName
             from components.java
         }
     }

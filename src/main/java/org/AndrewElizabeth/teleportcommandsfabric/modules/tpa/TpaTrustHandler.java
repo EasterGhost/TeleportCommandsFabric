@@ -3,6 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.modules.tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustEntry;
@@ -25,21 +26,17 @@ final class TpaTrustHandler {
 		}
 		MinecraftServer server = owner.level().getServer();
 		UUID ownerUuid = owner.getUUID();
-		manager.query(ownerUuid, profile -> target.all()
+		CommandAsyncSupport.whenCompleteForPlayer(server, ownerUuid, manager.query(ownerUuid, profile -> target.all()
 				? new TpaTrustEntry(profile.getDefaultTpaTrust(), profile.getDefaultTpaHereTrust())
-				: profile.getTpaTrustEntries().getOrDefault(target.playerUuid(), TpaTrustEntry.defaults()))
-				.whenComplete((entry, throwable) -> server.execute(() -> {
-					ServerPlayer currentOwner = server.getPlayerList().getPlayer(ownerUuid);
-					if (currentOwner == null) {
-						return;
-					}
+				: profile.getTpaTrustEntries().getOrDefault(target.playerUuid(), TpaTrustEntry.defaults())),
+				(currentOwner, entry, throwable) -> {
 					if (throwable != null) {
 						ModConstants.LOGGER.error("Error while reading TPA trust settings.", throwable);
 						TpaMessages.send(currentOwner, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 						return;
 					}
 					TpaMessages.sendTrustStatus(currentOwner, target, entry);
-				}));
+				});
 		return 0;
 	}
 
@@ -51,24 +48,20 @@ final class TpaTrustHandler {
 		}
 		MinecraftServer server = owner.level().getServer();
 		UUID ownerUuid = owner.getUUID();
-		manager.mutateVoid(ownerUuid, profile -> {
+		CommandAsyncSupport.whenCompleteForPlayer(server, ownerUuid, manager.mutateVoid(ownerUuid, profile -> {
 			if (target.all()) {
 				profile.setDefaultTpaTrust(type, decision);
 			} else {
 				profile.setPlayerTpaTrust(target.playerUuid(), type, decision);
 			}
-		}).whenComplete((ignored, throwable) -> server.execute(() -> {
-			ServerPlayer currentOwner = server.getPlayerList().getPlayer(ownerUuid);
-			if (currentOwner == null) {
-				return;
-			}
+		}), (currentOwner, ignored, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while updating TPA trust settings.", throwable);
 				TpaMessages.send(currentOwner, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				return;
 			}
 			TpaMessages.sendTrustUpdated(currentOwner, target, type, decision);
-		}));
+		});
 		return 0;
 	}
 
@@ -81,7 +74,7 @@ final class TpaTrustHandler {
 		}
 		MinecraftServer server = owner.level().getServer();
 		UUID ownerUuid = owner.getUUID();
-		manager.mutateVoid(ownerUuid, profile -> {
+		CommandAsyncSupport.whenCompleteForPlayer(server, ownerUuid, manager.mutateVoid(ownerUuid, profile -> {
 			if (target.all()) {
 				profile.setDefaultTpaTrust(Tpa.Type.TPA, tpaDecision);
 				profile.setDefaultTpaTrust(Tpa.Type.TPAHERE, tpaHereDecision);
@@ -89,18 +82,14 @@ final class TpaTrustHandler {
 				profile.setPlayerTpaTrust(target.playerUuid(), Tpa.Type.TPA, tpaDecision);
 				profile.setPlayerTpaTrust(target.playerUuid(), Tpa.Type.TPAHERE, tpaHereDecision);
 			}
-		}).whenComplete((ignored, throwable) -> server.execute(() -> {
-			ServerPlayer currentOwner = server.getPlayerList().getPlayer(ownerUuid);
-			if (currentOwner == null) {
-				return;
-			}
+		}), (currentOwner, ignored, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while updating TPA trust settings.", throwable);
 				TpaMessages.send(currentOwner, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				return;
 			}
 			TpaMessages.sendTrustUpdated(currentOwner, target, tpaDecision, tpaHereDecision);
-		}));
+		});
 		return 0;
 	}
 }

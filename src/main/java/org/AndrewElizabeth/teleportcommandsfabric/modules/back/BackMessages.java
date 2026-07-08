@@ -40,22 +40,9 @@ public final class BackMessages {
 				false);
 	}
 
-	public static void sendUnsafeTeleportPrompt(ServerPlayer player, String command) {
-		MessageSupport.sendUnsafeTeleportPrompt(player, command);
-	}
-
 	public static void sendStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds,
 			String forceCommand) {
-		if (player == null || status == null || status == TeleportStatus.SUCCESS || status == TeleportStatus.CANCELLED) {
-			return;
-		}
-		switch (status) {
-		case COOLDOWN -> MessageSupport.sendCooldown(player, cooldownSeconds);
-		case NO_SAFE_POSITION -> sendUnsafeTeleportPrompt(player, forceCommand);
-		case TARGET_UNAVAILABLE -> send(player, "commands.teleport_commands.common.noLocation", ChatFormatting.RED);
-		case PLAYER_DISCONNECTED -> {
-		}
-		default -> send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-		}
+		MessageSupport.sendTeleportStatus(player, status, cooldownSeconds, forceCommand,
+				"commands.teleport_commands.common.noLocation", ChatFormatting.RED);
 	}
 }

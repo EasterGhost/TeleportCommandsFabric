@@ -3,7 +3,7 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.*;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.*;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocationSource;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;

@@ -4,15 +4,15 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.Config;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.GlobalWarpSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
@@ -43,11 +43,8 @@ final class WarpTeleportHandler {
 		}
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		resolveWarp(name).whenComplete((location, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid, resolveWarp(name),
+				(currentPlayer, location, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while resolving warp.", throwable);
 				WarpMessages.send(currentPlayer, "commands.teleport_commands.warp.goError", ChatFormatting.RED, ChatFormatting.BOLD);
@@ -58,7 +55,7 @@ final class WarpTeleportHandler {
 				return;
 			}
 			executeTeleport(currentPlayer, location.get(), settings, safetyDisabledOverride);
-		}));
+		});
 		return 0;
 	}
 
@@ -73,9 +70,11 @@ final class WarpTeleportHandler {
 			if (settings.deleteInvalidWarps()) {
 				AsyncWaypointSource source = source();
 				if (source != null) {
-					WaypointCrudService.delete(warp.getName(), source).whenComplete((ignored, throwable) -> server.execute(() -> {
-						if (throwable == null) {
-							ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
+					UUID playerUuid = player.getUUID();
+					WaypointCrudService.delete(warp.getName(), source).whenComplete((result, throwable) -> server.execute(() -> {
+						if (throwable == null && result == WaypointOperationResult.SUCCESS) {
+							WaypointMapSyncEvents.markAllDirty();
+							ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 							if (currentPlayer == null) {
 								return;
 							}
@@ -94,44 +93,13 @@ final class WarpTeleportHandler {
 			return;
 		}
 
-		TargetTeleportOptions options = TargetTeleportOptions.builder()
-				.delayTicks(settings.delayTicks())
-				.cooldownMillis(settings.cooldownMillis())
-				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
-				.recordPrevious(true)
-				.build();
 		TeleportTarget target = WaypointTeleportTargets.toTarget(warp, world);
-		TeleportRequest request = TeleportRequest.resolved(target, options);
 		String forceCommand = "warp " + CommandArgumentUtils.quote(warp.getName()) + " true";
-		try {
-			TeleportService service = TeleportCommands.TELEPORT_SERVICE;
-			CompletableFuture<TeleportStatus> result = service.request(player, request);
-			if (result.isDone()) {
-				WarpMessages.sendStatus(player, result.join(), settings.cooldownSeconds(), forceCommand);
-				return;
-			}
-			if (settings.delaySeconds() > 0) {
-				WarpMessages.sendDelayStart(player, settings.delaySeconds());
-			} else {
-				WarpMessages.send(player, "commands.teleport_commands.warp.go", ChatFormatting.AQUA);
-			}
-			result.whenComplete((status, throwable) -> server.execute(() -> {
-				ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
-				if (currentPlayer == null) {
-					return;
-				}
-				if (throwable != null) {
-					ModConstants.LOGGER.error("Error while executing /warp teleport.", throwable);
-					WarpMessages.send(currentPlayer, "commands.teleport_commands.warp.goError", ChatFormatting.RED,
-							ChatFormatting.BOLD);
-					return;
-				}
-				WarpMessages.sendStatus(currentPlayer, status, settings.cooldownSeconds(), forceCommand);
-			}));
-		} catch (Exception exception) {
-			ModConstants.LOGGER.error("Error while executing /warp teleport.", exception);
-			WarpMessages.send(player, "commands.teleport_commands.warp.goError", ChatFormatting.RED, ChatFormatting.BOLD);
-		}
+		TargetTeleportCommandSupport.submit(player, target, new TargetTeleportCommandSupport.Settings(
+				settings.delaySeconds(), settings.delayTicks(), settings.cooldownSeconds(), settings.cooldownMillis(),
+				settings.safetyEnabled(safetyDisabledOverride), true),
+				"commands.teleport_commands.warp.go", "commands.teleport_commands.warp.goError",
+				"Error while executing /warp teleport.", forceCommand, WarpMessages::sendStatus);
 	}
 
 	private static CompletableFuture<Optional<NamedLocationView>> resolveWarp(String name) {

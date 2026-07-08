@@ -4,16 +4,16 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.Config;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.AsyncWaypointSource;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.PlayerHomeSource;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
@@ -44,11 +44,8 @@ final class HomeTeleportHandler {
 		}
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
-		resolveHome(player, name).whenComplete((location, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
-			}
+		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid, resolveHome(player, name),
+				(currentPlayer, location, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error("Error while resolving home.", throwable);
 				HomeMessages.send(currentPlayer, "commands.teleport_commands.home.goError", ChatFormatting.RED, ChatFormatting.BOLD);
@@ -61,7 +58,7 @@ final class HomeTeleportHandler {
 				return;
 			}
 			executeTeleport(currentPlayer, location.get(), source, settings, safetyDisabledOverride);
-		}));
+		});
 		return 0;
 	}
 
@@ -74,9 +71,13 @@ final class HomeTeleportHandler {
 					player.getName().getString(), home.getDimensionId());
 			HomeMessages.send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
 			if (settings.deleteInvalidHomes()) {
-				WaypointCrudService.delete(home.getName(), source).whenComplete((ignored, throwable) -> server.execute(() -> {
-					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
-					if (throwable == null && currentPlayer != null) {
+				UUID playerUuid = player.getUUID();
+				WaypointCrudService.delete(home.getName(), source).whenComplete((result, throwable) -> server.execute(() -> {
+					if (throwable == null && result == WaypointOperationResult.SUCCESS) {
+						WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+					}
+					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
+					if (throwable == null && result == WaypointOperationResult.SUCCESS && currentPlayer != null) {
 						HomeMessages.send(currentPlayer, "commands.teleport_commands.home.deletedInvalid", ChatFormatting.YELLOW);
 					}
 				}));
@@ -88,44 +89,13 @@ final class HomeTeleportHandler {
 			return;
 		}
 
-		TargetTeleportOptions options = TargetTeleportOptions.builder()
-				.delayTicks(settings.delayTicks())
-				.cooldownMillis(settings.cooldownMillis())
-				.safetyEnabled(settings.safetyEnabled(safetyDisabledOverride))
-				.recordPrevious(true)
-				.build();
 		TeleportTarget target = WaypointTeleportTargets.toTarget(home, world);
-		TeleportRequest request = TeleportRequest.resolved(target, options);
 		String forceCommand = "home " + CommandArgumentUtils.quote(home.getName()) + " true";
-		try {
-			TeleportService service = TeleportCommands.TELEPORT_SERVICE;
-			CompletableFuture<TeleportStatus> result = service.request(player, request);
-			if (result.isDone()) {
-				HomeMessages.sendStatus(player, result.join(), settings.cooldownSeconds(), forceCommand);
-				return;
-			}
-			if (settings.delaySeconds() > 0) {
-				HomeMessages.sendDelayStart(player, settings.delaySeconds());
-			} else {
-				HomeMessages.send(player, "commands.teleport_commands.home.go", ChatFormatting.AQUA);
-			}
-			result.whenComplete((status, throwable) -> server.execute(() -> {
-				ServerPlayer currentPlayer = server.getPlayerList().getPlayer(player.getUUID());
-				if (currentPlayer == null) {
-					return;
-				}
-				if (throwable != null) {
-					ModConstants.LOGGER.error("Error while executing /home teleport.", throwable);
-					HomeMessages.send(currentPlayer, "commands.teleport_commands.home.goError", ChatFormatting.RED,
-							ChatFormatting.BOLD);
-					return;
-				}
-				HomeMessages.sendStatus(currentPlayer, status, settings.cooldownSeconds(), forceCommand);
-			}));
-		} catch (Exception exception) {
-			ModConstants.LOGGER.error("Error while executing /home teleport.", exception);
-			HomeMessages.send(player, "commands.teleport_commands.home.goError", ChatFormatting.RED, ChatFormatting.BOLD);
-		}
+		TargetTeleportCommandSupport.submit(player, target, new TargetTeleportCommandSupport.Settings(
+				settings.delaySeconds(), settings.delayTicks(), settings.cooldownSeconds(), settings.cooldownMillis(),
+				settings.safetyEnabled(safetyDisabledOverride), true),
+				"commands.teleport_commands.home.go", "commands.teleport_commands.home.goError",
+				"Error while executing /home teleport.", forceCommand, HomeMessages::sendStatus);
 	}
 
 	private static CompletableFuture<Optional<NamedLocationView>> resolveHome(ServerPlayer player, String name) {

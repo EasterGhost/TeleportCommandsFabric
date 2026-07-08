@@ -68,10 +68,10 @@ public final class AdminHelpRenderer {
 							"commands.teleport_commands.admin.help.desc.config.rtp.minRadius"),
 					config("maxRadius", "/tpc config rtp maxRadius <blocks>", "/tpc config rtp maxRadius ",
 							"commands.teleport_commands.admin.help.desc.config.rtp.maxRadius"))),
-			new ConfigGroup("xaero", List.of(
-					config("syncIntervalSeconds", "/tpc config xaero syncIntervalSeconds <seconds>",
-							"/tpc config xaero syncIntervalSeconds ",
-							"commands.teleport_commands.admin.help.desc.config.xaero.syncIntervalSeconds"))),
+			new ConfigGroup("integration", List.of(
+					config("syncIntervalSeconds", "/tpc config integration syncIntervalSeconds <seconds>",
+							"/tpc config integration syncIntervalSeconds ",
+							"commands.teleport_commands.admin.help.desc.config.integration.syncIntervalSeconds"))),
 			new ConfigGroup("storage", List.of(
 					config("autoSaveIntervalSeconds", "/tpc config storage autoSaveIntervalSeconds <seconds>",
 							"/tpc config storage autoSaveIntervalSeconds ",
@@ -115,7 +115,7 @@ public final class AdminHelpRenderer {
 			appendEntry(message, entry, request.language());
 		}
 		appendSection(message, "commands.teleport_commands.admin.help.section.modules", request.language());
-		appendLine(message, Component.literal("back home tpa warp worldspawn rtp xaero").withStyle(ChatFormatting.GRAY));
+		appendLine(message, Component.literal("back home tpa warp worldspawn rtp integration").withStyle(ChatFormatting.GRAY));
 		return message;
 	}
 

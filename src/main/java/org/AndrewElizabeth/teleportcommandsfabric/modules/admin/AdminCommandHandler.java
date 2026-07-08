@@ -78,7 +78,7 @@ final class AdminCommandHandler {
 	static int toggleModule(CommandContext<CommandSourceStack> context, boolean enabled)
 			throws CommandSyntaxException {
 		CommandSourceStack source = context.getSource();
-		String moduleName = StringArgumentType.getString(context, "command");
+		String moduleName = StringArgumentType.getString(context, "module");
 		AdminModuleRegistry.ModuleToggle toggle = AdminModuleRegistry.get(moduleName);
 
 		if (toggle == null) {
