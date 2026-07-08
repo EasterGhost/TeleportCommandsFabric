@@ -46,15 +46,14 @@ final class MapWaypointSnapshotBuilder {
 			List<SyncedMapWaypoint> waypoints = new ArrayList<>();
 			addWarps(waypoints, warps, playerData.hiddenWarpUuids());
 			addHomes(waypoints, playerData.homes());
-			MapWaypointSnapshot snapshot = new MapWaypointSnapshot(waypoints, options.persistWaypointSets(),
-					options.warpGroupName(), options.homeGroupName(), deathLocation);
+			MapWaypointSnapshot snapshot = new MapWaypointSnapshot(waypoints, options.persistWaypointSets(), options.warpGroupName(), options.homeGroupName(),
+					deathLocation);
 			return new Result(snapshot, nextHomeExpiryMillis(playerData.homes()));
 		});
 	}
 
 	private static SyncedDeathLocation syncedDeathLocation(RecordedLocationView location) {
-		return new SyncedDeathLocation(location.getDimensionId(),
-				location.getBlockPos().getX(), location.getBlockPos().getY(), location.getBlockPos().getZ());
+		return new SyncedDeathLocation(location.getDimensionId(), location.getBlockPos().getX(), location.getBlockPos().getY(), location.getBlockPos().getZ());
 	}
 
 	private static void addWarps(List<SyncedMapWaypoint> waypoints, List<NamedLocationView> warps,
@@ -96,8 +95,7 @@ final class MapWaypointSnapshotBuilder {
 		if (worldId == null || worldId.isBlank()) {
 			return;
 		}
-		waypoints.add(new SyncedMapWaypoint(kind, location.getName(), worldId,
-				location.getX(), location.getY(), location.getZ()));
+		waypoints.add(new SyncedMapWaypoint(kind, location.getName(), worldId, location.getX(), location.getY(), location.getZ()));
 	}
 
 	record Options(boolean persistWaypointSets, String warpGroupName, String homeGroupName) {

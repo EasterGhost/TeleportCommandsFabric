@@ -93,8 +93,7 @@ public final class MapWaypointSyncServer {
 				return existing;
 			}
 			MapWaypointClientState state = existing == null
-					? new MapWaypointClientState(MapWaypointSyncMode.LEGACY_XAERO,
-							IntegrationProtocol.PROTOCOL_VERSION)
+					? new MapWaypointClientState(MapWaypointSyncMode.LEGACY_XAERO, IntegrationProtocol.PROTOCOL_VERSION)
 					: existing;
 			state.useLegacyXaero();
 			state.markDirty();
@@ -146,10 +145,7 @@ public final class MapWaypointSyncServer {
 			MapWaypointSnapshot snapshot = result.snapshot();
 			state.updateNextHomeExpiry(result.nextHomeExpiryMillis());
 			ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
-			if (player == null) {
-				return;
-			}
-			if (!state.isSnapshotChanged(snapshot)) {
+			if (player == null || !state.isSnapshotChanged(snapshot)) {
 				return;
 			}
 			if (!sendSnapshot(player, state, snapshot)) {

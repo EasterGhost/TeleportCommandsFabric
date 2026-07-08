@@ -38,8 +38,7 @@ final class XaeroWaypointWriter {
 		replaceTaggedWaypoints(set, entries, type, false);
 	}
 
-	static List<Waypoint> toTaggedWaypoints(List<SyncedMapWaypoint> entries, XaeroWaypointType type,
-			boolean temporary) {
+	static List<Waypoint> toTaggedWaypoints(List<SyncedMapWaypoint> entries, XaeroWaypointType type, boolean temporary) {
 		List<Waypoint> waypoints = new ArrayList<>(entries.size());
 		String prefix = type.prefix();
 		for (SyncedMapWaypoint entry : entries) {
@@ -70,8 +69,7 @@ final class XaeroWaypointWriter {
 		}
 	}
 
-	private static void replaceTaggedWaypoints(WaypointSet set, List<SyncedMapWaypoint> entries,
-			XaeroWaypointType type, boolean temporary) {
+	private static void replaceTaggedWaypoints(WaypointSet set, List<SyncedMapWaypoint> entries, XaeroWaypointType type, boolean temporary) {
 		if (set == null) {
 			return;
 		}
