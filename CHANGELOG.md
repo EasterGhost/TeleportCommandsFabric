@@ -14,7 +14,7 @@ The config and storage schema versions are tracked separately from the mod relea
 | 2.2             |              3 |                     1 | Feature update. Keeps the v2.1 config/storage schema. Xaero integration extracted to bundled JAR-in-JAR source set.                                                                 |
 | 2.1             |              3 |                     1 | Feature update on the 26.1 line. Keeps the v2.0 storage/config schema while adding TPA trust rules and saved rotation fields to stored locations.                                   |
 | 2.0             |              3 |                     1 | Core refactoring release. Dynamically applied config and independent storage format.                                                                                                |
-| 1.7             |              2 |                     5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring.                                         |
+| 1.7             |              2 |                     5 | Storage schema is reserved for the `expiredTime` field on named locations. Older locations without the field are treated as non-expiring. Internal development version, not published |
 | 1.6.1/1.5.2     |              2 |                     4 | Corrected the declared storage schema for UUID-based home/warp identity,`DefaultHomeUuid`, and `HiddenWarpUuids`; repairs historical files from the earlier `v3` declaration. |
 | 1.6             |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                   |
 | 1.5.1           |              2 | 3 declared / 4 layout | Code and saved files still declared storage `v3`, but the effective layout was already the UUID-based layout later corrected to storage `v4`.                                   |
@@ -23,20 +23,23 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.3             |              2 |                     2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |          not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
 
-## [2.3] - 2026-06-24
+## [2.3] - 2026-07-08
 
 ### Added
 
 - Added JourneyMap integration for synced TeleportCommandsFabric homes, warps, and death-location teleport handling.
 - Added BlueMap integration for publishing server-side warp markers to BlueMap web maps.
 - Added a shared map integration sync protocol used by bundled map integrations, allowing map support to be coordinated through the common `integration` module.
+- Added a legacy Xaero sync compatibility path so older Xaero integration clients and servers can continue exchanging waypoint snapshots during the 2.2 to 2.3 transition.
 
 ### Changed
 
 - Updated map integration admin commands and descriptions to use the `integration` module name instead of the old Xaero-specific module name.
 - Kept the existing `xaero` config section name for backward compatibility, while treating it as the map integration config group at runtime.
 - Updated standard build packaging to bundle BlueMap support alongside Xaero and JourneyMap, while keeping the core build free of bundled map integrations.
+- Updated Gradle build switches so `includeMapIntegrations=false` produces a core build and standard builds include all bundled map integrations by default.
 - Changed invalid-dimension cleanup behavior for homes and warps: storage loading now preserves entries even if a dimension is not available yet, and `deleteInvalid` cleanup happens only when a teleport attempt finds that the target world is unavailable.
+- Normalized command return values across modules for clearer command execution semantics in command blocks and admin tooling.
 - Improved map waypoint synchronization so clients only receive changed waypoint snapshots instead of repeated unchanged data.
 - Improved map integrations so synced waypoints respect the configured waypoint persistence behavior.
 - Improved teleport execution state handling so previous-location records are captured before teleport and saved only after successful teleport execution.
