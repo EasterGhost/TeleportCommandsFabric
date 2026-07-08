@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudServ
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncEvents;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
@@ -31,12 +32,12 @@ final class HomeMutationHandler {
 
 	static int setHome(ServerPlayer player, String name, boolean temporary) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source(player);
 		if (source == null) {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		CompletableFuture<WaypointOperationResult> result = temporary
@@ -44,63 +45,63 @@ final class HomeMutationHandler {
 				: WaypointCrudService.add(player, name, source);
 		handleMutationResult(player, result, temporary ? "commands.teleport_commands.home.tempSet" : "commands.teleport_commands.home.set",
 				temporary ? "Error while setting a temporary home." : "Error while setting a home.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int updateHome(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source(player);
 		if (source == null) {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleMutationResult(player, WaypointCrudService.update(player, name, source),
 				"commands.teleport_commands.home.update", "Error while updating a home.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int deleteHome(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source(player);
 		if (source == null) {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleMutationResult(player, WaypointCrudService.delete(name, source),
 				"commands.teleport_commands.home.delete", "Error while deleting a home.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int renameHome(ServerPlayer player, String oldName, String newName) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source(player);
 		if (source == null) {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleMutationResult(player, WaypointCrudService.rename(oldName, newName, source),
 				"commands.teleport_commands.home.rename", "Error while renaming a home.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int setDefaultHome(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source(player);
 		if (source == null) {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleMutationResult(player, WaypointCrudService.setDefault(name, source),
 				"commands.teleport_commands.home.default", "Error while setting default home.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int setMapVisibility(CommandContext<CommandSourceStack> context, boolean silent, WaypointListQuery query) {
@@ -108,17 +109,17 @@ final class HomeMutationHandler {
 		try {
 			player = context.getSource().getPlayerOrException();
 		} catch (Exception exception) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		if (!ensureEnabled(player, silent)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source(player);
 		if (source == null) {
 			if (!silent) {
 				HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 			}
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		String name = StringArgumentType.getString(context, "name");
 		boolean visible = BoolArgumentType.getBool(context, "visible");
@@ -144,7 +145,7 @@ final class HomeMutationHandler {
 				HomeListHandler.renderHomes(currentPlayer, query, false);
 			}
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static void handleMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,

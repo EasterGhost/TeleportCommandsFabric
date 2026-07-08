@@ -5,6 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.MessageSupport;
 
 import net.minecraft.ChatFormatting;
@@ -26,15 +27,16 @@ public final class TeleportCancelCommand {
 		TeleportService service = TeleportCommands.TELEPORT_SERVICE;
 		if (service == null) {
 			MessageSupport.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		boolean cancelled = service.cancelCurrent(player.getUUID(), TeleportStatus.CANCELLED).isPresent();
 		if (cancelled) {
 			MessageSupport.send(player, "commands.teleport_commands.tpcancel.cancelled", ChatFormatting.AQUA);
+			return CommandReturns.COMPLETED_SYNC;
 		} else {
 			MessageSupport.send(player, "commands.teleport_commands.tpcancel.none", ChatFormatting.YELLOW);
 		}
-		return 0;
+		return CommandReturns.COMPLETED_SYNC;
 	}
 }

@@ -8,6 +8,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.TpaRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
@@ -29,27 +30,27 @@ final class TpaRequestHandler {
 		TpaCommandSettings settings = ConfigManager.query(TpaRequestHandler::settingsFrom);
 		if (!settings.enabled()) {
 			TpaMessages.send(sender, "commands.teleport_commands.tpa.disabled", ChatFormatting.RED);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		TpaService service = TeleportCommands.TPA_SERVICE;
 		if (service == null) {
 			TpaMessages.send(sender, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		if (sender.getUUID().equals(target.getUUID())) {
 			TpaMessages.send(sender, "commands.teleport_commands.tpa.self", ChatFormatting.AQUA);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 		if (service.hasOutgoing(sender.getUUID(), target.getUUID())
 				|| service.hasPendingRequest(sender.getUUID(), target.getUUID(), type)) {
 			TpaMessages.sendAlreadySent(sender, target);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 
 		PlayerProfileManager profileManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 		if (profileManager == null) {
 			TpaMessages.send(sender, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		MinecraftServer server = sender.level().getServer();
@@ -77,7 +78,7 @@ final class TpaRequestHandler {
 					}
 					handleTrustDecision(service, server, currentSender, currentTarget, request, decision, settings);
 				}));
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static void handleTrustDecision(TpaService service, MinecraftServer server, ServerPlayer sender,
@@ -147,28 +148,28 @@ final class TpaRequestHandler {
 		TpaCommandSettings settings = ConfigManager.query(TpaRequestHandler::settingsFrom);
 		if (!settings.enabled()) {
 			TpaMessages.send(recipient, "commands.teleport_commands.tpa.disabled", ChatFormatting.RED);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		TpaService service = TeleportCommands.TPA_SERVICE;
 		if (service == null) {
 			TpaMessages.send(recipient, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		if (recipient.getUUID().equals(sender.getUUID())) {
 			TpaMessages.send(recipient, "commands.teleport_commands.tpa.self", ChatFormatting.AQUA);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 
 		Optional<Tpa.Session> session = service.findIncoming(recipient.getUUID(), sender.getUUID(), sessionId);
 		if (session.isEmpty()) {
 			TpaMessages.send(recipient, "commands.teleport_commands.tpa.notFound", ChatFormatting.RED);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 
 		if (!accept) {
 			service.remove(session.get().sessionId());
 			TpaMessages.sendDenied(recipient, sender);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 		return acceptRequest(recipient, sender, session.get(), settings);
 	}
@@ -179,7 +180,7 @@ final class TpaRequestHandler {
 			sessionId = UUID.fromString(requestId);
 		} catch (IllegalArgumentException exception) {
 			TpaMessages.send(recipient, "commands.teleport_commands.tpa.notFound", ChatFormatting.RED);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 		return handleResponse(recipient, sender, sessionId, accept);
 	}
@@ -190,8 +191,9 @@ final class TpaRequestHandler {
 		try {
 			CompletableFuture<TeleportStatus> result = TeleportCommands.TPA_SERVICE.acceptRequest(server, session.sessionId());
 			if (result.isDone()) {
-				sendImmediateStatus(recipient, sender, session, result.join(), settings.cooldownSeconds());
-				return 0;
+				TeleportStatus status = result.join();
+				sendImmediateStatus(recipient, sender, session, status, settings.cooldownSeconds());
+				return CommandReturns.forTeleportStatus(status);
 			}
 			TpaMessages.sendAccepted(recipient, sender);
 			result.whenComplete((status, throwable) -> server.execute(() -> {
@@ -207,11 +209,11 @@ final class TpaRequestHandler {
 				}
 				sendFailureStatus(currentRecipient, currentSender, session, status, settings.cooldownSeconds());
 			}));
-			return 0;
+			return CommandReturns.ACCEPTED_ASYNC;
 		} catch (Exception exception) {
 			ModConstants.LOGGER.error("Error while accepting a TPA request.", exception);
 			TpaMessages.send(recipient, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 	}
 

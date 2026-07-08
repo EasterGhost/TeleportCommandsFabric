@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportSt
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportOptions;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TeleportRequest;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.back.BackPreviewRenderer;
@@ -37,12 +38,12 @@ final class BackTeleportHandler {
 
 	static int handleBackDeath(ServerPlayer player, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncRecordedLocationSource source = TeleportCommands.RECORDED_LOCATION_SOURCE;
 		if (source == null) {
 			BackMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		UUID playerUuid = player.getUUID();
@@ -66,17 +67,17 @@ final class BackTeleportHandler {
 			executeResolved(currentPlayer, location.get(), safetyDisabledOverride, COMMAND_BACK_DEATH_FORCE, true,
 					"commands.teleport_commands.back.same", "commands.teleport_commands.back.go");
 		}));
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int handleBackTp(ServerPlayer player, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncRecordedLocationSource source = TeleportCommands.RECORDED_LOCATION_SOURCE;
 		if (source == null) {
 			BackMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		UUID playerUuid = player.getUUID();
@@ -100,17 +101,17 @@ final class BackTeleportHandler {
 					executeResolved(currentPlayer, location.get(), safetyDisabledOverride, COMMAND_BACK_TP_FORCE, false,
 							"commands.teleport_commands.back.tp.same", "commands.teleport_commands.back.tp.go");
 				}));
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int handlePreview(ServerPlayer player) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncRecordedLocationSource source = TeleportCommands.RECORDED_LOCATION_SOURCE;
 		if (source == null) {
 			BackMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		UUID playerUuid = player.getUUID();
@@ -130,7 +131,7 @@ final class BackTeleportHandler {
 			}
 			currentPlayer.sendSystemMessage(PREVIEW_RENDERER.render(currentPlayer, preview.previous(), preview.death()), false);
 		}));
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static void executeResolved(ServerPlayer player, RecordedLocationView location, Boolean safetyDisabledOverride,

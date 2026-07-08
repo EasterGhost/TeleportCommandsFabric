@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
@@ -44,12 +45,12 @@ final class WarpListHandler {
 	private static int renderWarps(CommandSourceStack source, ServerPlayer player, WaypointListQuery query,
 			WaypointRenderMode renderMode) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		GlobalProfileManager globalManager = TeleportCommands.GLOBAL_PROFILE_MANAGER;
 		if (globalManager == null || TeleportCommands.WAYPOINT_PAGES == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		UUID playerUuid = player.getUUID();
 		MinecraftServer server = player.level().getServer();
@@ -98,7 +99,7 @@ final class WarpListHandler {
 						target.sendSystemMessage(component, false);
 					});
 				});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static CompletableFuture<Set<UUID>> hiddenWarps(UUID playerUuid) {

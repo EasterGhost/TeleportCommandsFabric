@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudServ
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
@@ -34,12 +35,12 @@ final class WarpTeleportHandler {
 
 	static int teleportWarp(ServerPlayer player, String name, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		WarpCommandSettings settings = ConfigManager.query(WarpTeleportHandler::settingsFrom);
 		if (TeleportCommands.GLOBAL_PROFILE_MANAGER == null || TeleportCommands.TELEPORT_SERVICE == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
@@ -56,7 +57,7 @@ final class WarpTeleportHandler {
 			}
 			executeTeleport(currentPlayer, location.get(), settings, safetyDisabledOverride);
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static void executeTeleport(ServerPlayer player, NamedLocationView warp, WarpCommandSettings settings,

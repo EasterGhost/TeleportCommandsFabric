@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustEntry;
@@ -22,7 +23,7 @@ final class TpaTrustHandler {
 		PlayerProfileManager manager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 		if (manager == null) {
 			TpaMessages.send(owner, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		MinecraftServer server = owner.level().getServer();
 		UUID ownerUuid = owner.getUUID();
@@ -37,14 +38,14 @@ final class TpaTrustHandler {
 					}
 					TpaMessages.sendTrustStatus(currentOwner, target, entry);
 				});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int setTrust(ServerPlayer owner, TpaTrustTarget target, Tpa.Type type, TpaTrustDecision decision) {
 		PlayerProfileManager manager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 		if (manager == null) {
 			TpaMessages.send(owner, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		MinecraftServer server = owner.level().getServer();
 		UUID ownerUuid = owner.getUUID();
@@ -62,7 +63,7 @@ final class TpaTrustHandler {
 			}
 			TpaMessages.sendTrustUpdated(currentOwner, target, type, decision);
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int setTrust(ServerPlayer owner, TpaTrustTarget target, TpaTrustDecision tpaDecision,
@@ -70,7 +71,7 @@ final class TpaTrustHandler {
 		PlayerProfileManager manager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 		if (manager == null) {
 			TpaMessages.send(owner, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		MinecraftServer server = owner.level().getServer();
 		UUID ownerUuid = owner.getUUID();
@@ -90,6 +91,6 @@ final class TpaTrustHandler {
 			}
 			TpaMessages.sendTrustUpdated(currentOwner, target, tpaDecision, tpaHereDecision);
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 }

@@ -8,6 +8,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportStatus;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
 
 import net.minecraft.ChatFormatting;
@@ -23,17 +24,17 @@ final class RtpHandler {
 		RtpCommandSettings settings = ConfigManager.query(RtpHandler::settingsFrom);
 		if (!settings.enabled()) {
 			RtpMessages.send(player, "commands.teleport_commands.rtp.disabled", ChatFormatting.RED);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		if (settings.maxRadius() < 1) {
 			RtpMessages.send(player, "commands.teleport_commands.rtp.invalidRadius", ChatFormatting.RED);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		RtpService service = TeleportCommands.RTP_SERVICE;
 		if (service == null) {
 			RtpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		try {
@@ -41,8 +42,9 @@ final class RtpHandler {
 					RtpService.DEFAULT_MAX_ATTEMPTS, settings.delayTicks(), settings.cooldownMillis(), true);
 			CompletableFuture<TeleportStatus> result = service.request(player, request);
 			if (result.isDone()) {
-				RtpMessages.sendStatus(player, result.join(), settings.cooldownSeconds());
-				return 0;
+				TeleportStatus status = result.join();
+				RtpMessages.sendStatus(player, status, settings.cooldownSeconds());
+				return CommandReturns.forTeleportStatus(status);
 			} else if (settings.delaySeconds() > 0) {
 				RtpMessages.sendDelayStart(player, settings.delaySeconds());
 			} else {
@@ -57,11 +59,11 @@ final class RtpHandler {
 				}
 				RtpMessages.sendStatus(currentPlayer, status, settings.cooldownSeconds());
 			});
-			return 0;
+			return CommandReturns.ACCEPTED_ASYNC;
 		} catch (Exception exception) {
 			ModConstants.LOGGER.error("Error while executing /rtp.", exception);
 			RtpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 	}
 

@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.admin;
 
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TranslationHelper;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -28,7 +29,7 @@ final class AdminMessages {
 	static int sendCurrentValue(CommandSourceStack source, String name, MutableComponent value) {
 		source.sendSuccess(() -> t(source, "commands.teleport_commands.admin.config.current",
 				Component.literal(name), value).withStyle(ChatFormatting.YELLOW), false);
-		return 0;
+		return CommandReturns.COMPLETED_SYNC;
 	}
 
 	static void sendSuccess(CommandSourceStack source, MutableComponent message, boolean broadcastToOps) {

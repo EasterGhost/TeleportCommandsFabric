@@ -1,5 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.modules.common;
 
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -24,11 +26,15 @@ public final class CommandAsyncSupport {
 			return;
 		}
 		future.whenComplete((result, throwable) -> server.execute(() -> {
-			ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
-			if (currentPlayer == null) {
-				return;
+			try {
+				ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
+				if (currentPlayer == null) {
+					return;
+				}
+				completion.accept(currentPlayer, result, throwable);
+			} catch (RuntimeException exception) {
+				ModConstants.LOGGER.error("Failed to handle async command completion for {}.", playerUuid, exception);
 			}
-			completion.accept(currentPlayer, result, throwable);
 		}));
 	}
 

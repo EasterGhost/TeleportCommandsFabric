@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudServ
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
@@ -34,13 +35,13 @@ final class HomeTeleportHandler {
 
 	static int teleportHome(ServerPlayer player, String name, Boolean safetyDisabledOverride) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		HomeCommandSettings settings = ConfigManager.query(HomeTeleportHandler::settingsFrom);
 		AsyncWaypointSource source = source(player);
 		if (source == null || TeleportCommands.TELEPORT_SERVICE == null) {
 			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
@@ -59,7 +60,7 @@ final class HomeTeleportHandler {
 			}
 			executeTeleport(currentPlayer, location.get(), source, settings, safetyDisabledOverride);
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static void executeTeleport(ServerPlayer player, NamedLocationView home, AsyncWaypointSource source,

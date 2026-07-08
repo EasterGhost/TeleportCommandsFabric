@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.config.Config;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminStatusRenderer;
@@ -36,7 +37,7 @@ final class AdminCommandHandler {
 						AdminMessages.t(source, "commands.teleport_commands.admin.reload.success"), true);
 			}
 		}));
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int sendCurrentDebug(CommandContext<CommandSourceStack> context) {
@@ -57,18 +58,18 @@ final class AdminCommandHandler {
 		AdminMessages.sendSuccess(source, AdminMessages.t(source,
 				"commands.teleport_commands.admin.debug",
 				AdminMessages.enabledText(source, enabled)), true);
-		return 0;
+		return CommandReturns.COMPLETED_SYNC;
 	}
 
 	static int sendStatus(CommandSourceStack source) {
 		source.sendSuccess(() -> STATUS_RENDERER.render(AdminModuleRegistry.statuses(), AdminMessages.language(source),
 				AdminRuntimeInfoProvider.current()), false);
-		return 0;
+		return CommandReturns.COMPLETED_SYNC;
 	}
 
 	static int sendHelp(CommandSourceStack source, AdminHelpRequest request) {
 		source.sendSuccess(() -> HELP_RENDERER.render(request), false);
-		return 0;
+		return CommandReturns.COMPLETED_SYNC;
 	}
 
 	static void sendStatusRefreshDivider(CommandSourceStack source) {

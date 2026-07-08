@@ -10,6 +10,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.config.Config;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -95,7 +96,7 @@ final class AdminConfigNodeFactory {
 		try {
 			ConfigManager.mutate(writer);
 			AdminMessages.sendSuccess(context.getSource(), message, true);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		} catch (Exception exception) {
 			ModConstants.LOGGER.error("Failed to update admin config.", exception);
 			throw new SimpleCommandExceptionType(AdminMessages.t(context.getSource(),

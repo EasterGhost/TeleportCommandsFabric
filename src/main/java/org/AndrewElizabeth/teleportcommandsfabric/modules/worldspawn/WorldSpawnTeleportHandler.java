@@ -4,6 +4,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
 import org.AndrewElizabeth.teleportcommandsfabric.config.Config;
 import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportCommandSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.TargetTeleportSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.TimeUtils;
@@ -24,7 +25,7 @@ final class WorldSpawnTeleportHandler {
 		WorldSpawnCommandSettings settings = ConfigManager.query(WorldSpawnTeleportHandler::settingsFrom);
 		if (!settings.enabled()) {
 			WorldSpawnMessages.send(player, "commands.teleport_commands.worldspawn.disabled", ChatFormatting.RED);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		MinecraftServer server = player.level().getServer();
@@ -32,22 +33,21 @@ final class WorldSpawnTeleportHandler {
 		if (world == null) {
 			WorldSpawnMessages.send(player, "commands.teleport_commands.common.worldNotFound",
 					ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 
 		BlockPos spawnPos = world.getRespawnData().pos();
 		if (player.level().dimension().equals(world.dimension()) && player.blockPosition().equals(spawnPos)) {
 			WorldSpawnMessages.send(player, "commands.teleport_commands.worldspawn.same", ChatFormatting.AQUA);
-			return 0;
+			return CommandReturns.COMPLETED_SYNC;
 		}
 
-		boolean submitted = TargetTeleportCommandSupport.submit(player, TeleportTarget.centered(world, spawnPos),
+		return TargetTeleportCommandSupport.submit(player, TeleportTarget.centered(world, spawnPos),
 				new TargetTeleportCommandSupport.Settings(settings.delaySeconds(), settings.delayTicks(), settings.cooldownSeconds(), settings.cooldownMillis(),
 						settings.safetyEnabled(safetyDisabledOverride), true),
 				"commands.teleport_commands.worldspawn.go", "commands.teleport_commands.common.error",
 				"Error while going to the worldspawn.", null,
 				(currentPlayer, status, cooldownSeconds, ignored) -> WorldSpawnMessages.sendStatus(currentPlayer, status, cooldownSeconds));
-		return submitted ? 0 : 1;
 	}
 
 	private static ServerLevel resolveWorld(MinecraftServer server, String worldId) {

@@ -13,6 +13,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointMapSyncE
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointCrudService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointOperationResult;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandAsyncSupport;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.CommandReturns;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
@@ -31,58 +32,58 @@ final class WarpMutationHandler {
 
 	static int setWarp(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source();
 		if (source == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleGlobalMutationResult(player, WaypointCrudService.add(player, name, source),
 				"commands.teleport_commands.warp.set", "Error while setting a warp.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int updateWarp(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source();
 		if (source == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleGlobalMutationResult(player, WaypointCrudService.update(player, name, source),
 				"commands.teleport_commands.warp.update", "Error while updating a warp.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int deleteWarp(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source();
 		if (source == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleGlobalMutationResult(player, WaypointCrudService.delete(name, source),
 				"commands.teleport_commands.warp.delete", "Error while deleting a warp.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int renameWarp(ServerPlayer player, String oldName, String newName) {
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source();
 		if (source == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		handleGlobalMutationResult(player, WaypointCrudService.rename(oldName, newName, source),
 				"commands.teleport_commands.warp.rename", "Error while renaming a warp.");
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int setPlayerMapVisibility(CommandContext<CommandSourceStack> context, boolean silent,
@@ -91,10 +92,10 @@ final class WarpMutationHandler {
 		try {
 			player = context.getSource().getPlayerOrException();
 		} catch (Exception exception) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		if (!ensureEnabled(player, silent)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		String name = StringArgumentType.getString(context, "name");
 		boolean visible = BoolArgumentType.getBool(context, "visible");
@@ -120,7 +121,7 @@ final class WarpMutationHandler {
 				WarpListHandler.renderWarps(context.getSource(), currentPlayer, query, false);
 			}
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	static int setGlobalMapVisibility(CommandContext<CommandSourceStack> context, WaypointListQuery query) {
@@ -128,15 +129,15 @@ final class WarpMutationHandler {
 		try {
 			player = context.getSource().getPlayerOrException();
 		} catch (Exception exception) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		if (!ensureEnabled(player)) {
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		AsyncWaypointSource source = source();
 		if (source == null) {
 			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
-			return 1;
+			return CommandReturns.FAILED;
 		}
 		String name = StringArgumentType.getString(context, "name");
 		boolean visible = BoolArgumentType.getBool(context, "visible");
@@ -160,7 +161,7 @@ final class WarpMutationHandler {
 				WarpListHandler.renderWarps(context.getSource(), currentPlayer, query, false);
 			}
 		});
-		return 0;
+		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
 	private static void handleGlobalMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,

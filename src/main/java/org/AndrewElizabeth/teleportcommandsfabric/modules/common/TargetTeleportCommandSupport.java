@@ -17,12 +17,12 @@ public final class TargetTeleportCommandSupport {
 	private TargetTeleportCommandSupport() {
 	}
 
-	public static boolean submit(ServerPlayer player, TeleportTarget target, Settings settings, String startedKey, String errorKey, String errorLogMessage,
+	public static int submit(ServerPlayer player, TeleportTarget target, Settings settings, String startedKey, String errorKey, String errorLogMessage,
 			String forceCommand, StatusSender statusSender) {
 		TeleportService service = TeleportCommands.TELEPORT_SERVICE;
 		if (service == null) {
 			MessageSupport.send(player, errorKey, ChatFormatting.RED, ChatFormatting.BOLD);
-			return false;
+			return CommandReturns.FAILED;
 		}
 
 		TargetTeleportOptions options = TargetTeleportOptions.builder()
@@ -36,8 +36,9 @@ public final class TargetTeleportCommandSupport {
 		try {
 			CompletableFuture<TeleportStatus> result = service.request(player, request);
 			if (result.isDone()) {
-				statusSender.send(player, result.join(), settings.cooldownSeconds(), forceCommand);
-				return true;
+				TeleportStatus status = result.join();
+				statusSender.send(player, status, settings.cooldownSeconds(), forceCommand);
+				return CommandReturns.forTeleportStatus(status);
 			}
 			if (settings.delaySeconds() > 0) {
 				MessageSupport.sendDelayStart(player, settings.delaySeconds());
@@ -52,11 +53,11 @@ public final class TargetTeleportCommandSupport {
 				}
 				statusSender.send(currentPlayer, status, settings.cooldownSeconds(), forceCommand);
 			});
-			return true;
+			return CommandReturns.ACCEPTED_ASYNC;
 		} catch (Exception exception) {
 			ModConstants.LOGGER.error(errorLogMessage, exception);
 			MessageSupport.send(player, errorKey, ChatFormatting.RED, ChatFormatting.BOLD);
-			return false;
+			return CommandReturns.FAILED;
 		}
 	}
 
