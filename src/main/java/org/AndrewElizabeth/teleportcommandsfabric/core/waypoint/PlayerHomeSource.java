@@ -43,6 +43,11 @@ public class PlayerHomeSource implements AsyncWaypointSource {
 			}
 
 			@Override
+			public Optional<NamedLocation> findByUuid(UUID uuid) {
+				return profile.getHome(uuid);
+			}
+
+			@Override
 			public boolean put(NamedLocation location) {
 				if (profile.updateHome(location)) {
 					return true;

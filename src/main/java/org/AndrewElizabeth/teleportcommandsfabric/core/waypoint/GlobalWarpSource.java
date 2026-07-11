@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
@@ -37,6 +38,11 @@ public class GlobalWarpSource implements AsyncWaypointSource {
 			@Override
 			public Optional<NamedLocation> findByName(String name) {
 				return profile.getWarpByName(name);
+			}
+
+			@Override
+			public Optional<NamedLocation> findByUuid(UUID uuid) {
+				return profile.getWarp(uuid);
 			}
 
 			@Override

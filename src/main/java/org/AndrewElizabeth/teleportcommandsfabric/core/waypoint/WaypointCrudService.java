@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.waypoint;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 
 import net.minecraft.resources.ResourceKey;
@@ -100,6 +101,24 @@ public class WaypointCrudService {
 		return source.mutateAtomic(accessor -> {
 			Optional<NamedLocation> locationOpt = accessor.findByName(name);
 			if (locationOpt.isEmpty()) {
+				return WaypointOperationResult.NOT_FOUND;
+			}
+
+			accessor.remove(locationOpt.get());
+			return WaypointOperationResult.SUCCESS;
+		});
+	}
+
+	public static CompletableFuture<WaypointOperationResult> deleteIfUnchanged(NamedLocationView expected,
+			AsyncWaypointSource source) {
+		if (expected == null || expected.getUuid() == null) {
+			return CompletableFuture.completedFuture(WaypointOperationResult.NOT_FOUND);
+		}
+		NamedLocationSnapshot expectedSnapshot = NamedLocationSnapshot.from(expected);
+		return source.mutateAtomic(accessor -> {
+			Optional<NamedLocation> locationOpt = accessor.findByUuid(expectedSnapshot.getUuid());
+			if (locationOpt.isEmpty()
+					|| !NamedLocationSnapshot.from(locationOpt.get()).equals(expectedSnapshot)) {
 				return WaypointOperationResult.NOT_FOUND;
 			}
 

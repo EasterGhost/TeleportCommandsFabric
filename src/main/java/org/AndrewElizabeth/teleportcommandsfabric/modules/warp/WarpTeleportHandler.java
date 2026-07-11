@@ -72,7 +72,7 @@ final class WarpTeleportHandler {
 				AsyncWaypointSource source = source();
 				if (source != null) {
 					UUID playerUuid = player.getUUID();
-					WaypointCrudService.delete(warp.getName(), source).whenComplete((result, throwable) -> server.execute(() -> {
+					WaypointCrudService.deleteIfUnchanged(warp, source).whenComplete((result, throwable) -> server.execute(() -> {
 						if (throwable == null && result == WaypointOperationResult.SUCCESS) {
 							WaypointMapSyncEvents.markAllDirty();
 							ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);

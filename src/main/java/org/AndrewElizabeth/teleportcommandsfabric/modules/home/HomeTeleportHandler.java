@@ -73,7 +73,7 @@ final class HomeTeleportHandler {
 			HomeMessages.send(player, "commands.teleport_commands.common.worldNotFound", ChatFormatting.RED, ChatFormatting.BOLD);
 			if (settings.deleteInvalidHomes()) {
 				UUID playerUuid = player.getUUID();
-				WaypointCrudService.delete(home.getName(), source).whenComplete((result, throwable) -> server.execute(() -> {
+				WaypointCrudService.deleteIfUnchanged(home, source).whenComplete((result, throwable) -> server.execute(() -> {
 					if (throwable == null && result == WaypointOperationResult.SUCCESS) {
 						WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 					}
