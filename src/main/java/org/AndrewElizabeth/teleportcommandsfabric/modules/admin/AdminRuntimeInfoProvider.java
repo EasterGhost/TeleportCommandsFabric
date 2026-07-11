@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class AdminRuntimeInfoProvider {
-	private static final String XAERO_INTEGRATION_MOD_ID = "teleport_commands_fabric_xaero";
-	private static final String JOURNEYMAP_INTEGRATION_MOD_ID = "teleport_commands_fabric_journeymap";
+	private static final String CLIENT_MAP_SYNC_MOD_ID = "teleport_commands_fabric_integration_common";
 	private static final String BLUEMAP_INTEGRATION_MOD_ID = "teleport_commands_fabric_bluemap";
+	private static final String BLUEMAP_MOD_ID = "bluemap";
 
 	private AdminRuntimeInfoProvider() {
 	}
@@ -24,14 +24,13 @@ final class AdminRuntimeInfoProvider {
 
 	private static List<AdminIntegrationStatus> integrations(FabricLoader loader) {
 		List<AdminIntegrationStatus> integrations = new ArrayList<>();
-		if (loader.isModLoaded(XAERO_INTEGRATION_MOD_ID)) {
-			integrations.add(new AdminIntegrationStatus("commands.teleport_commands.admin.info.integration.xaero"));
+		if (loader.isModLoaded(CLIENT_MAP_SYNC_MOD_ID)) {
+			integrations.add(AdminIntegrationStatus.available(
+					"commands.teleport_commands.admin.info.integration.client_sync"));
 		}
-		if (loader.isModLoaded(JOURNEYMAP_INTEGRATION_MOD_ID)) {
-			integrations.add(new AdminIntegrationStatus("commands.teleport_commands.admin.info.integration.journeymap"));
-		}
-		if (loader.isModLoaded(BLUEMAP_INTEGRATION_MOD_ID)) {
-			integrations.add(new AdminIntegrationStatus("commands.teleport_commands.admin.info.integration.bluemap"));
+		if (loader.isModLoaded(BLUEMAP_INTEGRATION_MOD_ID) && loader.isModLoaded(BLUEMAP_MOD_ID)) {
+			integrations.add(AdminIntegrationStatus.loaded(
+					"commands.teleport_commands.admin.info.integration.bluemap"));
 		}
 		return List.copyOf(integrations);
 	}

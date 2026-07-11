@@ -290,7 +290,7 @@ public final class CliTestSuite {
 		String zhRtpConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
 				"rtp", "zh_cn", runtimeInfo)).getString();
 
-		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nIntegrations: Xaero loaded\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
+		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nIntegrations: Client map sync available\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
 				"overview help should render compact topic and quick command entries");
 		assertContains(admin, "========== TPC Admin Commands ==========", "admin help should render admin title");
 		assertContains(admin, "/tpc enable <module>\n  Enable a command module.",
@@ -313,11 +313,11 @@ public final class CliTestSuite {
 		String zhText = renderer.render(modules, "zh_cn", testRuntimeInfo()).getString();
 		String enText = renderer.render(modules, "en_us", testRuntimeInfo()).getString();
 
-		assertContains(zhText, "TPC 状态：\n版本：test-version\n联动：Xaero 已加载\n模块状态：\n",
+		assertContains(zhText, "TPC 状态：\n版本：test-version\n联动：客户端地图同步 可用\n模块状态：\n",
 				"admin status should render runtime info and title");
 		assertContains(zhText, "Home 命令：已启用 [禁用]\n", "enabled module should render disable action");
 		assertContains(zhText, "Warp 命令：已禁用 [启用]\n", "disabled module should render enable action");
-		assertContains(enText, "TPC status:\nVersion: test-version\nIntegrations: Xaero loaded\nModule status:\nHome command: enabled [disable]\nWarp command: disabled [enable]\n",
+		assertContains(enText, "TPC status:\nVersion: test-version\nIntegrations: Client map sync available\nModule status:\nHome command: enabled [disable]\nWarp command: disabled [enable]\n",
 				"English admin status should render expected text");
 		assertEquals("\n===========================", renderer.renderRefreshDivider().getString(),
 				"refresh divider should match legacy status refresh separator");
@@ -343,8 +343,8 @@ public final class CliTestSuite {
 	}
 
 	private static AdminRuntimeInfo testRuntimeInfo() {
-		return AdminRuntimeInfo.of("test-version", List.of(new AdminIntegrationStatus(
-				"commands.teleport_commands.admin.info.integration.xaero")));
+		return AdminRuntimeInfo.of("test-version", List.of(AdminIntegrationStatus.available(
+				"commands.teleport_commands.admin.info.integration.client_sync")));
 	}
 
 	private static TestLocation location(String name, int x, double y, int z, ResourceKey<Level> dimension,

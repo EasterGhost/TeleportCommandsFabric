@@ -8,7 +8,7 @@
 		"Andrew Elizabeth / EasterGhost"
 	],
 	"license": "GPL-3.0-only",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
 		"client": [
 			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroClientIntegration"

@@ -30,7 +30,7 @@ final class AdminInfoRenderer {
 			}
 			text.append(ComponentSupport.translate(integration.labelKey(), language).withStyle(ChatFormatting.AQUA));
 			text.append(" ");
-			text.append(ComponentSupport.translate("commands.teleport_commands.admin.info.integration.loaded", language)
+			text.append(ComponentSupport.translate(integration.stateKey(), language)
 					.withStyle(ChatFormatting.GREEN));
 		}
 		return text;
