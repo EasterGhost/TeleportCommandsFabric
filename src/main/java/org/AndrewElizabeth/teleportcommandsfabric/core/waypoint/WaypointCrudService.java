@@ -109,8 +109,7 @@ public class WaypointCrudService {
 		});
 	}
 
-	public static CompletableFuture<WaypointOperationResult> deleteIfUnchanged(NamedLocationView expected,
-			AsyncWaypointSource source) {
+	public static CompletableFuture<WaypointOperationResult> deleteIfUnchanged(NamedLocationView expected, AsyncWaypointSource source) {
 		if (expected == null || expected.getUuid() == null) {
 			return CompletableFuture.completedFuture(WaypointOperationResult.NOT_FOUND);
 		}
@@ -143,11 +142,11 @@ public class WaypointCrudService {
 			NamedLocation location = locationOpt.get();
 
 			if (currentPos.getX() == location.getX() &&
-				Double.compare(currentY, location.getYPrecise()) == 0 &&
-				currentPos.getZ() == location.getZ() &&
-				currentDim.equals(location.getDimension()) &&
-				sameRotation(currentYRot, location.getYRot()) &&
-				sameRotation(currentXRot, location.getXRot())) {
+					Double.compare(currentY, location.getYPrecise()) == 0 &&
+					currentPos.getZ() == location.getZ() &&
+					currentDim.equals(location.getDimension()) &&
+					sameRotation(currentYRot, location.getYRot()) &&
+					sameRotation(currentXRot, location.getXRot())) {
 				return WaypointOperationResult.SAME_LOCATION;
 			}
 

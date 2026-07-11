@@ -10,6 +10,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 | Mod version     | Config version |       Storage version | Data compatibility notes                                                                                                                                                            |
 | --------------- | -------------: | --------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.3.1           |              3 |                     1 | Keeps the v2.3 config/storage schema. Existing preload radius values above the supported maximum are normalized to `3`.                                                            |
 | 2.3             |              3 |                     1 | Keeps the v2.2 config/storage schema. The map integration config still uses the historical `xaero` config section. Invalid-dimension home/warp entries are preserved during profile load. |
 | 2.2             |              3 |                     1 | Keeps the v2.1 config/storage schema. No persisted config or storage fields were added.                                                                                             |
 | 2.1             |              3 |                     1 | Keeps the v2.0 schema versions but adds optional `YRot`/`XRot` fields to named locations and recorded back locations, plus optional player `TpaTrust` data. Older records without these fields remain valid. |
@@ -22,6 +23,20 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.4             |              2 |                     2 | Kept the `1.3` config and storage schema while refactoring teleport/runtime behavior.                                                                                             |
 | 1.3             |              2 |                     2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |          not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
+
+## [2.3.1] - Unreleased
+
+### Changed
+
+- Limited the configurable target chunk preload radius to a maximum of `3` chunks. Existing larger values are normalized automatically, and `/tpc config teleporting preloadRadius` now enforces the same range.
+- Updated `/tpc help` and `/tpc status` to report whether client map synchronization is available instead of presenting bundled client integrations as if they were loaded on the server.
+- Marked the bundled Xaero integration as client-only to match its actual runtime role.
+
+### Fixed
+
+- Fixed invalid-dimension home and warp cleanup potentially deleting a newly created or updated waypoint after an earlier teleport lookup became stale. Automatic cleanup now removes only the exact unchanged waypoint that failed resolution.
+- Fixed a BlueMap lifecycle race that could use an invalid API instance while BlueMap was being disabled or reloaded.
+- Hardened current and legacy map synchronization payload decoding against invalid waypoint counts and unsafe allocation from untrusted count values.
 
 ## [2.3] - 2026-07-08
 
