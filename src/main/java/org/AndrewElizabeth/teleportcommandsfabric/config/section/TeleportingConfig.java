@@ -4,6 +4,7 @@ public final class TeleportingConfig {
 	public static final int MIN_DELAY = 0;
 	public static final int MIN_COOLDOWN = 0;
 	public static final int MIN_PRELOAD_RADIUS_CHUNKS = 0;
+	public static final int MAX_PRELOAD_RADIUS_CHUNKS = 3;
 	private int delay = 0;
 	private int cooldown = 3;
 	private boolean preloadEnabled = false;
@@ -41,7 +42,8 @@ public final class TeleportingConfig {
 	}
 
 	public void setPreloadRadiusChunks(int preloadRadiusChunks) {
-		this.preloadRadiusChunks = Math.max(MIN_PRELOAD_RADIUS_CHUNKS, preloadRadiusChunks);
+		this.preloadRadiusChunks = Math.min(MAX_PRELOAD_RADIUS_CHUNKS,
+				Math.max(MIN_PRELOAD_RADIUS_CHUNKS, preloadRadiusChunks));
 	}
 
 	public boolean isDefaultSafetyCheck() {

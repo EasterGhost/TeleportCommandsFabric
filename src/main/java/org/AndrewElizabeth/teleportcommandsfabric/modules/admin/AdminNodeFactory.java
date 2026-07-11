@@ -80,6 +80,7 @@ final class AdminNodeFactory {
 						"commands.teleport_commands.admin.config.teleporting.preload"))
 				.then(AdminConfigNodeFactory.intNode("preloadRadius", "chunks",
 						TeleportingConfig.MIN_PRELOAD_RADIUS_CHUNKS,
+						TeleportingConfig.MAX_PRELOAD_RADIUS_CHUNKS,
 						config -> config.getTeleporting().getPreloadRadiusChunks(),
 						(config, value) -> config.getTeleporting().setPreloadRadiusChunks(value),
 						"commands.teleport_commands.admin.config.teleporting.preloadRadius"))
