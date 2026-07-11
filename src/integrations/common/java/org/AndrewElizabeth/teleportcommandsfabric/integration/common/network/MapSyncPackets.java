@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.Sy
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
 
+import io.netty.handler.codec.DecoderException;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
@@ -66,7 +67,10 @@ public final class MapSyncPackets {
 				buf.readInt(),
 				buf.readInt());
 		int size = buf.readVarInt();
-		List<SyncedMapWaypoint> waypoints = new ArrayList<>(size);
+		if (size < 0) {
+			throw new DecoderException("Negative waypoint count: " + size);
+		}
+		List<SyncedMapWaypoint> waypoints = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
 			waypoints.add(new SyncedMapWaypoint(
 					buf.readEnum(SyncedWaypointKind.class),

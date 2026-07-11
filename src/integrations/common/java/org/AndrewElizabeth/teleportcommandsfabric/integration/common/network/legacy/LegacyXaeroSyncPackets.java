@@ -6,6 +6,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.Sy
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
 
+import io.netty.handler.codec.DecoderException;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.Identifier;
@@ -78,6 +79,9 @@ public final class LegacyXaeroSyncPackets {
 	private static void readEntries(FriendlyByteBuf buf, List<SyncedMapWaypoint> waypoints,
 			SyncedWaypointKind kind) {
 		int size = buf.readVarInt();
+		if (size < 0) {
+			throw new DecoderException("Negative " + kind.name() + " waypoint count: " + size);
+		}
 		for (int i = 0; i < size; i++) {
 			waypoints.add(new SyncedMapWaypoint(
 					kind,

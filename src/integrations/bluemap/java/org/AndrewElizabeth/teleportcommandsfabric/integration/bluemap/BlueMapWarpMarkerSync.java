@@ -110,11 +110,11 @@ final class BlueMapWarpMarkerSync {
 				ModConstants.LOGGER.error("Failed to read warps for BlueMap marker sync.", unwrap(throwable));
 				return;
 			}
-			if (blueMapApi != api || !enabled) {
-				return;
-			}
-			BlueMapWarpMarkers.apply(api, warps);
 			synchronized (BlueMapWarpMarkerSync.class) {
+				if (blueMapApi != api || !enabled) {
+					return;
+				}
+				BlueMapWarpMarkers.apply(api, warps);
 				if (changeVersion == refreshVersion) {
 					appliedVersion = refreshVersion;
 				}
@@ -126,20 +126,17 @@ final class BlueMapWarpMarkerSync {
 	}
 
 	private static void clearMarkersIfNeeded(BlueMapAPI api) {
-		boolean shouldClear;
 		synchronized (BlueMapWarpMarkerSync.class) {
-			shouldClear = markersApplied;
+			if (blueMapApi != api) {
+				return;
+			}
+			if (markersApplied) {
+				BlueMapWarpMarkers.clear(api);
+			}
 			markersApplied = false;
 			appliedVersion = changeVersion;
 			refreshInProgress = false;
 		}
-		if (shouldClear) {
-			clearMarkers(api);
-		}
-	}
-
-	private static void clearMarkers(BlueMapAPI api) {
-		BlueMapWarpMarkers.clear(api);
 	}
 
 	private static synchronized void finishRefresh() {
