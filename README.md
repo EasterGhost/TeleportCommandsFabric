@@ -15,7 +15,7 @@
 | --- | --- |
 | 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/worldspawn` | Every teleport command your server needs |
 | 🎛️ `/tpc` | One admin surface: enable/disable modules, tune limits, reload config — no JSON editing |
-| 🗺️ Map integrations | Homes and warps shown in supported map mods. Delete a synced map waypoint, and it hides server-side |
+| 🗺️ Map integrations | Sync homes and warps to Xaero/JourneyMap clients, and publish public warp markers to BlueMap web maps |
 | 📋 Better lists | `/homes` and `/warps` include clickable paging, sorting, and filtering controls |
 | ⚙️ Shared behavior | Delay, cooldown, chunk preloading, and safety checks apply consistently across all teleport types |
 | ⏳ Temporary homes | Time-limited homes (`/tmphome`) with automatic cleanup on expiry |
@@ -49,7 +49,7 @@ By default, extra debug logs are disabled. Target chunk preloading and default t
 
 TeleportCommandsFabric provides two build variants:
 
-- **Standard build**: includes the core teleport features and bundled map integrations, including Xaero and JourneyMap. Recommended for most users.
+- **Standard build**: includes the core teleport features and bundled map integrations for Xaero, JourneyMap, and BlueMap. Recommended for most users.
 - **Core build**: includes only the core teleport features, without bundled map integration. Use this if you only need server-side teleport commands or do not use bundled map integrations.
 
 Compatibility notes:
@@ -69,10 +69,13 @@ Adding the client mod (optional) improves the experience:
 | --- | :---: | :---: |
 | All teleport commands | ✅ | ✅ |
 | Clickable chat buttons | ✅ | ✅ |
-| Waypoints in supported map mods | — | ✅ |
+| Xaero/JourneyMap client waypoints | — | ✅ |
+| BlueMap web warp markers | ✅ | ✅ |
 | Map right-click → teleport | — | ✅ |
 | Trusted commands skip confirmation | — | ✅ |
 | TPA trust auto-accept / deny | ✅ | ✅ |
+
+BlueMap markers require BlueMap on the server, but do not require TeleportCommandsFabric on clients.
 
 ---
 
