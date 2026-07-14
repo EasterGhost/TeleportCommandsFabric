@@ -63,11 +63,12 @@ public final class SafetyThreadPool {
 					return;
 				} catch (Exception ignored) {
 				}
-				if (!waitForChunks(level, spawnPos)) {
+				LoadedChunkBlockStateReader reader = waitForSafetyReader(level, spawnPos);
+				if (reader == null) {
 					return;
 				}
 				for (int j = 0; j < warmupIterationsPerThread; j++) {
-					if (TeleportSafety.getSafeBlockPos(spawnPos, level).isEmpty()) {
+					if (TeleportSafety.getSafeBlockPos(spawnPos, level, reader).isEmpty()) {
 						DebugLog.warn("Teleport safety warmup check returned no safe position.");
 						break;
 					}
@@ -83,19 +84,20 @@ public final class SafetyThreadPool {
 						level.getChunkSource().removeTicketWithRadius(TicketType.UNKNOWN, chunkPos, ticketRadius)));
 	}
 
-	private static boolean waitForChunks(ServerLevel level, BlockPos pos) {
+	private static LoadedChunkBlockStateReader waitForSafetyReader(ServerLevel level, BlockPos pos) {
 		for (int retries = 0; retries < 40; retries++) {
-			if (level.isLoaded(pos)) {
-				return true;
+			LoadedChunkBlockStateReader reader = LoadedChunkBlockStateReader.create(level, pos);
+			if (reader.complete()) {
+				return reader;
 			}
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
-				return false;
+				return null;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	public void shutdown() {

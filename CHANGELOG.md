@@ -34,6 +34,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 ### Fixed
 
+- Fixed teleport safety workers attempting to synchronously create missing chunks when the warmup region had not finished loading. Warmup now waits for every required loaded chunk, and parallel safety checks no longer fall back to worker-thread world chunk loading.
 - Fixed invalid-dimension home and warp cleanup potentially deleting a newly created or updated waypoint after an earlier teleport lookup became stale. Automatic cleanup now removes only the exact unchanged waypoint that failed resolution.
 - Fixed a BlueMap lifecycle race that could use an invalid API instance while BlueMap was being disabled or reloaded.
 - Hardened current and legacy map synchronization payload decoding against invalid waypoint counts and unsafe allocation from untrusted count values.
