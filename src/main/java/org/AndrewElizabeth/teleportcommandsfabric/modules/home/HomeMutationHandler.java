@@ -182,6 +182,7 @@ final class HomeMutationHandler {
 			}
 			if (result == WaypointOperationResult.SUCCESS) {
 				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+				SharedHomePublicationHandler.onOwnerHomesChanged(server, playerUuid);
 			}
 			if (!silent) {
 				sendVisibilityResult(currentPlayer, result, visible);
@@ -204,14 +205,19 @@ final class HomeMutationHandler {
 		int maxHomes = ConfigManager.query(config -> config.getHome().getPlayerMaximum());
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
+		future.whenComplete((result, throwable) -> {
+			if (throwable == null && result == WaypointOperationResult.SUCCESS) {
+				server.execute(() -> {
+					WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+					SharedHomePublicationHandler.onOwnerHomesChanged(server, playerUuid);
+				});
+			}
+		});
 		CommandAsyncSupport.whenCompleteForPlayer(server, playerUuid, future, (currentPlayer, result, throwable) -> {
 			if (throwable != null) {
 				ModConstants.LOGGER.error(logMessage, throwable);
 				HomeMessages.send(currentPlayer, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 				return;
-			}
-			if (result == WaypointOperationResult.SUCCESS) {
-				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 			}
 			sendMutationResult(currentPlayer, result, successKey, maxHomes);
 			if (result == WaypointOperationResult.SUCCESS && successAction != null) {

@@ -1,7 +1,10 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli;
 
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeKey;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpTopic;
@@ -79,6 +82,9 @@ public final class CliTestSuite {
 				scenario("Homes render markers and actions",
 						"Verify /homes output shows default and temporary markers and does not show global map controls.",
 						CliTestSuite::testHomesRenderMarkersAndActions),
+				scenario("Shared homes render subscription actions",
+						"Verify /sharedhomes output identifies owners and exposes teleport, map, and unsubscribe actions.",
+						CliTestSuite::testSharedHomesRenderSubscriptionActions),
 				scenario("Waypoint manage and delete confirmation",
 						"Verify low-frequency waypoint actions use a manage page and deletion requires explicit confirmation.",
 						CliTestSuite::testWaypointManageAndDeleteConfirmation),
@@ -264,6 +270,30 @@ public final class CliTestSuite {
 		assertNotContains(text, "[全局地图", "home page should not show global map controls");
 	}
 
+	private static void testSharedHomesRenderSubscriptionActions() {
+		TestLocation location = location("farm", 30, 70.0D, 40, NETHER, true, 0);
+		SharedHomeView sharedHome = new SharedHomeView(
+				new SharedHomeKey(UUID.randomUUID(), location.getUuid()),
+				"Alex",
+				NamedLocationSnapshot.from(location),
+				true,
+				0);
+		String text = render(new WaypointPageRequest(
+				WaypointPageKind.SHARED_HOMES,
+				List.of(sharedHome),
+				Set.of(),
+				null,
+				false,
+				Set.of(),
+				WaypointListQuery.defaultQuery(),
+				"en_us"));
+
+		assertContains(text, "========== Shared Homes (Page 1/1) ==========", "shared homes should use their own title");
+		assertContains(text, "  - Alex / farm [Map: On]", "shared home rows should identify owner and home");
+		assertContains(text, "     | [Tp] [Hide From Map] [Unsubscribe] ",
+				"shared home rows should expose subscription-specific actions");
+	}
+
 	private static void testWaypointManageAndDeleteConfirmation() {
 		TestLocation home = location("main home", 10, 64.0D, 20, OVERWORLD, true, 0);
 		WaypointListQuery query = new WaypointListQuery(2,
@@ -282,8 +312,9 @@ public final class CliTestSuite {
 		String confirmation = renderDeleteConfirmation(request, home);
 		CommandLinkBuilder commands = new CommandLinkBuilder();
 
-		assertContains(manage, "========== Manage Home ==========\n  - main home (Default) [Map: On]\n     | [X10 Y64 Z20] [minecraft:overworld]\n     | [Tp] [Rename] [Update] \n     | [Delete] [Back] ",
+		assertContains(manage, "========== Manage Home ==========\n  - main home (Default) [Map: On]\n     | [X10 Y64 Z20] [minecraft:overworld]\n     | [Tp] [Rename] [Update] \n     | [Share] \n     | [Delete] [Back] ",
 				"manage page should render the selected waypoint and low-frequency actions");
+		assertContains(manage, "[Share]", "permanent home management should expose sharing");
 		assertContains(confirmation, "========== Manage Home ==========\nDelete \"main home\"? This cannot be undone.\n[Confirm Delete] [Cancel]",
 				"delete should require an explicit confirmation page");
 		assertEquals("teleportcommandsfabric:homeui confirmdelete " + home.getUuid()

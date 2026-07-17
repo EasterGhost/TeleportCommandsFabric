@@ -98,6 +98,19 @@ public final class ManageRenderer {
 			appendButton(message, request.language(), "commands.teleport_commands.common.defaultPrompt", ChatFormatting.DARK_AQUA,
 					new ClickEvent.RunCommand(commands.manageDefaultCommand(request, location.getUuid(), page)));
 		}
+		if (request.kind() == WaypointPageKind.HOMES && !location.isTemporary()) {
+			message.append("\n");
+			message.append(Component.literal("     | ").withStyle(ChatFormatting.AQUA));
+			if (request.publishedHomeUuids().contains(location.getUuid())) {
+				appendButton(message, request.language(), "commands.teleport_commands.sharedhome.broadcast", ChatFormatting.GOLD,
+						new ClickEvent.RunCommand(commands.manageShareCommand(request, location.getUuid(), page)));
+				appendButton(message, request.language(), "commands.teleport_commands.sharedhome.withdraw", ChatFormatting.RED,
+						new ClickEvent.RunCommand(commands.manageWithdrawCommand(request, location.getUuid(), page)));
+			} else {
+				appendButton(message, request.language(), "commands.teleport_commands.sharedhome.share", ChatFormatting.GOLD,
+						new ClickEvent.RunCommand(commands.manageShareCommand(request, location.getUuid(), page)));
+			}
+		}
 
 		message.append("\n");
 		message.append(Component.literal("     | ").withStyle(ChatFormatting.AQUA));

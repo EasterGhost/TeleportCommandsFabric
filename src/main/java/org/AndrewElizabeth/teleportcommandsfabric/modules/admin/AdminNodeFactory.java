@@ -111,7 +111,16 @@ final class AdminNodeFactory {
 				.then(AdminConfigNodeFactory.intNode("temporaryHomeTtl", "seconds", HomeConfig.MIN_TEMPORARY_HOME_TTL_SECONDS,
 						config -> config.getHome().getTemporaryHomeTtlSeconds(),
 						(config, value) -> config.getHome().setTemporaryHomeTtlSeconds(value),
-						"commands.teleport_commands.admin.config.home.temporaryHomeTtl"));
+						"commands.teleport_commands.admin.config.home.temporaryHomeTtl"))
+				.then(AdminConfigNodeFactory.intNode("sharedMax", "count", HomeConfig.MIN_SHARED_HOME_MAXIMUM,
+						config -> config.getHome().getSharedHomeMaximum(),
+						(config, value) -> config.getHome().setSharedHomeMaximum(value),
+						"commands.teleport_commands.admin.config.home.sharedMax"))
+				.then(AdminConfigNodeFactory.intNode("sharedBroadcastCooldown", "seconds",
+						HomeConfig.MIN_SHARED_HOME_BROADCAST_COOLDOWN_SECONDS,
+						config -> config.getHome().getSharedHomeBroadcastCooldownSeconds(),
+						(config, value) -> config.getHome().setSharedHomeBroadcastCooldownSeconds(value),
+						"commands.teleport_commands.admin.config.home.sharedBroadcastCooldown"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildTpaConfigNode() {

@@ -139,6 +139,10 @@ final class HomeNodeFactory {
 						HomeMutationHandler.updateHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
 				.then(uiActionNode("default", (context, waypointUuid, query) ->
 						HomeMutationHandler.setDefaultHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("share", (context, waypointUuid, query) ->
+						SharedHomePublicationHandler.shareFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("withdraw", (context, waypointUuid, query) ->
+						SharedHomePublicationHandler.withdrawFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
 				.then(uiActionNode("delete", (context, waypointUuid, query) ->
 						HomeListHandler.renderHomeManage(context.getSource().getPlayerOrException(), waypointUuid, query, true)))
 				.then(uiActionNode("confirmdelete", (context, waypointUuid, query) ->

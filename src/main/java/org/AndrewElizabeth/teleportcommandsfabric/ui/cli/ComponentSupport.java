@@ -54,8 +54,10 @@ public final class ComponentSupport {
 	}
 
 	public static String waypointTitleKey(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES
-				? "commands.teleport_commands.homes.title"
-				: "commands.teleport_commands.warps.title";
+		return switch (kind) {
+		case HOMES -> "commands.teleport_commands.homes.title";
+		case WARPS -> "commands.teleport_commands.warps.title";
+		case SHARED_HOMES -> "commands.teleport_commands.sharedhomes.title";
+		};
 	}
 }

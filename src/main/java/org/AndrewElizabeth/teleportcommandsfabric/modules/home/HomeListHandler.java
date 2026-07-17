@@ -65,8 +65,11 @@ final class HomeListHandler {
 								ChatFormatting.BOLD);
 						return;
 					}
+					Set<UUID> publishedHomeUuids = TeleportCommands.SHARED_HOME_SERVICE == null
+							? Set.of()
+							: TeleportCommands.SHARED_HOME_SERVICE.publishedHomeUuids(playerUuid);
 					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.HOMES, data.homes(), Set.of(),
-							data.defaultHomeUuid(), true, query, language(currentPlayer));
+							data.defaultHomeUuid(), true, publishedHomeUuids, query, language(currentPlayer));
 					if (renderMode == WaypointRenderMode.MANAGE || renderMode == WaypointRenderMode.DELETE_CONFIRMATION) {
 						NamedLocationView location = WaypointRows.findByUuid(data.homes(), waypointUuid).orElse(null);
 						if (location == null) {
