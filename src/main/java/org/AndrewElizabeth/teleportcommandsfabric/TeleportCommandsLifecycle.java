@@ -11,6 +11,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.Safe
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.TeleportBatchDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.home.SharedHomeBroadcastDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
@@ -56,6 +57,9 @@ final class TeleportCommandsLifecycle {
 		if (TeleportCommands.RTP_SERVICE != null) {
 			TeleportCommands.RTP_SERVICE.tick(server);
 		}
+		if (TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER != null) {
+			TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER.tick(server);
+		}
 	}
 
 	static void shutdown(MinecraftServer server) {
@@ -75,6 +79,7 @@ final class TeleportCommandsLifecycle {
 		TeleportCommands.RTP_SERVICE = new RtpService(TeleportCommands.RECORDED_LOCATION_SOURCE,
 				teleportOperationManager, teleportPreloadManager);
 		TeleportCommands.SHARED_HOME_SERVICE = new SharedHomeService();
+		TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER = new SharedHomeBroadcastDispatcher();
 		TeleportCommands.GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
 		TeleportCommands.PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
 		TeleportCommands.WAYPOINT_PAGES = new WaypointPages();
@@ -133,6 +138,7 @@ final class TeleportCommandsLifecycle {
 		RtpService rtpService = TeleportCommands.RTP_SERVICE;
 		WaypointPages waypointPages = TeleportCommands.WAYPOINT_PAGES;
 		SharedHomeService sharedHomeService = TeleportCommands.SHARED_HOME_SERVICE;
+		SharedHomeBroadcastDispatcher sharedHomeBroadcastDispatcher = TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER;
 		PlayerRecordedLocationManager recordedLocationManager = TeleportCommands.RECORDED_LOCATION_MANAGER;
 		GlobalProfileManager globalProfileManager = TeleportCommands.GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerProfileManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
@@ -152,10 +158,14 @@ final class TeleportCommandsLifecycle {
 		if (sharedHomeService != null) {
 			sharedHomeService.clear();
 		}
+		if (sharedHomeBroadcastDispatcher != null) {
+			sharedHomeBroadcastDispatcher.clear();
+		}
 		TeleportCommands.TELEPORT_SERVICE = null;
 		TeleportCommands.TPA_SERVICE = null;
 		TeleportCommands.RTP_SERVICE = null;
 		TeleportCommands.SHARED_HOME_SERVICE = null;
+		TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER = null;
 		TeleportCommands.WAYPOINT_PAGES = null;
 
 		CompletableFuture<Void> configShutdown = ConfigManager.shutdown();

@@ -63,7 +63,7 @@ final class SharedHomePublicationHandler {
 	static void onOwnerHomesChanged(MinecraftServer server, UUID ownerUuid) {
 		SharedHomeService service = TeleportCommands.SHARED_HOME_SERVICE;
 		PlayerProfileManager profileManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
-		if (service == null || profileManager == null || service.publishedHomeUuids(ownerUuid).isEmpty()) {
+		if (service == null || profileManager == null || !service.hasPublications(ownerUuid)) {
 			return;
 		}
 		profileManager.query(ownerUuid, profile -> profile.getHomes().stream()
@@ -136,11 +136,8 @@ final class SharedHomePublicationHandler {
 	}
 
 	private static void broadcast(ServerPlayer owner, String homeName, SharedHomeKey key) {
-		for (ServerPlayer recipient : owner.level().getServer().getPlayerList().getPlayers()) {
-			if (!recipient.getUUID().equals(owner.getUUID())) {
-				SharedHomeMessages.sendBroadcast(recipient, owner.getName().getString(), homeName, key);
-			}
-		}
+		TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER.enqueue(owner.level().getServer(), owner.getUUID(),
+				owner.getName().getString(), homeName, key);
 	}
 
 	private static boolean ensureAvailable(ServerPlayer player) {
@@ -148,7 +145,8 @@ final class SharedHomePublicationHandler {
 			HomeMessages.send(player, "commands.teleport_commands.home.disabled", ChatFormatting.RED);
 			return false;
 		}
-		if (TeleportCommands.SHARED_HOME_SERVICE == null || TeleportCommands.PLAYER_PROFILE_MANAGER == null) {
+		if (TeleportCommands.SHARED_HOME_SERVICE == null || TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER == null
+				|| TeleportCommands.PLAYER_PROFILE_MANAGER == null) {
 			SharedHomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
 			return false;
 		}

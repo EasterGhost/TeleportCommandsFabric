@@ -10,13 +10,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class SharedHomeService {
-	private final Map<SharedHomeKey, Publication> publications = new LinkedHashMap<>();
+	private final Map<UUID, LinkedHashMap<UUID, Publication>> publicationsByOwner = new LinkedHashMap<>();
 	private final Map<UUID, LinkedHashMap<SharedHomeKey, Subscription>> subscriptionsByPlayer = new LinkedHashMap<>();
 	private final Map<UUID, Long> lastBroadcastTimeByPlayer = new LinkedHashMap<>();
 
 	public PublishResult publishOrBroadcast(SharedHomeKey key, int maximum, long nowMillis, long cooldownMillis) {
-		Publication existing = publications.get(key);
-		if (existing == null && publicationCount(key.ownerUuid()) >= Math.max(1, maximum)) {
+		Map<UUID, Publication> ownerPublications = publicationsByOwner.get(key.ownerUuid());
+		Publication existing = ownerPublications == null ? null : ownerPublications.get(key.homeUuid());
+		if (existing == null && ownerPublications != null && ownerPublications.size() >= Math.max(1, maximum)) {
 			return new PublishResult(PublishStatus.LIMIT_REACHED, 0L);
 		}
 
@@ -27,14 +28,15 @@ public final class SharedHomeService {
 
 		boolean created = existing == null;
 		if (created) {
-			publications.put(key, new Publication());
+			publicationsByOwner.computeIfAbsent(key.ownerUuid(), ignored -> new LinkedHashMap<>())
+					.put(key.homeUuid(), new Publication());
 		}
 		lastBroadcastTimeByPlayer.put(key.ownerUuid(), nowMillis);
 		return new PublishResult(created ? PublishStatus.PUBLISHED : PublishStatus.BROADCAST, 0L);
 	}
 
 	public SubscriptionStatus subscribe(UUID subscriberUuid, SharedHomeKey key) {
-		Publication publication = publications.get(key);
+		Publication publication = publication(key);
 		if (publication == null) {
 			return SubscriptionStatus.NOT_FOUND;
 		}
@@ -60,7 +62,7 @@ public final class SharedHomeService {
 		if (subscriptions.isEmpty()) {
 			subscriptionsByPlayer.remove(subscriberUuid);
 		}
-		Publication publication = publications.get(key);
+		Publication publication = publication(key);
 		if (publication != null) {
 			publication.subscribers.remove(subscriberUuid);
 		}
@@ -68,9 +70,13 @@ public final class SharedHomeService {
 	}
 
 	public Set<UUID> withdraw(SharedHomeKey key) {
-		Publication publication = publications.remove(key);
+		LinkedHashMap<UUID, Publication> ownerPublications = publicationsByOwner.get(key.ownerUuid());
+		Publication publication = ownerPublications == null ? null : ownerPublications.remove(key.homeUuid());
 		if (publication == null) {
 			return Set.of();
+		}
+		if (ownerPublications.isEmpty()) {
+			publicationsByOwner.remove(key.ownerUuid());
 		}
 		Set<UUID> affected = Set.copyOf(publication.subscribers);
 		for (UUID subscriberUuid : affected) {
@@ -87,9 +93,14 @@ public final class SharedHomeService {
 	}
 
 	public Set<UUID> removeMissingPublications(UUID ownerUuid, Collection<UUID> existingHomeUuids) {
+		Map<UUID, Publication> ownerPublications = publicationsByOwner.get(ownerUuid);
+		if (ownerPublications == null || ownerPublications.isEmpty()) {
+			return Set.of();
+		}
 		Set<UUID> valid = existingHomeUuids == null ? Set.of() : Set.copyOf(existingHomeUuids);
-		List<SharedHomeKey> missing = publications.keySet().stream()
-				.filter(key -> key.ownerUuid().equals(ownerUuid) && !valid.contains(key.homeUuid()))
+		List<SharedHomeKey> missing = ownerPublications.keySet().stream()
+				.filter(homeUuid -> !valid.contains(homeUuid))
+				.map(homeUuid -> new SharedHomeKey(ownerUuid, homeUuid))
 				.toList();
 		Set<UUID> affected = new LinkedHashSet<>();
 		for (SharedHomeKey key : missing) {
@@ -100,7 +111,7 @@ public final class SharedHomeService {
 
 	public boolean setMapVisible(UUID subscriberUuid, SharedHomeKey key, boolean visible) {
 		LinkedHashMap<SharedHomeKey, Subscription> subscriptions = subscriptionsByPlayer.get(subscriberUuid);
-		if (subscriptions == null || !subscriptions.containsKey(key) || !publications.containsKey(key)) {
+		if (subscriptions == null || !subscriptions.containsKey(key) || !isPublished(key)) {
 			return false;
 		}
 		subscriptions.put(key, new Subscription(visible));
@@ -108,30 +119,31 @@ public final class SharedHomeService {
 	}
 
 	public boolean isPublished(SharedHomeKey key) {
-		return publications.containsKey(key);
+		return publication(key) != null;
+	}
+
+	public boolean hasPublications(UUID ownerUuid) {
+		return publicationsByOwner.containsKey(ownerUuid);
 	}
 
 	public boolean isSubscribed(UUID subscriberUuid, SharedHomeKey key) {
 		Map<SharedHomeKey, Subscription> subscriptions = subscriptionsByPlayer.get(subscriberUuid);
-		return subscriptions != null && subscriptions.containsKey(key) && publications.containsKey(key);
+		return subscriptions != null && subscriptions.containsKey(key) && isPublished(key);
 	}
 
 	public Set<UUID> publishedHomeUuids(UUID ownerUuid) {
-		Set<UUID> result = new LinkedHashSet<>();
-		for (SharedHomeKey key : publications.keySet()) {
-			if (key.ownerUuid().equals(ownerUuid)) {
-				result.add(key.homeUuid());
-			}
-		}
-		return Set.copyOf(result);
+		Map<UUID, Publication> ownerPublications = publicationsByOwner.get(ownerUuid);
+		return ownerPublications == null ? Set.of() : Set.copyOf(ownerPublications.keySet());
 	}
 
 	public Set<UUID> subscribersForOwner(UUID ownerUuid) {
+		Map<UUID, Publication> ownerPublications = publicationsByOwner.get(ownerUuid);
+		if (ownerPublications == null) {
+			return Set.of();
+		}
 		Set<UUID> result = new LinkedHashSet<>();
-		for (Map.Entry<SharedHomeKey, Publication> entry : publications.entrySet()) {
-			if (entry.getKey().ownerUuid().equals(ownerUuid)) {
-				result.addAll(entry.getValue().subscribers);
-			}
+		for (Publication publication : ownerPublications.values()) {
+			result.addAll(publication.subscribers);
 		}
 		return Set.copyOf(result);
 	}
@@ -144,7 +156,7 @@ public final class SharedHomeService {
 		List<SubscriptionView> result = new ArrayList<>(subscriptions.size());
 		int sequence = 0;
 		for (Map.Entry<SharedHomeKey, Subscription> entry : subscriptions.entrySet()) {
-			if (publications.containsKey(entry.getKey())) {
+			if (isPublished(entry.getKey())) {
 				result.add(new SubscriptionView(entry.getKey(), entry.getValue().mapVisible, sequence++));
 			}
 		}
@@ -152,19 +164,14 @@ public final class SharedHomeService {
 	}
 
 	public void clear() {
-		publications.clear();
+		publicationsByOwner.clear();
 		subscriptionsByPlayer.clear();
 		lastBroadcastTimeByPlayer.clear();
 	}
 
-	private int publicationCount(UUID ownerUuid) {
-		int count = 0;
-		for (SharedHomeKey key : publications.keySet()) {
-			if (key.ownerUuid().equals(ownerUuid)) {
-				count++;
-			}
-		}
-		return count;
+	private Publication publication(SharedHomeKey key) {
+		Map<UUID, Publication> ownerPublications = publicationsByOwner.get(key.ownerUuid());
+		return ownerPublications == null ? null : ownerPublications.get(key.homeUuid());
 	}
 
 	private long remainingCooldown(UUID ownerUuid, long nowMillis, long cooldownMillis) {

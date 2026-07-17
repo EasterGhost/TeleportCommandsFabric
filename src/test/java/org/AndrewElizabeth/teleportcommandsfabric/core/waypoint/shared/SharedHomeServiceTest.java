@@ -26,6 +26,7 @@ class SharedHomeServiceTest {
 				service.publishOrBroadcast(first, 1, 61_000L, COOLDOWN_MILLIS).status());
 		assertEquals(SharedHomeService.PublishStatus.LIMIT_REACHED,
 				service.publishOrBroadcast(second, 1, 121_000L, COOLDOWN_MILLIS).status());
+		assertTrue(service.hasPublications(owner));
 		assertEquals(Set.of(first.homeUuid()), service.publishedHomeUuids(owner));
 	}
 
@@ -83,6 +84,7 @@ class SharedHomeServiceTest {
 		service.subscribe(secondSubscriber, key);
 
 		assertEquals(Set.of(firstSubscriber, secondSubscriber), service.withdraw(key));
+		assertFalse(service.hasPublications(key.ownerUuid()));
 		assertFalse(service.isPublished(key));
 		assertFalse(service.isSubscribed(firstSubscriber, key));
 		assertTrue(service.subscriptions(secondSubscriber).isEmpty());
@@ -114,6 +116,24 @@ class SharedHomeServiceTest {
 		assertEquals(Set.of(subscriber), service.removeMissingPublications(owner, Set.of(kept.homeUuid())));
 		assertTrue(service.isPublished(kept));
 		assertFalse(service.isPublished(removed));
+	}
+
+	@Test
+	void ownerIndexesRemainIndependentAtScale() {
+		SharedHomeService service = new SharedHomeService();
+		List<SharedHomeKey> keys = java.util.stream.IntStream.range(0, 10_000)
+				.mapToObj(ignored -> key(UUID.randomUUID()))
+				.toList();
+		for (SharedHomeKey key : keys) {
+			service.publishOrBroadcast(key, 1, 1_000L, 0L);
+		}
+
+		SharedHomeKey target = keys.get(5_000);
+		assertEquals(Set.of(target.homeUuid()), service.publishedHomeUuids(target.ownerUuid()));
+		assertEquals(Set.of(), service.removeMissingPublications(target.ownerUuid(), Set.of(target.homeUuid())));
+		assertTrue(service.isPublished(target));
+		assertTrue(service.isPublished(keys.getFirst()));
+		assertTrue(service.isPublished(keys.getLast()));
 	}
 
 	private static SharedHomeKey publish(SharedHomeService service, UUID owner, long now) {

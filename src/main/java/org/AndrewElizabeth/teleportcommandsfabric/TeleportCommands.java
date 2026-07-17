@@ -10,6 +10,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHom
 import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.home.HomeCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.home.SharedHomeBroadcastDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.rtp.RtpCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.teleport.TeleportCancelCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
@@ -43,6 +44,7 @@ public class TeleportCommands implements ModInitializer {
 	public static TpaService TPA_SERVICE;
 	public static RtpService RTP_SERVICE;
 	public static SharedHomeService SHARED_HOME_SERVICE;
+	public static SharedHomeBroadcastDispatcher SHARED_HOME_BROADCAST_DISPATCHER;
 	public static WaypointPages WAYPOINT_PAGES;
 
 	@Override
