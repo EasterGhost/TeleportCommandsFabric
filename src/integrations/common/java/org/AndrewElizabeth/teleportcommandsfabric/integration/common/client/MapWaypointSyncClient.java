@@ -72,6 +72,10 @@ public final class MapWaypointSyncClient {
 
 	private static void sendBestAvailableHandshake() {
 		if (ClientPlayNetworking.canSend(ClientIntegrationHelloPayload.TYPE)) {
+			if (IntegrationProtocol.PROTOCOL_VERSION > IntegrationProtocol.MIN_SUPPORTED_PROTOCOL_VERSION) {
+				ClientPlayNetworking.send(new ClientIntegrationHelloPayload(
+						IntegrationProtocol.MIN_SUPPORTED_PROTOCOL_VERSION));
+			}
 			ClientPlayNetworking.send(ClientIntegrationHelloPayload.current());
 			pendingHello = false;
 			DebugLog.info("Sending integration common hello.");

@@ -21,6 +21,7 @@ import java.util.Set;
 public final class XaeroCompat {
 	private static final Set<String> WARP_SYNCED_WORLDS = new HashSet<>();
 	private static final Set<String> HOME_SYNCED_WORLDS = new HashSet<>();
+	private static final Set<String> SHARED_HOME_SYNCED_WORLDS = new HashSet<>();
 
 	private XaeroCompat() {
 	}
@@ -45,7 +46,9 @@ public final class XaeroCompat {
 		boolean homesApplied = applyEntries(worldManager, entriesOf(snapshot, SyncedWaypointKind.HOME),
 				XaeroWaypointType.HOME,
 				persist, warpSetName, homeSetName);
-		return warpsApplied && homesApplied;
+		boolean sharedHomesApplied = applyEntries(worldManager, entriesOf(snapshot, SyncedWaypointKind.SHARED_HOME),
+				XaeroWaypointType.SHARED_HOME, false, warpSetName, homeSetName);
+		return warpsApplied && homesApplied && sharedHomesApplied;
 	}
 
 	private static List<SyncedMapWaypoint> entriesOf(MapWaypointSnapshot snapshot, SyncedWaypointKind kind) {
@@ -81,7 +84,7 @@ public final class XaeroCompat {
 
 	private static void clearMissingWorlds(MinimapWorldManager worldManager, Set<String> activeWorlds,
 			XaeroWaypointType type, boolean persist, String warpSetName, String homeSetName) {
-		Set<String> trackedWorlds = type == XaeroWaypointType.WARP ? WARP_SYNCED_WORLDS : HOME_SYNCED_WORLDS;
+		Set<String> trackedWorlds = trackedWorlds(type);
 		Set<String> previousWorlds = new HashSet<>(trackedWorlds);
 		previousWorlds.removeAll(activeWorlds);
 		for (String worldId : previousWorlds) {
@@ -126,10 +129,14 @@ public final class XaeroCompat {
 	}
 
 	private static void markWorldSynced(String worldId, XaeroWaypointType type) {
-		if (type == XaeroWaypointType.WARP) {
-			WARP_SYNCED_WORLDS.add(worldId);
-		} else {
-			HOME_SYNCED_WORLDS.add(worldId);
-		}
+		trackedWorlds(type).add(worldId);
+	}
+
+	private static Set<String> trackedWorlds(XaeroWaypointType type) {
+		return switch (type) {
+		case WARP -> WARP_SYNCED_WORLDS;
+		case HOME -> HOME_SYNCED_WORLDS;
+		case SHARED_HOME -> SHARED_HOME_SYNCED_WORLDS;
+		};
 	}
 }

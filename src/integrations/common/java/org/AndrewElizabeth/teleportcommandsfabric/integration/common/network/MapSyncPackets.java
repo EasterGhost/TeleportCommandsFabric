@@ -38,7 +38,7 @@ public final class MapSyncPackets {
 		payloadTypesRegistered = true;
 	}
 
-	public static void writeSnapshot(FriendlyByteBuf buf, MapWaypointSnapshot snapshot) {
+	public static void writeSnapshot(FriendlyByteBuf buf, MapWaypointSnapshot snapshot, int protocolVersion) {
 		buf.writeBoolean(snapshot.persistWaypointSets());
 		buf.writeUtf(snapshot.warpGroupName());
 		buf.writeUtf(snapshot.homeGroupName());
@@ -46,10 +46,16 @@ public final class MapSyncPackets {
 		buf.writeInt(snapshot.deathLocation().x());
 		buf.writeInt(snapshot.deathLocation().y());
 		buf.writeInt(snapshot.deathLocation().z());
-		buf.writeVarInt(snapshot.waypoints().size());
-		for (SyncedMapWaypoint waypoint : snapshot.waypoints()) {
+		List<SyncedMapWaypoint> compatibleWaypoints = snapshot.waypoints().stream()
+				.filter(waypoint -> protocolVersion >= 2 || waypoint.kind() != SyncedWaypointKind.SHARED_HOME)
+				.toList();
+		buf.writeVarInt(compatibleWaypoints.size());
+		for (SyncedMapWaypoint waypoint : compatibleWaypoints) {
 			buf.writeEnum(waypoint.kind());
 			buf.writeUtf(waypoint.name());
+			if (protocolVersion >= 2) {
+				buf.writeUtf(waypoint.commandTarget());
+			}
 			buf.writeUtf(waypoint.worldId());
 			buf.writeInt(waypoint.x());
 			buf.writeInt(waypoint.y());
@@ -57,7 +63,7 @@ public final class MapSyncPackets {
 		}
 	}
 
-	public static MapWaypointSnapshot readSnapshot(FriendlyByteBuf buf) {
+	public static MapWaypointSnapshot readSnapshot(FriendlyByteBuf buf, int protocolVersion) {
 		boolean persistWaypointSets = buf.readBoolean();
 		String warpGroupName = buf.readUtf();
 		String homeGroupName = buf.readUtf();
@@ -72,9 +78,13 @@ public final class MapSyncPackets {
 		}
 		List<SyncedMapWaypoint> waypoints = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
+			SyncedWaypointKind kind = buf.readEnum(SyncedWaypointKind.class);
+			String name = buf.readUtf();
+			String commandTarget = protocolVersion >= 2 ? buf.readUtf() : name;
 			waypoints.add(new SyncedMapWaypoint(
-					buf.readEnum(SyncedWaypointKind.class),
-					buf.readUtf(),
+					kind,
+					name,
+					commandTarget,
 					buf.readUtf(),
 					buf.readInt(),
 					buf.readInt(),

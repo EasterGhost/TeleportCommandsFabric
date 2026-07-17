@@ -1,6 +1,8 @@
 package org.AndrewElizabeth.teleportcommandsfabric.integration.xaero;
 
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.client.ClientMapWaypointSnapshots;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import xaero.common.minimap.waypoints.Waypoint;
@@ -15,7 +17,7 @@ public final class XaeroWaypointCommandHelper {
 			return null;
 		}
 
-		return buildHideCommand(waypoint.getName());
+		return buildHideCommand(waypoint.getName(), waypoint.getX(), waypoint.getY(), waypoint.getZ());
 	}
 
 	public static String buildHideCommand(xaero.map.mods.gui.Waypoint waypoint) {
@@ -23,7 +25,7 @@ public final class XaeroWaypointCommandHelper {
 			return null;
 		}
 
-		return buildHideCommand(waypoint.getName());
+		return buildHideCommand(waypoint.getName(), waypoint.getX(), waypoint.getY(), waypoint.getZ());
 	}
 
 	public static String buildTeleportCommand(Waypoint waypoint) {
@@ -33,17 +35,17 @@ public final class XaeroWaypointCommandHelper {
 		if (waypoint.getPurpose() == WaypointPurpose.DEATH) {
 			return command("back") + " death";
 		}
-		return buildTaggedTeleportCommand(waypoint.getName());
+		return buildTaggedTeleportCommand(waypoint.getName(), waypoint.getX(), waypoint.getY(), waypoint.getZ());
 	}
 
 	public static String buildTeleportCommand(xaero.map.mods.gui.Waypoint waypoint) {
 		if (waypoint == null) {
 			return null;
 		}
-		return buildTaggedTeleportCommand(waypoint.getName());
+		return buildTaggedTeleportCommand(waypoint.getName(), waypoint.getX(), waypoint.getY(), waypoint.getZ());
 	}
 
-	private static String buildHideCommand(String name) {
+	private static String buildHideCommand(String name, int x, int y, int z) {
 		if (name == null) {
 			return null;
 		}
@@ -56,6 +58,9 @@ public final class XaeroWaypointCommandHelper {
 			return buildHideCommandLiteral("teleportcommandsfabric:maphome",
 					name.substring(XaeroWaypointTags.HOME_PREFIX.length()).trim());
 		}
+		if (name.startsWith(XaeroWaypointTags.SHARED_HOME_PREFIX)) {
+			return sharedCommand("teleportcommandsfabric:mapsharedhome", name, x, y, z, " false");
+		}
 
 		return null;
 	}
@@ -64,7 +69,7 @@ public final class XaeroWaypointCommandHelper {
 		return command + " " + CommandArgumentUtils.quote(name) + " false";
 	}
 
-	private static String buildTaggedTeleportCommand(String name) {
+	private static String buildTaggedTeleportCommand(String name, int x, int y, int z) {
 		if (name == null) {
 			return null;
 		}
@@ -80,7 +85,29 @@ public final class XaeroWaypointCommandHelper {
 		if (name.startsWith(XaeroWaypointTags.HOME_PREFIX)) {
 			return command("home") + " " + CommandArgumentUtils.quote(normalizedName);
 		}
+		if (name.startsWith(XaeroWaypointTags.SHARED_HOME_PREFIX)) {
+			return sharedCommand("teleportcommandsfabric:sharedhome", name, x, y, z, "");
+		}
 		return null;
+	}
+
+	private static String sharedCommand(String root, String taggedName, int x, int y, int z, String suffix) {
+		String name = taggedName.substring(XaeroWaypointTags.SHARED_HOME_PREFIX.length()).trim();
+		SyncedMapWaypoint match = null;
+		for (SyncedMapWaypoint waypoint : ClientMapWaypointSnapshots.latest().waypoints()) {
+			if (waypoint.kind() != SyncedWaypointKind.SHARED_HOME || !waypoint.name().equals(name)) {
+				continue;
+			}
+			if (x != Integer.MIN_VALUE
+					&& (waypoint.x() != x || waypoint.y() != y || waypoint.z() != z)) {
+				continue;
+			}
+			if (match != null) {
+				return null;
+			}
+			match = waypoint;
+		}
+		return match == null ? null : root + " " + match.commandTarget() + suffix;
 	}
 
 	private static String command(String root) {
