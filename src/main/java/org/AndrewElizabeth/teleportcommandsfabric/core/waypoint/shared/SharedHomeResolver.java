@@ -1,5 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared;
 
+import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.StorageFutures;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
@@ -30,13 +32,7 @@ public final class SharedHomeResolver {
 		for (SharedHomeService.SubscriptionView subscription : subscriptions) {
 			UUID ownerUuid = subscription.key().ownerUuid();
 			ownerNames.computeIfAbsent(ownerUuid, uuid -> resolveOwnerName(server, uuid));
-			homesByOwner.computeIfAbsent(ownerUuid, uuid -> profileManager.query(uuid, profile -> {
-				Map<UUID, NamedLocationView> homes = new LinkedHashMap<>();
-				for (NamedLocationView home : profile.getHomes()) {
-					homes.put(home.getUuid(), home);
-				}
-				return Map.copyOf(homes);
-			}));
+			homesByOwner.computeIfAbsent(ownerUuid, uuid -> loadOwnerHomes(uuid, profileManager));
 		}
 
 		CompletableFuture<?>[] loads = homesByOwner.values().toArray(CompletableFuture[]::new);
@@ -50,6 +46,21 @@ public final class SharedHomeResolver {
 	public static CompletableFuture<Optional<NamedLocationView>> resolve(SharedHomeKey key,
 			PlayerProfileManager profileManager) {
 		return profileManager.query(key.ownerUuid(), profile -> profile.getHome(key.homeUuid()));
+	}
+
+	private static CompletableFuture<Map<UUID, NamedLocationView>> loadOwnerHomes(UUID ownerUuid,
+			PlayerProfileManager profileManager) {
+		return profileManager.query(ownerUuid, profile -> {
+			Map<UUID, NamedLocationView> homes = new LinkedHashMap<>();
+			for (NamedLocationView home : profile.getHomes()) {
+				homes.put(home.getUuid(), home);
+			}
+			return Map.copyOf(homes);
+		}).exceptionally(throwable -> {
+			ModConstants.LOGGER.error("Failed to resolve shared homes for owner {}.", ownerUuid,
+					StorageFutures.unwrapCompletionException(throwable));
+			return Map.of();
+		});
 	}
 
 	private static Optional<SharedHomeView> resolve(SharedHomeService.SubscriptionView subscription,
