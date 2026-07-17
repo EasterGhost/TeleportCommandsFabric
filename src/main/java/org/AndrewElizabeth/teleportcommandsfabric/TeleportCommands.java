@@ -6,6 +6,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.home.HomeCommand;
@@ -41,6 +42,7 @@ public class TeleportCommands implements ModInitializer {
 	public static TeleportService TELEPORT_SERVICE;
 	public static TpaService TPA_SERVICE;
 	public static RtpService RTP_SERVICE;
+	public static SharedHomeService SHARED_HOME_SERVICE;
 	public static WaypointPages WAYPOINT_PAGES;
 
 	@Override

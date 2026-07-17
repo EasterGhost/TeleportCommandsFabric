@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.Teleport
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.SafetyThreadPool;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.TeleportBatchDispatcher;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
@@ -73,6 +74,7 @@ final class TeleportCommandsLifecycle {
 				teleportOperationManager, teleportPreloadManager, TpaCommand::sendExpired);
 		TeleportCommands.RTP_SERVICE = new RtpService(TeleportCommands.RECORDED_LOCATION_SOURCE,
 				teleportOperationManager, teleportPreloadManager);
+		TeleportCommands.SHARED_HOME_SERVICE = new SharedHomeService();
 		TeleportCommands.GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
 		TeleportCommands.PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
 		TeleportCommands.WAYPOINT_PAGES = new WaypointPages();
@@ -130,6 +132,7 @@ final class TeleportCommandsLifecycle {
 		TpaService tpaService = TeleportCommands.TPA_SERVICE;
 		RtpService rtpService = TeleportCommands.RTP_SERVICE;
 		WaypointPages waypointPages = TeleportCommands.WAYPOINT_PAGES;
+		SharedHomeService sharedHomeService = TeleportCommands.SHARED_HOME_SERVICE;
 		PlayerRecordedLocationManager recordedLocationManager = TeleportCommands.RECORDED_LOCATION_MANAGER;
 		GlobalProfileManager globalProfileManager = TeleportCommands.GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerProfileManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
@@ -146,9 +149,13 @@ final class TeleportCommandsLifecycle {
 		if (waypointPages != null) {
 			waypointPages.close();
 		}
+		if (sharedHomeService != null) {
+			sharedHomeService.clear();
+		}
 		TeleportCommands.TELEPORT_SERVICE = null;
 		TeleportCommands.TPA_SERVICE = null;
 		TeleportCommands.RTP_SERVICE = null;
+		TeleportCommands.SHARED_HOME_SERVICE = null;
 		TeleportCommands.WAYPOINT_PAGES = null;
 
 		CompletableFuture<Void> configShutdown = ConfigManager.shutdown();
