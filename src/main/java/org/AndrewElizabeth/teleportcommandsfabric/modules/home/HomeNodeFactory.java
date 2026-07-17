@@ -130,6 +130,26 @@ final class HomeNodeFactory {
 						.then(visibleNode));
 	}
 
+	static LiteralArgumentBuilder<CommandSourceStack> buildUiNode() {
+		return Commands.literal("teleportcommandsfabric:homeui")
+				.requires(HomeNodeFactory::requiresPlayer)
+				.then(uiActionNode("manage", (context, waypointUuid, query) ->
+						HomeListHandler.renderHomeManage(context.getSource().getPlayerOrException(), waypointUuid, query, false)))
+				.then(uiActionNode("update", (context, waypointUuid, query) ->
+						HomeMutationHandler.updateHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("default", (context, waypointUuid, query) ->
+						HomeMutationHandler.setDefaultHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("delete", (context, waypointUuid, query) ->
+						HomeListHandler.renderHomeManage(context.getSource().getPlayerOrException(), waypointUuid, query, true)))
+				.then(uiActionNode("confirmdelete", (context, waypointUuid, query) ->
+						HomeMutationHandler.deleteHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> uiActionNode(String action,
+			WaypointQueryNodes.WaypointQueryExecutor executor) {
+		return Commands.literal(action).then(WaypointQueryNodes.waypointUuidArgument(executor));
+	}
+
 	private static boolean requiresPlayer(CommandSourceStack source) {
 		return source.getPlayer() != null;
 	}

@@ -25,6 +25,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 final class WarpMutationHandler {
 	private WarpMutationHandler() {
@@ -58,6 +59,22 @@ final class WarpMutationHandler {
 		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
+	static int updateWarpFromManage(ServerPlayer player, UUID waypointUuid, WaypointListQuery query) {
+		if (!ensureEnabled(player)) {
+			return CommandReturns.FAILED;
+		}
+		AsyncWaypointSource source = source();
+		if (source == null) {
+			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return CommandReturns.FAILED;
+		}
+		handleGlobalMutationResult(player, WaypointCrudService.update(player, waypointUuid, source),
+				"commands.teleport_commands.warp.update", "Error while updating a warp.",
+				currentPlayer -> WarpListHandler.renderWarpManage(currentPlayer.createCommandSourceStack(), currentPlayer,
+						waypointUuid, query, false));
+		return CommandReturns.ACCEPTED_ASYNC;
+	}
+
 	static int deleteWarp(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
 			return CommandReturns.FAILED;
@@ -69,6 +86,21 @@ final class WarpMutationHandler {
 		}
 		handleGlobalMutationResult(player, WaypointCrudService.delete(name, source),
 				"commands.teleport_commands.warp.delete", "Error while deleting a warp.");
+		return CommandReturns.ACCEPTED_ASYNC;
+	}
+
+	static int deleteWarpFromManage(ServerPlayer player, UUID waypointUuid, WaypointListQuery query) {
+		if (!ensureEnabled(player)) {
+			return CommandReturns.FAILED;
+		}
+		AsyncWaypointSource source = source();
+		if (source == null) {
+			WarpMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return CommandReturns.FAILED;
+		}
+		handleGlobalMutationResult(player, WaypointCrudService.delete(waypointUuid, source),
+				"commands.teleport_commands.warp.delete", "Error while deleting a warp.",
+				currentPlayer -> WarpListHandler.renderWarps(currentPlayer.createCommandSourceStack(), currentPlayer, query, false));
 		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
@@ -166,6 +198,11 @@ final class WarpMutationHandler {
 
 	private static void handleGlobalMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,
 			String successKey, String logMessage) {
+		handleGlobalMutationResult(player, future, successKey, logMessage, null);
+	}
+
+	private static void handleGlobalMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,
+			String successKey, String logMessage, Consumer<ServerPlayer> successAction) {
 		int maxWarps = ConfigManager.query(config -> config.getWarp().getMaximum());
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
@@ -182,6 +219,9 @@ final class WarpMutationHandler {
 				WaypointMapSyncEvents.markAllDirty();
 			}
 			sendMutationResult(currentPlayer, result, successKey, maxWarps);
+			if (result == WaypointOperationResult.SUCCESS && successAction != null) {
+				successAction.accept(currentPlayer);
+			}
 		});
 	}
 

@@ -27,5 +27,6 @@ public final class HomeCommand {
 				WaypointFilterPickerKind.DIMENSION));
 		dispatcher.register(HomeNodeFactory.buildMapVisibilityNode("maphome", false));
 		dispatcher.register(HomeNodeFactory.buildMapVisibilityNode("teleportcommandsfabric:maphome", true));
+		dispatcher.register(HomeNodeFactory.buildUiNode());
 	}
 }

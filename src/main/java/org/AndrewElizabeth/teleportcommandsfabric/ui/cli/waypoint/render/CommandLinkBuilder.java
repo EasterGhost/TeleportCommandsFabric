@@ -9,6 +9,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointSort;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
+import java.util.UUID;
+
 public final class CommandLinkBuilder {
 	public String listCommand(WaypointPageKind kind, WaypointListQuery query, int page) {
 		return listCommand(kind) + " " + pageQueryArgs(query, page);
@@ -63,16 +65,28 @@ public final class CommandLinkBuilder {
 		return (kind == WaypointPageKind.HOMES ? "home " : "warp ") + quotedName;
 	}
 
+	public String manageCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "manage", waypointUuid, currentPage);
+	}
+
+	public String manageUpdateCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "update", waypointUuid, currentPage);
+	}
+
+	public String manageDefaultCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "default", waypointUuid, currentPage);
+	}
+
+	public String deleteConfirmationCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "delete", waypointUuid, currentPage);
+	}
+
+	public String confirmDeleteCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "confirmdelete", waypointUuid, currentPage);
+	}
+
 	public String renameCommand(WaypointPageKind kind) {
 		return kind == WaypointPageKind.HOMES ? "renamehome" : "renamewarp";
-	}
-
-	public String updateCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES ? "updatehome" : "updatewarp";
-	}
-
-	public String deleteCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES ? "delhome" : "delwarp";
 	}
 
 	private String pageQueryArgs(WaypointListQuery query, int page) {
@@ -125,6 +139,13 @@ public final class CommandLinkBuilder {
 
 	private String visibilityCommand(WaypointPageKind kind) {
 		return kind == WaypointPageKind.HOMES ? "teleportcommandsfabric:maphome" : "teleportcommandsfabric:mapwarp";
+	}
+
+	private String uiCommand(WaypointPageRequest request, String action, UUID waypointUuid, int currentPage) {
+		String root = request.kind() == WaypointPageKind.HOMES
+				? "teleportcommandsfabric:homeui"
+				: "teleportcommandsfabric:warpui";
+		return root + " " + action + " " + waypointUuid + " " + pageQueryArgs(request.query(), currentPage);
 	}
 
 	private WaypointListQuery safeQuery(WaypointListQuery query) {

@@ -29,16 +29,23 @@ final class HomeListHandler {
 	}
 
 	static int renderHomes(ServerPlayer player, WaypointListQuery query, boolean pagePicker) {
-		return renderHomes(player, query, pagePicker ? WaypointRenderMode.PAGE_PICKER : WaypointRenderMode.PAGE);
+		return renderHomes(player, query, pagePicker ? WaypointRenderMode.PAGE_PICKER : WaypointRenderMode.PAGE, null);
 	}
 
 	static int renderHomeFilterPicker(ServerPlayer player, WaypointListQuery query, WaypointFilterPickerKind pickerKind) {
 		return renderHomes(player, query, pickerKind == WaypointFilterPickerKind.DIMENSION
 				? WaypointRenderMode.DIMENSION_FILTER_PICKER
-				: WaypointRenderMode.PREFIX_FILTER_PICKER);
+				: WaypointRenderMode.PREFIX_FILTER_PICKER, null);
 	}
 
-	private static int renderHomes(ServerPlayer player, WaypointListQuery query, WaypointRenderMode renderMode) {
+	static int renderHomeManage(ServerPlayer player, UUID waypointUuid, WaypointListQuery query, boolean deleteConfirmation) {
+		return renderHomes(player, query, deleteConfirmation
+				? WaypointRenderMode.DELETE_CONFIRMATION
+				: WaypointRenderMode.MANAGE, waypointUuid);
+	}
+
+	private static int renderHomes(ServerPlayer player, WaypointListQuery query, WaypointRenderMode renderMode,
+			UUID waypointUuid) {
 		if (!ensureEnabled(player)) {
 			return CommandReturns.FAILED;
 		}
@@ -58,6 +65,20 @@ final class HomeListHandler {
 								ChatFormatting.BOLD);
 						return;
 					}
+					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.HOMES, data.homes(), Set.of(),
+							data.defaultHomeUuid(), true, query, language(currentPlayer));
+					if (renderMode == WaypointRenderMode.MANAGE || renderMode == WaypointRenderMode.DELETE_CONFIRMATION) {
+						NamedLocationView location = WaypointRows.findByUuid(data.homes(), waypointUuid).orElse(null);
+						if (location == null) {
+							HomeMessages.send(currentPlayer, "commands.teleport_commands.home.notFound", ChatFormatting.RED);
+							return;
+						}
+						currentPlayer.sendSystemMessage(renderMode == WaypointRenderMode.DELETE_CONFIRMATION
+								? TeleportCommands.WAYPOINT_PAGES.renderDeleteConfirmation(request, location)
+								: TeleportCommands.WAYPOINT_PAGES.renderManage(request, location), false);
+						return;
+					}
+
 					List<NamedLocationView> filtered = WaypointRows.filterAndSort(data.homes(), query);
 					if (filtered.isEmpty()) {
 						if (query.filter() instanceof WaypointFilter.Dimension dimension) {
@@ -67,8 +88,6 @@ final class HomeListHandler {
 						}
 						return;
 					}
-					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.HOMES, data.homes(), Set.of(),
-							data.defaultHomeUuid(), true, query, language(currentPlayer));
 					if (renderMode == WaypointRenderMode.PAGE_PICKER) {
 						currentPlayer.sendSystemMessage(TeleportCommands.WAYPOINT_PAGES.renderPagePicker(request), false);
 						return;

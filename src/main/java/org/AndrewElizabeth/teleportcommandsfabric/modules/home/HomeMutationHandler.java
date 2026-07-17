@@ -25,6 +25,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 final class HomeMutationHandler {
 	private HomeMutationHandler() {
@@ -62,6 +63,21 @@ final class HomeMutationHandler {
 		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
+	static int updateHomeFromManage(ServerPlayer player, UUID waypointUuid, WaypointListQuery query) {
+		if (!ensureEnabled(player)) {
+			return CommandReturns.FAILED;
+		}
+		AsyncWaypointSource source = source(player);
+		if (source == null) {
+			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return CommandReturns.FAILED;
+		}
+		handleMutationResult(player, WaypointCrudService.update(player, waypointUuid, source),
+				"commands.teleport_commands.home.update", "Error while updating a home.",
+				currentPlayer -> HomeListHandler.renderHomeManage(currentPlayer, waypointUuid, query, false));
+		return CommandReturns.ACCEPTED_ASYNC;
+	}
+
 	static int deleteHome(ServerPlayer player, String name) {
 		if (!ensureEnabled(player)) {
 			return CommandReturns.FAILED;
@@ -73,6 +89,21 @@ final class HomeMutationHandler {
 		}
 		handleMutationResult(player, WaypointCrudService.delete(name, source),
 				"commands.teleport_commands.home.delete", "Error while deleting a home.");
+		return CommandReturns.ACCEPTED_ASYNC;
+	}
+
+	static int deleteHomeFromManage(ServerPlayer player, UUID waypointUuid, WaypointListQuery query) {
+		if (!ensureEnabled(player)) {
+			return CommandReturns.FAILED;
+		}
+		AsyncWaypointSource source = source(player);
+		if (source == null) {
+			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return CommandReturns.FAILED;
+		}
+		handleMutationResult(player, WaypointCrudService.delete(waypointUuid, source),
+				"commands.teleport_commands.home.delete", "Error while deleting a home.",
+				currentPlayer -> HomeListHandler.renderHomes(currentPlayer, query, false));
 		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
@@ -101,6 +132,21 @@ final class HomeMutationHandler {
 		}
 		handleMutationResult(player, WaypointCrudService.setDefault(name, source),
 				"commands.teleport_commands.home.default", "Error while setting default home.");
+		return CommandReturns.ACCEPTED_ASYNC;
+	}
+
+	static int setDefaultHomeFromManage(ServerPlayer player, UUID waypointUuid, WaypointListQuery query) {
+		if (!ensureEnabled(player)) {
+			return CommandReturns.FAILED;
+		}
+		AsyncWaypointSource source = source(player);
+		if (source == null) {
+			HomeMessages.send(player, "commands.teleport_commands.common.error", ChatFormatting.RED, ChatFormatting.BOLD);
+			return CommandReturns.FAILED;
+		}
+		handleMutationResult(player, WaypointCrudService.setDefault(waypointUuid, source),
+				"commands.teleport_commands.home.default", "Error while setting default home.",
+				currentPlayer -> HomeListHandler.renderHomeManage(currentPlayer, waypointUuid, query, false));
 		return CommandReturns.ACCEPTED_ASYNC;
 	}
 
@@ -150,6 +196,11 @@ final class HomeMutationHandler {
 
 	private static void handleMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,
 			String successKey, String logMessage) {
+		handleMutationResult(player, future, successKey, logMessage, null);
+	}
+
+	private static void handleMutationResult(ServerPlayer player, CompletableFuture<WaypointOperationResult> future,
+			String successKey, String logMessage, Consumer<ServerPlayer> successAction) {
 		int maxHomes = ConfigManager.query(config -> config.getHome().getPlayerMaximum());
 		MinecraftServer server = player.level().getServer();
 		UUID playerUuid = player.getUUID();
@@ -163,6 +214,9 @@ final class HomeMutationHandler {
 				WaypointMapSyncEvents.markPlayerDirty(playerUuid);
 			}
 			sendMutationResult(currentPlayer, result, successKey, maxHomes);
+			if (result == WaypointOperationResult.SUCCESS && successAction != null) {
+				successAction.accept(currentPlayer);
+			}
 		});
 	}
 

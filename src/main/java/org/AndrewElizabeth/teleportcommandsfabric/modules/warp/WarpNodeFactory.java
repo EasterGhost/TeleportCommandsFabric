@@ -142,6 +142,26 @@ final class WarpNodeFactory {
 								.executes(context -> WarpMutationHandler.setGlobalMapVisibility(context, null))));
 	}
 
+	static LiteralArgumentBuilder<CommandSourceStack> buildUiNode() {
+		return Commands.literal("teleportcommandsfabric:warpui")
+				.requires(WarpNodeFactory::requiresAdminPlayer)
+				.then(uiActionNode("manage", (context, waypointUuid, query) ->
+						WarpListHandler.renderWarpManage(context.getSource(), context.getSource().getPlayerOrException(),
+								waypointUuid, query, false)))
+				.then(uiActionNode("update", (context, waypointUuid, query) ->
+						WarpMutationHandler.updateWarpFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("delete", (context, waypointUuid, query) ->
+						WarpListHandler.renderWarpManage(context.getSource(), context.getSource().getPlayerOrException(),
+								waypointUuid, query, true)))
+				.then(uiActionNode("confirmdelete", (context, waypointUuid, query) ->
+						WarpMutationHandler.deleteWarpFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> uiActionNode(String action,
+			WaypointQueryNodes.WaypointQueryExecutor executor) {
+		return Commands.literal(action).then(WaypointQueryNodes.waypointUuidArgument(executor));
+	}
+
 	private static boolean requiresPlayer(CommandSourceStack source) {
 		return source.getPlayer() != null;
 	}

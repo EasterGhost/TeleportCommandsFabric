@@ -16,7 +16,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.UuidArgument;
 
+import java.util.UUID;
 import java.util.function.Function;
 
 public final class WaypointQueryNodes {
@@ -39,6 +41,12 @@ public final class WaypointQueryNodes {
 
 	public static LiteralArgumentBuilder<CommandSourceStack> filterNode(int page, QueryExecutor executor) {
 		return filterNode(page, WaypointDimensionSuggestions.LOADED_DIMENSIONS, executor);
+	}
+
+	public static RequiredArgumentBuilder<CommandSourceStack, UUID> waypointUuidArgument(WaypointQueryExecutor executor) {
+		return Commands.argument("waypointUuid", UuidArgument.uuid())
+				.then(pageArgument((context, query) -> executor.run(context,
+						UuidArgument.getUuid(context, "waypointUuid"), query)));
 	}
 
 	public static LiteralArgumentBuilder<CommandSourceStack> filterNode(int page,
@@ -96,5 +104,11 @@ public final class WaypointQueryNodes {
 	@FunctionalInterface
 	public interface QueryExecutor {
 		int run(CommandContext<CommandSourceStack> context, WaypointListQuery query) throws CommandSyntaxException;
+	}
+
+	@FunctionalInterface
+	public interface WaypointQueryExecutor {
+		int run(CommandContext<CommandSourceStack> context, UUID waypointUuid, WaypointListQuery query)
+				throws CommandSyntaxException;
 	}
 }

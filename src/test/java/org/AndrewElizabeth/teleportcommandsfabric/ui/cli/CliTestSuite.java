@@ -79,6 +79,9 @@ public final class CliTestSuite {
 				scenario("Homes render markers and actions",
 						"Verify /homes output shows default and temporary markers and does not show global map controls.",
 						CliTestSuite::testHomesRenderMarkersAndActions),
+				scenario("Waypoint manage and delete confirmation",
+						"Verify low-frequency waypoint actions use a manage page and deletion requires explicit confirmation.",
+						CliTestSuite::testWaypointManageAndDeleteConfirmation),
 				scenario("Back preview render",
 						"Verify /back preview renders previous and death records with facing, pitch, and teleport actions.",
 						CliTestSuite::testBackPreviewRender),
@@ -129,9 +132,9 @@ public final class CliTestSuite {
 				"en_us")));
 
 		assertContains(text, "========== 传送点 (第 1/7 页) ==========", "header should show page 1 of 7");
-		assertContains(text, "  - spawn [地图: 开] [全局地图: 开]\n     | [X0 Y64 Z0] [minecraft:overworld]\n     | [传送] [重命名] [更新位置] [删除] [地图隐藏] ",
+		assertContains(text, "  - spawn [地图: 开] [全局地图: 开]\n     | [X0 Y64 Z0] [minecraft:overworld]\n     | [传送] [地图隐藏] [管理] ",
 				"admin visible warp should show global map state on the name line");
-		assertContains(text, "  - nether_hub [地图: 关] [全局地图: 关]\n     | [X120 Y70 Z-40] [minecraft:the_nether]\n     | [传送] [重命名] [更新位置] [删除] [地图显示] ",
+		assertContains(text, "  - nether_hub [地图: 关] [全局地图: 关]\n     | [X120 Y70 Z-40] [minecraft:the_nether]\n     | [传送] [地图显示] [管理] ",
 				"admin hidden warp should show global map state on the name line");
 		assertNotContains(text, "[全局地图隐藏] ", "global map action should not be rendered on the action line");
 		assertNotContains(text, "[全局地图显示] ", "global map action should not be rendered on the action line");
@@ -209,6 +212,7 @@ public final class CliTestSuite {
 		assertNotContains(text, "[重命名]", "regular player should not see rename");
 		assertNotContains(text, "[更新位置]", "regular player should not see update");
 		assertNotContains(text, "[删除]", "regular player should not see delete");
+		assertNotContains(text, "[管理]", "regular player should not see manage");
 		assertNotContains(text, "[全局地图隐藏]", "regular player should not see global map action");
 	}
 
@@ -255,7 +259,37 @@ public final class CliTestSuite {
 
 		assertContains(text, "  - main home (默认) [地图: 开]", "default home marker should render");
 		assertContains(text, "  - temp [临时] [地图: 开]", "temporary home marker should render");
+		assertContains(text, "     | [传送] [地图隐藏] [管理] ", "home rows should move low-frequency actions into manage");
+		assertNotContains(text, "[重命名]", "home list should not render rename directly");
 		assertNotContains(text, "[全局地图", "home page should not show global map controls");
+	}
+
+	private static void testWaypointManageAndDeleteConfirmation() {
+		TestLocation home = location("main home", 10, 64.0D, 20, OVERWORLD, true, 0);
+		WaypointListQuery query = new WaypointListQuery(2,
+				WaypointFilter.prefix("m"),
+				new WaypointSort(SortKey.NAME, SortDirection.DESC));
+		WaypointPageRequest request = new WaypointPageRequest(
+				WaypointPageKind.HOMES,
+				List.of(home),
+				Set.of(),
+				home.getUuid(),
+				true,
+				query,
+				"en_us");
+
+		String manage = renderManage(request, home);
+		String confirmation = renderDeleteConfirmation(request, home);
+		CommandLinkBuilder commands = new CommandLinkBuilder();
+
+		assertContains(manage, "========== Manage Home ==========\n  - main home (Default) [Map: On]\n     | [X10 Y64 Z20] [minecraft:overworld]\n     | [Tp] [Rename] [Update] \n     | [Delete] [Back] ",
+				"manage page should render the selected waypoint and low-frequency actions");
+		assertContains(confirmation, "========== Manage Home ==========\nDelete \"main home\"? This cannot be undone.\n[Confirm Delete] [Cancel]",
+				"delete should require an explicit confirmation page");
+		assertEquals("teleportcommandsfabric:homeui confirmdelete " + home.getUuid()
+				+ " 2 filter prefix m sort name desc",
+				commands.confirmDeleteCommand(request, home.getUuid(), 2),
+				"confirmed delete should preserve the complete list query");
 	}
 
 	private static void testBackPreviewRender() {
@@ -339,6 +373,18 @@ public final class CliTestSuite {
 	private static String renderFilterPicker(WaypointPageRequest request, WaypointFilterPickerKind pickerKind) {
 		try (WaypointPages pages = new WaypointPages()) {
 			return pages.renderFilterPicker(request, pickerKind).getString();
+		}
+	}
+
+	private static String renderManage(WaypointPageRequest request, NamedLocationView location) {
+		try (WaypointPages pages = new WaypointPages()) {
+			return pages.renderManage(request, location).getString();
+		}
+	}
+
+	private static String renderDeleteConfirmation(WaypointPageRequest request, NamedLocationView location) {
+		try (WaypointPages pages = new WaypointPages()) {
+			return pages.renderDeleteConfirmation(request, location).getString();
 		}
 	}
 

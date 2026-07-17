@@ -27,5 +27,6 @@ public final class WarpCommand {
 		dispatcher.register(WarpNodeFactory.buildPlayerMapVisibilityNode("teleportcommandsfabric:mapwarp", true));
 		dispatcher.register(WarpNodeFactory.buildPublicGlobalMapVisibilityNode());
 		dispatcher.register(WarpNodeFactory.buildGlobalMapVisibilityNode());
+		dispatcher.register(WarpNodeFactory.buildUiNode());
 	}
 }

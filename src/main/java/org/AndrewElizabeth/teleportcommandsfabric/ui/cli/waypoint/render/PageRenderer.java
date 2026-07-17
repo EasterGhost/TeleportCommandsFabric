@@ -131,28 +131,15 @@ public final class PageRenderer {
 		appendActionButton(message, request.language(), "commands.teleport_commands.common.tp", ChatFormatting.GREEN,
 				new ClickEvent.RunCommand(commands.teleportCommand(request.kind(), quotedName)));
 
-		if (request.canModify()) {
-			appendModifyButtons(message, request, location, quotedName);
-		}
-
 		appendActionButton(message, request.language(), mapVisible
 				? "commands.teleport_commands.common.hideFromMap"
 				: "commands.teleport_commands.common.showOnMap", mapVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD,
 				new ClickEvent.RunCommand(commands.visibilityCommand(request, quotedName, !mapVisible, currentPage)));
-	}
 
-	private void appendModifyButtons(MutableComponent message, WaypointPageRequest request, NamedLocationView location, String quotedName) {
-		appendActionButton(message, request.language(), "commands.teleport_commands.common.rename", ChatFormatting.BLUE,
-				new ClickEvent.SuggestCommand("/" + commands.renameCommand(request.kind()) + " " + quotedName + " "));
-		appendActionButton(message, request.language(), "commands.teleport_commands.common.update", ChatFormatting.YELLOW,
-				new ClickEvent.RunCommand(commands.updateCommand(request.kind()) + " " + quotedName));
-		if (request.kind() == WaypointPageKind.HOMES && !location.isTemporary()
-				&& !Objects.equals(request.defaultLocationUuid(), location.getUuid())) {
-			appendActionButton(message, request.language(), "commands.teleport_commands.common.defaultPrompt", ChatFormatting.DARK_AQUA,
-					new ClickEvent.RunCommand("defaulthome " + quotedName));
+		if (request.canModify()) {
+			appendActionButton(message, request.language(), "commands.teleport_commands.common.manage", ChatFormatting.BLUE,
+					new ClickEvent.RunCommand(commands.manageCommand(request, location.getUuid(), currentPage)));
 		}
-		appendActionButton(message, request.language(), "commands.teleport_commands.common.delete", ChatFormatting.RED,
-				new ClickEvent.SuggestCommand("/" + commands.deleteCommand(request.kind()) + " " + quotedName));
 	}
 
 	private MutableComponent buildNavigation(WaypointPageRequest request, int currentPage, int totalPages) {

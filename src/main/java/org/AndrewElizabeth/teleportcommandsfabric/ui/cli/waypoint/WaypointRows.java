@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
 
 public final class WaypointRows {
 	private WaypointRows() {
@@ -16,6 +18,15 @@ public final class WaypointRows {
 
 	public static List<NamedLocationView> filterAndSort(Collection<NamedLocationView> rows, WaypointListQuery query) {
 		return rows.stream().filter(query.filter()::matches).sorted(comparator(query)).toList();
+	}
+
+	public static Optional<NamedLocationView> findByUuid(Collection<NamedLocationView> rows, UUID waypointUuid) {
+		if (rows == null || waypointUuid == null) {
+			return Optional.empty();
+		}
+		return rows.stream()
+				.filter(location -> waypointUuid.equals(location.getUuid()))
+				.findFirst();
 	}
 
 	private static Comparator<NamedLocationView> comparator(WaypointListQuery query) {
