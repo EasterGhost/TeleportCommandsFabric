@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 public class GlobalProfile {
 	private final LinkedHashMap<UUID, NamedLocation> warps = new LinkedHashMap<>();
@@ -102,22 +101,6 @@ public class GlobalProfile {
 			Map.Entry<UUID, NamedLocation> entry = iterator.next();
 			NamedLocation warp = entry.getValue();
 			if (!warp.isExpired()) {
-				continue;
-			}
-
-			warpNameIndex.remove(normalizeName(warp.getName()));
-			iterator.remove();
-			changed = true;
-		}
-		return changed;
-	}
-
-	public boolean removeInvalidWarps(Predicate<NamedLocation> isInvalidWarp) {
-		boolean changed = false;
-		for (var iterator = warps.entrySet().iterator(); iterator.hasNext();) {
-			Map.Entry<UUID, NamedLocation> entry = iterator.next();
-			NamedLocation warp = entry.getValue();
-			if (!isInvalidWarp.test(warp)) {
 				continue;
 			}
 

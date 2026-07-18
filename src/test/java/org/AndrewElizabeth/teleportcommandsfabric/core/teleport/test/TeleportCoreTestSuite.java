@@ -8,7 +8,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 
-import org.AndrewElizabeth.teleportcommandsfabric.core.record.RecordedLocationTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationNbtCodec;
@@ -162,11 +161,7 @@ public final class TeleportCoreTestSuite {
 				scenario("Player profile load preserves unavailable-dimension homes",
 						"Verify profile load does not delete homes just because ServerLevel is not available yet.",
 						"homes=1 dimension=tpc:test_dimension serverLevel=unavailable",
-						TeleportCoreTestSuite::testPlayerProfileLoadPreservesUnavailableDimensionHomes),
-				scenario("Recorded target resolver maps empty target",
-						"Verify missing death/previous records map to a failed target result.",
-						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
-						TeleportCoreTestSuite::testRecordedTargetEmpty));
+						TeleportCoreTestSuite::testPlayerProfileLoadPreservesUnavailableDimensionHomes));
 	}
 
 	private static void testTargetTeleportOptions() {
@@ -652,9 +647,8 @@ public final class TeleportCoreTestSuite {
 		assertEquals(25.0F, snapshot.get().getXRot(), "snapshot should keep original pitch");
 
 		RecordedLocation decoded = RecordedLocationNbtCodec.fromNbt(RecordedLocationNbtCodec.toNbt(RecordedLocation.copyOf(snapshot.get())));
-		TeleportTarget target = RecordedLocationTeleportTargets.toTarget(decoded, dummyWorld);
-		assertEquals(180.0F, target.yRot(), "recorded target should use stored yaw");
-		assertEquals(25.0F, target.xRot(), "recorded target should use stored pitch");
+		assertEquals(180.0F, decoded.getYRot(), "recorded location should preserve stored yaw");
+		assertEquals(25.0F, decoded.getXRot(), "recorded location should preserve stored pitch");
 		debug("DATA record.snapshot", "sourcePos=" + location.getBlockPos()
 				+ ", snapshotPos=" + snapshot.get().getBlockPos()
 				+ ", dimensionId=" + snapshot.get().getDimensionId()
@@ -763,14 +757,6 @@ public final class TeleportCoreTestSuite {
 		debug("DATA player.load", "homes=" + profile.getHomeCount()
 				+ ", dimension=" + home.getDimensionId()
 				+ ", changed=" + changed);
-	}
-
-	private static void testRecordedTargetEmpty() {
-		TeleportTargetResult result = RecordedLocationTeleportTargets.toTargetResult(Optional.empty(), null);
-		assertTrue(result instanceof TeleportTargetResult.Failed, "empty record target should fail");
-		TeleportTargetResult.Failed failed = (TeleportTargetResult.Failed) result;
-		assertEquals(TeleportStatus.TARGET_UNAVAILABLE, failed.reason(), "empty record target should map to target unavailable");
-		debug("DATA record.target.empty", "status=" + failed.reason());
 	}
 
 	private static TeleportRequest request() {

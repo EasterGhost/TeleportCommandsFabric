@@ -73,14 +73,6 @@ public final class RtpExecutionProcessor {
 		parallelExecutor.shutdownNow();
 	}
 
-	public int readyBacklogSize() {
-		return readyBacklog.size();
-	}
-
-	public int activeExecutionCount() {
-		return activeExecutions.size();
-	}
-
 	private void runSerialActive(MinecraftServer server) {
 		int activeCount = activeExecutions.size();
 		for (int i = 0; i < activeCount; i++) {

@@ -159,14 +159,6 @@ public final class WildService {
 		loadCoordinator.clear();
 	}
 
-	public int searchCount() {
-		return searches.size();
-	}
-
-	public int activeTicketCount() {
-		return loadCoordinator.activeTicketCount();
-	}
-
 	static long firstBatchSubmissionTick(WildTeleportPending pending) {
 		return Math.max(pending.createTick(), pending.delayUntilTick() - PRELOAD_LEAD_TICKS);
 	}

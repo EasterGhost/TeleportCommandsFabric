@@ -47,12 +47,6 @@ public final class WarpListCache {
 		}
 	}
 
-	public int cachedQueryCount() {
-		synchronized (cachedRows) {
-			return cachedRows.size();
-		}
-	}
-
 	private void ensureCurrentSource(Collection<NamedLocationView> sourceRows) {
 		if (sourceIdentity == sourceRows) {
 			return;

@@ -65,10 +65,6 @@ public final class TeleportPreloadManager {
 		return true;
 	}
 
-	public boolean isReady(TargetTeleportExecution entry) {
-		return isChunkLoaded(entry.target());
-	}
-
 	public PreloadTickResult tick(long currentTick) {
 		if (releaseAllOnNextTick) {
 			releaseAllOnNextTick = false;

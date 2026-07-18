@@ -238,7 +238,6 @@ public final class CliTestSuite {
 		assertEquals(List.of("atlas", "argon", "alpha"), first.stream().map(NamedLocationView::getName).toList(),
 				"prefix filter and descending name sort should produce expected row order");
 		assertSame(first, second, "repeated request should return the cached row list");
-		assertEquals(1, cache.cachedQueryCount(), "warp cache should hold one query result");
 	}
 
 	private static void testHomesRenderMarkersAndActions() {

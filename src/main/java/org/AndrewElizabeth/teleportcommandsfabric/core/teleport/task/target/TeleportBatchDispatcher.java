@@ -82,10 +82,6 @@ public final class TeleportBatchDispatcher {
 		return queue.size();
 	}
 
-	public DrainResult lastDrainResult() {
-		return lastDrainResult;
-	}
-
 	public void clear() {
 		queue.clear();
 		readyThisTick = 0;

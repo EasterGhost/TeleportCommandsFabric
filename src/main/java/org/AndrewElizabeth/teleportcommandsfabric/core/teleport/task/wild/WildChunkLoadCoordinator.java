@@ -129,20 +129,8 @@ public final class WildChunkLoadCoordinator {
 		activeTicketCount = 0;
 	}
 
-	public int activeTicketCount() {
-		return activeTicketCount;
-	}
-
-	public int activeBatchCount() {
-		return activeBatches.size();
-	}
-
 	public List<BatchKey> activeBatchKeys() {
 		return List.copyOf(activeBatches.keySet());
-	}
-
-	public int waitingBatchCount() {
-		return waitingBatches.size();
 	}
 
 	private void consumeCompletions() {
