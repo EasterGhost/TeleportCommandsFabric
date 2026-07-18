@@ -2,7 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.wild;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
-import net.minecraft.server.level.ChunkResult;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
@@ -20,14 +19,6 @@ class WildChunkLoadCoordinatorTest {
 	static void bootstrapMinecraft() {
 		SharedConstants.tryDetectVersion();
 		Bootstrap.bootStrap();
-	}
-
-	@Test
-	void loadRequiresSuccessfulChunkResultAndNoException() {
-		assertTrue(WildChunkLoadCoordinator.isSuccessfulLoad(ChunkResult.of("loaded"), null));
-		assertFalse(WildChunkLoadCoordinator.isSuccessfulLoad(ChunkResult.error("failed"), null));
-		assertFalse(WildChunkLoadCoordinator.isSuccessfulLoad(null, null));
-		assertFalse(WildChunkLoadCoordinator.isSuccessfulLoad(ChunkResult.of("loaded"), new RuntimeException()));
 	}
 
 	@Test

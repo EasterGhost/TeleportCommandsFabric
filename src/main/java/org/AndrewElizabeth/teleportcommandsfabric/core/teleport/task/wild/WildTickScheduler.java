@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.core.teleport;
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.wild;
 
 import java.util.ArrayList;
 import java.util.HashMap;

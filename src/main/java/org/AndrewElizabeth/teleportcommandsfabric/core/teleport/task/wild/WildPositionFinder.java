@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SplittableRandom;
 
-public final class WildPositionFinder {
+final class WildPositionFinder {
 	static final int CHUNKS_PER_BATCH = 4;
 	private static final int CANDIDATES_PER_CHUNK = 8;
 	private static final int MAX_ANCHOR_SAMPLE_ATTEMPTS = 4096;
@@ -26,7 +26,7 @@ public final class WildPositionFinder {
 	private WildPositionFinder() {
 	}
 
-	public static List<ChunkPos> sampleChunkBatch(ServerLevel world, WildTeleportPending pending,
+	static List<ChunkPos> sampleChunkBatch(ServerLevel world, WildTeleportPending pending,
 			Set<Long> excludedChunks) {
 		List<ChunkPos> chunks = new ArrayList<>(CHUNKS_PER_BATCH);
 		Set<Long> selected = new HashSet<>();
@@ -53,7 +53,7 @@ public final class WildPositionFinder {
 		return List.copyOf(chunks);
 	}
 
-	public static List<Candidate> findSafePositions(ServerLevel world, WildTeleportPending pending,
+	static List<Candidate> findSafePositions(ServerLevel world, WildTeleportPending pending,
 			Map<ChunkPos, LevelChunk> chunks) {
 		List<Candidate> candidates = new ArrayList<>(chunks.size() * CANDIDATES_PER_CHUNK);
 		SplittableRandom random = pending.random();
@@ -130,8 +130,8 @@ public final class WildPositionFinder {
 				&& SurfacePositionSafety.isBodyClear(chunk, headPos, headState);
 	}
 
-	public record Candidate(BlockPos position, ChunkPos chunkPos) {
-		public Candidate {
+	record Candidate(BlockPos position, ChunkPos chunkPos) {
+		Candidate {
 			position = position.immutable();
 		}
 	}

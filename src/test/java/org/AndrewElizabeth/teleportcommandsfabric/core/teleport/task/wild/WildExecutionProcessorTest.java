@@ -1,4 +1,4 @@
-package org.AndrewElizabeth.teleportcommandsfabric.core.teleport;
+package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.wild;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.wild.WildRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.wild.WildTeleportPending;
@@ -15,7 +15,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class WildServiceTest {
+class WildExecutionProcessorTest {
 	@BeforeAll
 	static void bootstrapMinecraft() {
 		SharedConstants.tryDetectVersion();
@@ -24,10 +24,10 @@ class WildServiceTest {
 
 	@Test
 	void firstBatchStartsTwoTicksBeforeDelayExpires() {
-		assertEquals(108L, WildService.firstBatchSubmissionTick(pending(100L, 10)));
-		assertEquals(100L, WildService.firstBatchSubmissionTick(pending(100L, 2)));
-		assertEquals(100L, WildService.firstBatchSubmissionTick(pending(100L, 1)));
-		assertEquals(100L, WildService.firstBatchSubmissionTick(pending(100L, 0)));
+		assertEquals(108L, WildExecutionProcessor.firstBatchSubmissionTick(pending(100L, 10)));
+		assertEquals(100L, WildExecutionProcessor.firstBatchSubmissionTick(pending(100L, 2)));
+		assertEquals(100L, WildExecutionProcessor.firstBatchSubmissionTick(pending(100L, 1)));
+		assertEquals(100L, WildExecutionProcessor.firstBatchSubmissionTick(pending(100L, 0)));
 	}
 
 	private static WildTeleportPending pending(long createTick, int delayTicks) {
