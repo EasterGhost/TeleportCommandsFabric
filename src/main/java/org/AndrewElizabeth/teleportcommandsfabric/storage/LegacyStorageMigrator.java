@@ -81,7 +81,6 @@ public final class LegacyStorageMigrator {
 			playerProfile.cleanupHiddenWarpUuids(existingWarpUuids);
 			playerProfile.rebuildHomeNameIndex();
 		}
-
 		return new MigrationData(globalProfile, playerProfiles);
 	}
 
@@ -150,7 +149,6 @@ public final class LegacyStorageMigrator {
 				playerProfiles.put(playerUuid.get(), profile);
 			}
 		}
-
 		return playerProfiles;
 	}
 
