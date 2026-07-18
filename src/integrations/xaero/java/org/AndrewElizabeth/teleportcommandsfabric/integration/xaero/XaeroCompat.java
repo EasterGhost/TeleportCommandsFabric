@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class XaeroCompat {
+final class XaeroCompat {
 	private static final Set<String> WARP_SYNCED_WORLDS = new HashSet<>();
 	private static final Set<String> HOME_SYNCED_WORLDS = new HashSet<>();
 	private static final Set<String> SHARED_HOME_SYNCED_WORLDS = new HashSet<>();
@@ -26,7 +26,7 @@ public final class XaeroCompat {
 	private XaeroCompat() {
 	}
 
-	public static boolean applySnapshot(MapWaypointSnapshot snapshot) {
+	static boolean applySnapshot(MapWaypointSnapshot snapshot) {
 		MinimapSession minimapSession = BuiltInHudModules.MINIMAP.getCurrentSession();
 		if (minimapSession == null) {
 			return false;

@@ -96,7 +96,7 @@ public class GlobalProfile {
 		return true;
 	}
 
-	public boolean removeExpiredWarps() {
+	private boolean removeExpiredWarps() {
 		boolean changed = false;
 		for (var iterator = warps.entrySet().iterator(); iterator.hasNext();) {
 			Map.Entry<UUID, NamedLocation> entry = iterator.next();

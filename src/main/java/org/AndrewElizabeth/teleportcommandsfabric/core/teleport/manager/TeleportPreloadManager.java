@@ -36,7 +36,7 @@ public final class TeleportPreloadManager {
 		return enabled;
 	}
 
-	public boolean isChunkLoaded(TeleportTarget target) {
+	private boolean isChunkLoaded(TeleportTarget target) {
 		Objects.requireNonNull(target, "target");
 		Vec3 position = target.position();
 		return target.world().isLoaded(BlockPos.containing(position));

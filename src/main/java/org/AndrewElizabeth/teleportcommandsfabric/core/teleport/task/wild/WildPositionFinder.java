@@ -18,8 +18,8 @@ import java.util.Set;
 import java.util.SplittableRandom;
 
 public final class WildPositionFinder {
-	public static final int CHUNKS_PER_BATCH = 4;
-	public static final int CANDIDATES_PER_CHUNK = 8;
+	static final int CHUNKS_PER_BATCH = 4;
+	private static final int CANDIDATES_PER_CHUNK = 8;
 	private static final int MAX_ANCHOR_SAMPLE_ATTEMPTS = 4096;
 	private static final double PLAYER_HALF_WIDTH = 0.3D;
 

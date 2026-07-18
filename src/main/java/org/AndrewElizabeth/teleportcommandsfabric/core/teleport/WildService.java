@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class WildService {
-	public static final int MAX_BATCHES_PER_OPERATION = 4;
+	private static final int MAX_BATCHES_PER_OPERATION = 4;
 	private static final long PRELOAD_LEAD_TICKS = 2L;
 
 	private final TeleportOperationManager operationManager;

@@ -21,11 +21,11 @@ public class PlayerRecordedLocationManager {
 		this(new PlayerRecordedLocationIO());
 	}
 
-	public PlayerRecordedLocationManager(PlayerRecordedLocationIO io) {
+	PlayerRecordedLocationManager(PlayerRecordedLocationIO io) {
 		this.io = io;
 	}
 
-	public Optional<PlayerRecordedLocations> getRecord(UUID playerUuid) {
+	private Optional<PlayerRecordedLocations> getRecord(UUID playerUuid) {
 		return Optional.ofNullable(records.get(playerUuid));
 	}
 

@@ -18,10 +18,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfile;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileLifecycle;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileTestAccess;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfile;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileLifecycle;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileNbtCodec;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileTestAccess;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 
 import net.minecraft.core.BlockPos;
@@ -711,7 +710,7 @@ public final class TeleportCoreTestSuite {
 		assertEquals(TpaTrustDecision.DENY, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE),
 				"per-player TPAHere rule should override default");
 
-		PlayerProfile decoded = PlayerProfileNbtCodec.fromNbt(PlayerProfileNbtCodec.toNbt(profile));
+		PlayerProfile decoded = PlayerProfileTestAccess.fromNbt(PlayerProfileTestAccess.toNbt(profile));
 		assertEquals(TpaTrustDecision.DENY, decoded.getDefaultTpaTrust(), "default TPA rule should persist");
 		assertEquals(TpaTrustDecision.ACCEPT, decoded.getDefaultTpaHereTrust(), "default TPAHere rule should persist");
 		assertEquals(TpaTrustDecision.ACCEPT, decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
@@ -723,9 +722,9 @@ public final class TeleportCoreTestSuite {
 		profile.setPlayerTpaTrust(requesterUuid, Tpa.Type.TPAHERE, TpaTrustDecision.DEFAULT);
 		assertFalse(profile.getTpaTrustEntries().containsKey(requesterUuid), "default/default entry should be removed");
 
-		var legacyTag = PlayerProfileNbtCodec.toNbt(profile);
+		var legacyTag = PlayerProfileTestAccess.toNbt(profile);
 		legacyTag.remove("TpaTrust");
-		PlayerProfile legacyDecoded = PlayerProfileNbtCodec.fromNbt(legacyTag);
+		PlayerProfile legacyDecoded = PlayerProfileTestAccess.fromNbt(legacyTag);
 		assertEquals(TpaTrustDecision.DEFAULT, legacyDecoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
 				"legacy profile without trust tag should use default request flow");
 		debug("DATA tpa.trust", "defaultTpa=" + decoded.getDefaultTpaTrust()
@@ -740,7 +739,7 @@ public final class TeleportCoreTestSuite {
 		NamedLocation warp = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
 
 		assertTrue(profile.addWarp(warp), "test warp should be accepted");
-		boolean changed = GlobalProfileLifecycle.prepareLoaded(profile);
+		boolean changed = GlobalProfileTestAccess.prepareLoaded(profile);
 
 		assertFalse(changed, "startup prepare should not treat unavailable dimensions as invalid global data");
 		assertEquals(1, profile.getWarpCount(), "startup prepare should preserve global warps");
@@ -756,7 +755,7 @@ public final class TeleportCoreTestSuite {
 		NamedLocation home = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
 
 		assertTrue(profile.addHome(home), "test home should be accepted");
-		boolean changed = PlayerProfileLifecycle.prepareLoaded(profile);
+		boolean changed = PlayerProfileTestAccess.prepareLoaded(profile);
 
 		assertFalse(changed, "profile prepare should not treat unavailable dimensions as invalid player data");
 		assertEquals(1, profile.getHomeCount(), "profile prepare should preserve homes");

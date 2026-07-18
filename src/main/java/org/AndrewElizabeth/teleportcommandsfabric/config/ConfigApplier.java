@@ -7,11 +7,11 @@ import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import java.time.Duration;
 
-public final class ConfigApplier {
+final class ConfigApplier {
 	private ConfigApplier() {
 	}
 
-	public static void applyRuntime() {
+	static void applyRuntime() {
 		RuntimePolicy policy = runtimePolicy();
 
 		DebugLog.setEnabled(policy.debugEnabled());

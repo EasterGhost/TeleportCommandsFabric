@@ -7,8 +7,11 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationNb
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 
-public final class GlobalProfileNbtCodec {
-	public static CompoundTag toNbt(GlobalProfile profile) {
+final class GlobalProfileNbtCodec {
+	private GlobalProfileNbtCodec() {
+	}
+
+	static CompoundTag toNbt(GlobalProfile profile) {
 		CompoundTag tag = new CompoundTag();
 
 		tag.putInt("DataVersion", ModConstants.STORAGE_VERSION);
@@ -21,7 +24,7 @@ public final class GlobalProfileNbtCodec {
 		return tag;
 	}
 
-	public static GlobalProfile fromNbt(CompoundTag tag) {
+	static GlobalProfile fromNbt(CompoundTag tag) {
 		GlobalProfile profile = new GlobalProfile();
 
 		ListTag warpList = tag.getListOrEmpty("Warps");

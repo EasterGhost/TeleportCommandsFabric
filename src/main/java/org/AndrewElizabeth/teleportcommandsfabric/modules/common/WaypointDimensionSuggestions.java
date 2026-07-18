@@ -12,8 +12,8 @@ import net.minecraft.commands.CommandSourceStack;
 import java.util.concurrent.CompletableFuture;
 import java.util.Locale;
 
-public final class WaypointDimensionSuggestions implements SuggestionProvider<CommandSourceStack> {
-	public static final WaypointDimensionSuggestions LOADED_DIMENSIONS = new WaypointDimensionSuggestions();
+final class WaypointDimensionSuggestions implements SuggestionProvider<CommandSourceStack> {
+	static final WaypointDimensionSuggestions LOADED_DIMENSIONS = new WaypointDimensionSuggestions();
 
 	private WaypointDimensionSuggestions() {
 	}

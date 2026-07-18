@@ -13,8 +13,11 @@ import net.minecraft.nbt.ListTag;
 import java.util.Map;
 import java.util.UUID;
 
-public final class PlayerProfileNbtCodec {
-	public static CompoundTag toNbt(PlayerProfile profile) {
+final class PlayerProfileNbtCodec {
+	private PlayerProfileNbtCodec() {
+	}
+
+	static CompoundTag toNbt(PlayerProfile profile) {
 		CompoundTag tag = new CompoundTag();
 
 		tag.putInt("DataVersion", ModConstants.STORAGE_VERSION);
@@ -56,7 +59,7 @@ public final class PlayerProfileNbtCodec {
 		return tag;
 	}
 
-	public static PlayerProfile fromNbt(CompoundTag tag) {
+	static PlayerProfile fromNbt(CompoundTag tag) {
 		UUID playerUuid = UUIDUtil.uuidFromIntArray(
 				tag.getIntArray("PlayerUUID").orElseThrow(() -> new IllegalArgumentException("Missing PlayerUUID")));
 		PlayerProfile profile = new PlayerProfile(playerUuid);

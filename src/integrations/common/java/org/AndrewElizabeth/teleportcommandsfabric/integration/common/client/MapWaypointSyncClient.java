@@ -17,7 +17,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 
 @Environment(EnvType.CLIENT)
-public final class MapWaypointSyncClient {
+final class MapWaypointSyncClient {
 	private static final int JOIN_HELLO_DELAY_TICKS = 20;
 	private static boolean initialized;
 	private static boolean pendingHello;
@@ -30,7 +30,7 @@ public final class MapWaypointSyncClient {
 		pendingHello = true;
 	}
 
-	public static void initialize() {
+	static void initialize() {
 		if (initialized) {
 			return;
 		}

@@ -148,7 +148,7 @@ public final class SharedHomeService {
 		return Set.copyOf(result);
 	}
 
-	public List<SubscriptionView> subscriptions(UUID subscriberUuid) {
+	List<SubscriptionView> subscriptions(UUID subscriberUuid) {
 		Map<SharedHomeKey, Subscription> subscriptions = subscriptionsByPlayer.get(subscriberUuid);
 		if (subscriptions == null || subscriptions.isEmpty()) {
 			return List.of();
@@ -199,7 +199,7 @@ public final class SharedHomeService {
 	public record PublishResult(PublishStatus status, long remainingCooldownMillis) {
 	}
 
-	public record SubscriptionView(SharedHomeKey key, boolean mapVisible, int sequence) {
+	record SubscriptionView(SharedHomeKey key, boolean mapVisible, int sequence) {
 	}
 
 	private static final class Publication {

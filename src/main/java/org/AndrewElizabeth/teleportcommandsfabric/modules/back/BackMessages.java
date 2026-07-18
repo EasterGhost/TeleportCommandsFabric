@@ -10,22 +10,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
 
-public final class BackMessages {
+final class BackMessages {
 	private static final String COMMAND_BACK_TP = "back tp";
 	private static final String DISPLAY_COMMAND_BACK_TP = "/back tp";
 
 	private BackMessages() {
 	}
 
-	public static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
+	static void send(ServerPlayer player, String key, ChatFormatting... formatting) {
 		MessageSupport.send(player, key, formatting);
 	}
 
-	public static void sendDelayStart(ServerPlayer player, int delaySeconds) {
+	static void sendDelayStart(ServerPlayer player, int delaySeconds) {
 		MessageSupport.sendDelayStart(player, delaySeconds);
 	}
 
-	public static void sendTryBackTpPrompt(ServerPlayer player) {
+	static void sendTryBackTpPrompt(ServerPlayer player) {
 		if (player == null) {
 			return;
 		}
@@ -40,7 +40,7 @@ public final class BackMessages {
 				false);
 	}
 
-	public static void sendStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds,
+	static void sendStatus(ServerPlayer player, TeleportStatus status, int cooldownSeconds,
 			String forceCommand) {
 		MessageSupport.sendTeleportStatus(player, status, cooldownSeconds, forceCommand,
 				"commands.teleport_commands.common.noLocation", ChatFormatting.RED);

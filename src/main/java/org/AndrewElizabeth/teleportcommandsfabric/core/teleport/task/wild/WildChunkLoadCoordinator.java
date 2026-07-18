@@ -22,10 +22,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class WildChunkLoadCoordinator {
-	public static final int MAX_ACTIVE_CHUNKS = 32;
-	public static final int MAX_ACTIVE_BATCHES = 8;
+	private static final int MAX_ACTIVE_CHUNKS = 32;
+	private static final int MAX_ACTIVE_BATCHES = 8;
 	public static final int MAX_READY_BATCHES_PER_TICK = 8;
-	public static final long LOAD_TIMEOUT_TICKS = 600L;
+	private static final long LOAD_TIMEOUT_TICKS = 600L;
 	private static final int TICKET_RADIUS = 0;
 
 	private final ArrayDeque<QueuedBatch> waitingBatches = new ArrayDeque<>();

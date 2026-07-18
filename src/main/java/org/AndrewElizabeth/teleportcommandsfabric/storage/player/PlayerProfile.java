@@ -231,7 +231,7 @@ public class PlayerProfile {
 		return hiddenWarpUuids.removeIf(uuid -> !existingWarpUuids.contains(uuid));
 	}
 
-	public boolean ensureDefaultHomeUuid() {
+	private boolean ensureDefaultHomeUuid() {
 		if (defaultHomeUuid == null) {
 			return false;
 		}
@@ -242,7 +242,7 @@ public class PlayerProfile {
 		return true;
 	}
 
-	public boolean removeExpiredHomes() {
+	private boolean removeExpiredHomes() {
 		boolean changed = false;
 		for (var iterator = homes.entrySet().iterator(); iterator.hasNext();) {
 			Map.Entry<UUID, NamedLocation> entry = iterator.next();

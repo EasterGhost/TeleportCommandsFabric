@@ -15,8 +15,11 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Locale;
 
-public class ConfigMigrator {
-	public static void migrate(Path configFile, Gson gson, int defaultVersion) throws IOException {
+final class ConfigMigrator {
+	private ConfigMigrator() {
+	}
+
+	static void migrate(Path configFile, Gson gson, int defaultVersion) throws IOException {
 		JsonObject jsonObject;
 		try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
 			jsonObject = gson.fromJson(reader, JsonObject.class);

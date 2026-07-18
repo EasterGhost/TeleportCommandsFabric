@@ -14,9 +14,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminRuntimeInfo;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminStatusRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.back.BackPreviewRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageAssembler;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
@@ -49,6 +47,7 @@ import java.util.stream.Stream;
 import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.ScenarioTestSupport.*;
 import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.TextAssertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public final class CliTestSuite {
 	private static final ResourceKey<Level> OVERWORLD = dimension("minecraft:overworld");
@@ -231,23 +230,14 @@ public final class CliTestSuite {
 		WaypointListQuery query = new WaypointListQuery(1,
 				WaypointFilter.prefix("a"),
 				new WaypointSort(SortKey.NAME, SortDirection.DESC));
-		WaypointPageRequest request = new WaypointPageRequest(
-				WaypointPageKind.WARPS,
-				rows,
-				Set.of(),
-				null,
-				false,
-				query,
-				"en_us");
 		WarpListCache cache = new WarpListCache();
-		WaypointPageAssembler assembler = new WaypointPageAssembler(cache);
 
-		PageView<NamedLocationView> first = assembler.page(request);
-		PageView<NamedLocationView> second = assembler.page(request);
+		List<NamedLocationView> first = cache.rows(rows, query);
+		List<NamedLocationView> second = cache.rows(rows, query);
 
-		assertEquals(List.of("atlas", "argon", "alpha"), first.entries().stream().map(NamedLocationView::getName).toList(),
+		assertEquals(List.of("atlas", "argon", "alpha"), first.stream().map(NamedLocationView::getName).toList(),
 				"prefix filter and descending name sort should produce expected row order");
-		assertEquals(first.entries(), second.entries(), "cached result should be stable for repeated request");
+		assertSame(first, second, "repeated request should return the cached row list");
 		assertEquals(1, cache.cachedQueryCount(), "warp cache should hold one query result");
 	}
 
