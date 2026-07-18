@@ -13,6 +13,7 @@ public class Config {
 	public WarpConfig warp = new WarpConfig();
 	public WorldSpawnConfig worldSpawn = new WorldSpawnConfig();
 	public RtpConfig rtp = new RtpConfig();
+	public WildConfig wild = new WildConfig();
 	public IntegrationConfig xaero = new IntegrationConfig();
 	public StorageConfig storage = new StorageConfig();
 
@@ -56,6 +57,10 @@ public class Config {
 		return rtp;
 	}
 
+	public WildConfig getWild() {
+		return wild;
+	}
+
 	public IntegrationConfig getIntegration() {
 		return xaero;
 	}
@@ -86,6 +91,9 @@ public class Config {
 		if (rtp == null) {
 			rtp = new RtpConfig();
 		}
+		if (wild == null) {
+			wild = new WildConfig();
+		}
 		if (xaero == null) {
 			xaero = new IntegrationConfig();
 		}
@@ -99,6 +107,7 @@ public class Config {
 		tpa.normalize();
 		warp.normalize();
 		rtp.normalize();
+		wild.normalize();
 		worldSpawn.normalize();
 		xaero.normalize();
 		storage.normalize();

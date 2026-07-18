@@ -354,20 +354,24 @@ public final class CliTestSuite {
 		String homeConfig = renderer.render(AdminHelpRequest.configModule("home", "en_us", runtimeInfo)).getString();
 		String zhRtpConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
 				"rtp", "zh_cn", runtimeInfo)).getString();
+		String wildConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
+				"wild", "en_us", runtimeInfo)).getString();
 
 		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nIntegrations: Client map sync available\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
 				"overview help should render compact topic and quick command entries");
 		assertContains(admin, "========== TPC Admin Commands ==========", "admin help should render admin title");
 		assertContains(admin, "/tpc enable <module>\n  Enable a command module.",
 				"admin help should render command usage with description");
-		assertContains(admin, "Modules:\nback home tpa warp worldspawn rtp integration",
+		assertContains(admin, "Modules:\nback home tpa warp worldspawn rtp wild integration",
 				"admin help should render module names");
-		assertContains(config, "========== TPC Config Commands ==========\nModules:\n[teleporting] [back] [home] [tpa]\n[warp] [worldspawn] [rtp] [integration]\n[storage]",
+		assertContains(config, "========== TPC Config Commands ==========\nModules:\n[teleporting] [back] [home] [tpa]\n[warp] [worldspawn] [rtp] [wild]\n[integration] [storage]",
 				"config index should render config modules as topic buttons");
 		assertContains(homeConfig, "========== TPC Config: home ==========\n/tpc config home max <count>\n  Set the maximum number of homes per player.\n/tpc config home deleteInvalid <true|false>",
 				"config module help should render home config commands");
 		assertContains(zhRtpConfig, "========== TPC 配置：rtp ==========\n/tpc config rtp minRadius <blocks>\n  设置 RTP 最小搜索半径。",
 				"config module help should localize descriptions");
+		assertContains(wildConfig, "========== TPC Config: wild ==========\n/tpc config wild minRadius <blocks>\n  Set the minimum Wild search radius, at least 128 blocks.",
+				"config module help should expose Wild radius controls");
 	}
 
 	private static void testAdminStatusRender() {

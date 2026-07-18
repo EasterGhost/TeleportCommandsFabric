@@ -1,13 +1,14 @@
-package org.AndrewElizabeth.teleportcommandsfabric.modules.rtp;
+package org.AndrewElizabeth.teleportcommandsfabric.modules.wild;
 
 import com.mojang.brigadier.CommandDispatcher;
+
 import net.minecraft.commands.CommandSourceStack;
 
-public final class RtpCommand {
-	private RtpCommand() {
+public final class WildCommand {
+	private WildCommand() {
 	}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(RtpNodeFactory.buildRtpCommand("rtp"));
+		dispatcher.register(WildNodeFactory.build());
 	}
 }

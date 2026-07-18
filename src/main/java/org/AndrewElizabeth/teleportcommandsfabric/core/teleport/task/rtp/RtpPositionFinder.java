@@ -1,6 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.rtp;
 
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SafetyBlockRules;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.SurfacePositionSafety;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.rtp.RtpTeleportPending;
 
 import net.minecraft.core.BlockPos;
@@ -82,29 +82,14 @@ final class RtpPositionFinder {
 		if (restrictNetherRoofBedrock && belowPos.getY() == 127 && belowState.is(Blocks.BEDROCK)) {
 			return false;
 		}
-		if (belowState.isAir() || !belowState.getFluidState().isEmpty()) {
-			return false;
-		}
-		if (belowState.getCollisionShape(reader, belowPos).isEmpty()) {
+		if (!SurfacePositionSafety.isSafeSupport(reader, belowPos, belowState)) {
 			return false;
 		}
 
 		BlockState feetState = reader.getBlockState(pos);
 		headPos.set(pos.getX(), pos.getY() + 1, pos.getZ());
 		BlockState headState = reader.getBlockState(headPos);
-		return isBodyClear(reader, pos, feetState) && isBodyClear(reader, headPos, headState);
-	}
-
-	private static boolean isBodyClear(RtpChunkReader reader, BlockPos pos, BlockState state) {
-		if (state.isAir()) {
-			return true;
-		}
-		if (!state.getFluidState().isEmpty()) {
-			return false;
-		}
-		if (!state.getCollisionShape(reader, pos).isEmpty()) {
-			return false;
-		}
-		return !SafetyBlockRules.isUnsafeCollisionFreeBlock(state.getBlock());
+		return SurfacePositionSafety.isBodyClear(reader, pos, feetState)
+				&& SurfacePositionSafety.isBodyClear(reader, headPos, headState);
 	}
 }
