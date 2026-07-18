@@ -43,13 +43,11 @@ public final class SharedHomeResolver {
 				.toList());
 	}
 
-	public static CompletableFuture<Optional<NamedLocationView>> resolve(SharedHomeKey key,
-			PlayerProfileManager profileManager) {
+	public static CompletableFuture<Optional<NamedLocationView>> resolve(SharedHomeKey key, PlayerProfileManager profileManager) {
 		return profileManager.query(key.ownerUuid(), profile -> profile.getHome(key.homeUuid()));
 	}
 
-	private static CompletableFuture<Map<UUID, NamedLocationView>> loadOwnerHomes(UUID ownerUuid,
-			PlayerProfileManager profileManager) {
+	private static CompletableFuture<Map<UUID, NamedLocationView>> loadOwnerHomes(UUID ownerUuid, PlayerProfileManager profileManager) {
 		return profileManager.query(ownerUuid, profile -> {
 			Map<UUID, NamedLocationView> homes = new LinkedHashMap<>();
 			for (NamedLocationView home : profile.getHomes()) {
