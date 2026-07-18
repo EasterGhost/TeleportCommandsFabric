@@ -10,6 +10,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 | Mod version     | Config version |       Storage version | Data compatibility notes                                                                                                                                                            |
 | --------------- | -------------: | --------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.4             |              3 |                     1 | Adds the `wild` config section and shared-home publication limits without changing schema versions. Shared-home publications and subscriptions are runtime-only and are not persisted. |
 | 2.3.1           |              3 |                     1 | Keeps the v2.3 config/storage schema. Existing preload radius values above the supported maximum are normalized to `3`.                                                            |
 | 2.3             |              3 |                     1 | Keeps the v2.2 config/storage schema. The map integration config still uses the historical `xaero` config section. Invalid-dimension home/warp entries are preserved during profile load. |
 | 2.2             |              3 |                     1 | Keeps the v2.1 config/storage schema. No persisted config or storage fields were added.                                                                                             |
@@ -24,7 +25,30 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.3             |              2 |                     2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |          not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
 
-## [2.3.1] - Unreleased
+## [2.4] - Unreleased
+
+### Added
+
+- Added runtime shared-home publication and subscription. Players can publish homes with `/sharehome`, subscribe from broadcast messages, browse subscriptions with `/sharedhomes`, and teleport with `/sharedhome`.
+- Added configurable per-player publication limits and broadcast cooldowns through `home.sharedHomeMaximum`, `home.sharedHomeBroadcastCooldownSeconds`, and the matching `/tpc config home` commands.
+- Added map synchronization for subscribed shared homes on supported client map integrations.
+- Added management pages for homes and warps with context-preserving actions and delete confirmation. Home management also supports publishing and withdrawing shared homes.
+- Added `/wild` as an independent long-range random teleport module with its own module switch and configurable minimum and maximum radii.
+- Added bounded, batched Wild chunk loading and surface-position search so long-range exploration teleports do not reuse the short-range RTP execution path.
+
+### Changed
+
+- Shared-home broadcasts are dispatched in bounded per-tick work and repeated broadcasts for the same publication are coalesced.
+- Updating or deleting an owner's home now reconciles active shared-home publications and subscribed map waypoints.
+- Timed-out target safety searches now request worker cancellation and discard late results without delaying later teleport execution.
+
+### Notes
+
+- Shared-home publications, subscriptions, and personal shared-home map visibility are runtime state. They are cleared when the server restarts and do not change the storage schema.
+- Temporary homes cannot be published as shared homes.
+- `/wild` is no longer an alias of `/rtp`: RTP remains a short-range random teleport, while Wild loads distant candidate chunks in bounded batches and searches their surface.
+
+## [2.3.1] - 2026-07-14
 
 ### Changed
 

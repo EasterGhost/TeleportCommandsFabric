@@ -13,15 +13,16 @@
 
 | Feature | What it does |
 | --- | --- |
-| 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/worldspawn` | Every teleport command your server needs |
+| 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/wild` `/worldspawn` | Fixed-point, player-to-player, short-range random, and long-range exploration teleports |
 | 🎛️ `/tpc` | One admin surface: enable/disable modules, tune limits, reload config — no JSON editing |
-| 🗺️ Map integrations | Sync homes and warps to Xaero/JourneyMap clients, and publish public warp markers to BlueMap web maps |
-| 📋 Better lists | `/homes` and `/warps` include clickable paging, sorting, and filtering controls |
-| ⚙️ Shared behavior | Delay, cooldown, chunk preloading, and safety checks apply consistently across all teleport types |
+| 🤝 Shared homes | Publish a home to online players, subscribe from chat, and use it through `/sharedhomes` |
+| 🗺️ Map integrations | Sync homes, subscribed shared homes, and warps to Xaero/JourneyMap clients, and publish public warp markers to BlueMap web maps |
+| 📋 Better lists | `/homes`, `/sharedhomes`, and `/warps` include clickable paging, sorting, filtering, and management controls |
+| ⚙️ Consistent timing | Global delay and cooldown apply across teleport flows, while known targets, RTP, and Wild use safety logic suited to their workloads |
 | ⏳ Temporary homes | Time-limited homes (`/tmphome`) with automatic cleanup on expiry |
 | 🤝 TPA trust | Auto-accept or auto-deny TPA / TPAHere requests globally or per player |
 | 🧭 Rotation restore | Saved homes, warps, and teleport records can preserve facing direction |
-| ⚡ RTP performance | Handles concurrent random teleports without lag |
+| ⚡ Random teleport performance | Batches short-range RTP and long-range Wild work for normal and high-player-count servers |
 
 ---
 
@@ -41,7 +42,9 @@ Common admin commands when you need them:
 /tpc reload                     # reload after manual file edits
 ```
 
-By default, extra debug logs are disabled. Target chunk preloading and default target safety checks are also disabled by default; RTP uses its own independent safety logic.
+By default, extra debug logs are disabled. Target chunk preloading and default target safety checks are also disabled by default; RTP and Wild use their own independent destination-selection and safety logic.
+
+Shared-home publications and subscriptions are session state: source homes remain stored normally, but active shares and subscriptions reset when the server restarts.
 
 ---
 
@@ -69,7 +72,7 @@ Adding the client mod (optional) improves the experience:
 | --- | :---: | :---: |
 | All teleport commands | ✅ | ✅ |
 | Clickable chat buttons | ✅ | ✅ |
-| Xaero/JourneyMap client waypoints | — | ✅ |
+| Xaero/JourneyMap home, shared-home, and warp waypoints | — | ✅ |
 | BlueMap web warp markers | ✅ | ✅ |
 | Map right-click → teleport | — | ✅ |
 | Trusted commands skip confirmation | — | ✅ |
