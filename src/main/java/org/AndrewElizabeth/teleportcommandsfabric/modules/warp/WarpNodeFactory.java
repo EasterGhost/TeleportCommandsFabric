@@ -109,12 +109,12 @@ final class WarpNodeFactory {
 	static LiteralArgumentBuilder<CommandSourceStack> buildPlayerMapVisibilityNode(String literal, boolean silent) {
 		var visibleNode = Commands.argument("visible", BoolArgumentType.bool());
 		if (!silent) {
-			visibleNode.executes(context -> WarpMutationHandler.setPlayerMapVisibility(context, false, null));
+			visibleNode.executes(context -> WarpMapVisibilityHandler.setPlayerVisibility(context, false, null));
 		}
 		if (silent) {
-			visibleNode.executes(context -> WarpMutationHandler.setPlayerMapVisibility(context, true, null));
+			visibleNode.executes(context -> WarpMapVisibilityHandler.setPlayerVisibility(context, true, null));
 			visibleNode.then(WaypointQueryNodes.pageArgument(
-					(context, query) -> WarpMutationHandler.setPlayerMapVisibility(context, true, query)));
+					(context, query) -> WarpMapVisibilityHandler.setPlayerVisibility(context, true, query)));
 		}
 		return Commands.literal(literal)
 				.requires(WarpNodeFactory::requiresPlayer)
@@ -125,7 +125,7 @@ final class WarpNodeFactory {
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildGlobalMapVisibilityNode() {
 		var visibleNode = Commands.argument("visible", BoolArgumentType.bool())
-				.then(WaypointQueryNodes.pageArgument(WarpMutationHandler::setGlobalMapVisibility));
+				.then(WaypointQueryNodes.pageArgument(WarpMapVisibilityHandler::setGlobalVisibility));
 		return Commands.literal("teleportcommandsfabric:gmapwarp")
 				.requires(WarpNodeFactory::requiresAdminPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
@@ -139,7 +139,7 @@ final class WarpNodeFactory {
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(WARP_SUGGESTIONS)
 						.then(Commands.argument("visible", BoolArgumentType.bool())
-								.executes(context -> WarpMutationHandler.setGlobalMapVisibility(context, null))));
+								.executes(context -> WarpMapVisibilityHandler.setGlobalVisibility(context, null))));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> buildUiNode() {

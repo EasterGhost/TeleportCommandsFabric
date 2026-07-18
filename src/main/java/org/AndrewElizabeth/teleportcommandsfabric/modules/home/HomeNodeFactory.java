@@ -116,12 +116,12 @@ final class HomeNodeFactory {
 	static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode(String literal, boolean silent) {
 		var visibleNode = Commands.argument("visible", BoolArgumentType.bool());
 		if (!silent) {
-			visibleNode.executes(context -> HomeMutationHandler.setMapVisibility(context, false, null));
+			visibleNode.executes(context -> HomeMapVisibilityHandler.setVisibility(context, false, null));
 		}
 		if (silent) {
-			visibleNode.executes(context -> HomeMutationHandler.setMapVisibility(context, true, null));
+			visibleNode.executes(context -> HomeMapVisibilityHandler.setVisibility(context, true, null));
 			visibleNode.then(WaypointQueryNodes.pageArgument(
-					(context, query) -> HomeMutationHandler.setMapVisibility(context, true, query)));
+					(context, query) -> HomeMapVisibilityHandler.setVisibility(context, true, query)));
 		}
 		return Commands.literal(literal)
 				.requires(HomeNodeFactory::requiresPlayer)
