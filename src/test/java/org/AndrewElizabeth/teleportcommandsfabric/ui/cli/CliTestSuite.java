@@ -1,10 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli;
 
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeKey;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeView;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.WaypointSuggestionSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpTopic;
@@ -63,6 +66,9 @@ public final class CliTestSuite {
 				scenario("Command argument quoting",
 						"Verify command arguments are quoted only when necessary and escaped correctly.",
 						CliTestSuite::testCommandArgumentQuoting),
+				scenario("Waypoint name suggestions",
+						"Verify waypoint suggestions filter by typed prefixes and preserve quoted names.",
+						CliTestSuite::testWaypointNameSuggestions),
 				scenario("Admin warps render actions and navigation",
 						"Verify admin /warps output includes clickable global map state and five page candidates.",
 						CliTestSuite::testAdminWarpsRenderActionsAndNavigation),
@@ -106,6 +112,26 @@ public final class CliTestSuite {
 		assertEquals("\"a\\\"b\"", CommandArgumentUtils.quote("a\"b"), "quote should be escaped");
 		assertEquals("\"a\\\\b\"", CommandArgumentUtils.quote("a\\b"), "backslash should be escaped");
 		assertEquals("\"\"", CommandArgumentUtils.quote(null), "null should serialize as an empty quoted argument");
+	}
+
+	private static void testWaypointNameSuggestions() {
+		List<String> names = List.of("alpha", "alpine base", "beta", "基地");
+		var unquoted = WaypointSuggestionSupport.build(new SuggestionsBuilder("/home al", 6), names);
+		assertEquals(Set.of("alpha", "\"alpine base\""),
+				Set.copyOf(unquoted.getList().stream().map(suggestion -> suggestion.getText()).toList()),
+				"unquoted prefixes should filter suggestions before quoting them");
+		assertEquals(2, unquoted.getList().size(), "unquoted filtering should not retain unrelated names");
+
+		var quoted = WaypointSuggestionSupport.build(new SuggestionsBuilder("/home \"al", 6), names);
+		assertEquals(Set.of("alpha", "\"alpine base\""),
+				Set.copyOf(quoted.getList().stream().map(suggestion -> suggestion.getText()).toList()),
+				"opening quotes should not prevent name matching");
+		assertEquals(2, quoted.getList().size(), "quoted filtering should not retain unrelated names");
+
+		var unicode = WaypointSuggestionSupport.build(new SuggestionsBuilder("/home 基", 6), names);
+		assertEquals(List.of("\"基地\""),
+				unicode.getList().stream().map(suggestion -> suggestion.getText()).toList(),
+				"Unicode names should match before being quoted for Brigadier");
 	}
 
 	private static void testAdminWarpsRenderActionsAndNavigation() {

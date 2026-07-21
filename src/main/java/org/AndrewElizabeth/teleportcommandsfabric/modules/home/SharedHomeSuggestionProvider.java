@@ -7,7 +7,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeResolver;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.WaypointSuggestionSupport;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,11 +29,11 @@ final class SharedHomeSuggestionProvider implements SuggestionProvider<CommandSo
 		}
 		return SharedHomeResolver.resolveSubscriptions(player.getUUID(), TeleportCommands.SHARED_HOME_SERVICE,
 				TeleportCommands.PLAYER_PROFILE_MANAGER, player.level().getServer()).handle((homes, throwable) -> {
-			if (throwable == null) {
-				homes.stream().map(home -> home.getName()).distinct()
-						.forEach(name -> builder.suggest(CommandArgumentUtils.quote(name)));
+			if (throwable != null) {
+				return builder.build();
 			}
-			return null;
-		}).thenCompose(ignored -> builder.buildFuture());
+			return WaypointSuggestionSupport.build(builder,
+					homes.stream().map(home -> home.getName()).distinct().toList());
+		});
 	}
 }
