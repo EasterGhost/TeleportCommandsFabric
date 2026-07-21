@@ -7,11 +7,12 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.tpa.Tpa;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 final class TpaSuggestionProvider implements SuggestionProvider<CommandSourceStack> {
@@ -30,12 +31,11 @@ final class TpaSuggestionProvider implements SuggestionProvider<CommandSourceSta
 			return builder.buildFuture();
 		}
 
-		for (Tpa.Session session : service.getIncoming(recipient.getUUID())) {
-			ServerPlayer sender = context.getSource().getServer().getPlayerList().getPlayer(session.sender());
-			if (sender != null) {
-				builder.suggest(sender.getName().getString());
-			}
-		}
-		return builder.buildFuture();
+		List<String> senderNames = service.getIncoming(recipient.getUUID()).stream()
+				.map(session -> context.getSource().getServer().getPlayerList().getPlayer(session.sender()))
+				.filter(sender -> sender != null)
+				.map(sender -> sender.getName().getString())
+				.toList();
+		return SharedSuggestionProvider.suggest(senderNames, builder);
 	}
 }
