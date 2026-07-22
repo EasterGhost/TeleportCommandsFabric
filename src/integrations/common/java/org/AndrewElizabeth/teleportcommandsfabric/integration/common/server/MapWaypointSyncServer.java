@@ -78,12 +78,16 @@ public final class MapWaypointSyncServer {
 			return;
 		}
 		CLIENTS.compute(player.getUUID(), (ignored, existing) -> {
-			MapWaypointClientState state = existing == null
-					? new MapWaypointClientState(MapWaypointSyncMode.COMMON, payload.protocolVersion())
-					: existing;
-			state.useCommon(payload.protocolVersion());
-			state.markDirty();
-			return state;
+			if (existing == null) {
+				MapWaypointClientState state = new MapWaypointClientState(
+						MapWaypointSyncMode.COMMON, payload.protocolVersion());
+				state.markDirty();
+				return state;
+			}
+			if (existing.useCommon(payload.protocolVersion())) {
+				existing.markDirty();
+			}
+			return existing;
 		});
 	}
 
@@ -142,6 +146,9 @@ public final class MapWaypointSyncServer {
 	private static void sendIfChanged(MinecraftServer server, UUID playerUuid, MapWaypointClientState state,
 			MapWaypointSnapshotBuilder.Result result, long now) {
 		try {
+			if (CLIENTS.get(playerUuid) != state) {
+				return;
+			}
 			MapWaypointSnapshot snapshot = result.snapshot();
 			state.updateNextHomeExpiry(result.nextHomeExpiryMillis());
 			ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);

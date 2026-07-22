@@ -72,11 +72,11 @@ final class MapWaypointSyncClient {
 
 	private static void sendBestAvailableHandshake() {
 		if (ClientPlayNetworking.canSend(ClientIntegrationHelloPayload.TYPE)) {
+			ClientPlayNetworking.send(ClientIntegrationHelloPayload.current());
 			if (IntegrationProtocol.PROTOCOL_VERSION > IntegrationProtocol.MIN_SUPPORTED_PROTOCOL_VERSION) {
 				ClientPlayNetworking.send(new ClientIntegrationHelloPayload(
 						IntegrationProtocol.MIN_SUPPORTED_PROTOCOL_VERSION));
 			}
-			ClientPlayNetworking.send(ClientIntegrationHelloPayload.current());
 			pendingHello = false;
 			DebugLog.info("Sending integration common hello.");
 			return;
@@ -89,10 +89,6 @@ final class MapWaypointSyncClient {
 	}
 
 	private static void handleSnapshot(MapWaypointSnapshotPayload payload) {
-		if (!IntegrationProtocol.isSupported(payload.protocolVersion())) {
-			DebugLog.debug("Ignoring unsupported map waypoint snapshot protocol {}.", payload.protocolVersion());
-			return;
-		}
 		ClientMapWaypointSnapshots.update(payload.snapshot());
 		DebugLog.info("Map waypoint snapshot received (waypoints: {}).", payload.snapshot().waypoints().size());
 		MapWaypointAdapterRegistry.dispatch(payload.snapshot());

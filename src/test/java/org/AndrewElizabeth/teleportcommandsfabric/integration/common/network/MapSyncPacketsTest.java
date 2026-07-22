@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.integration.common.network;
 
+import org.AndrewElizabeth.teleportcommandsfabric.integration.common.network.protocol.MapWaypointSnapshotPayload;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedDeathLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
@@ -7,11 +8,13 @@ import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.Sy
 import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MapSyncPacketsTest {
 	@Test
@@ -36,6 +39,16 @@ class MapSyncPacketsTest {
 				decoded.waypoints().stream().map(SyncedMapWaypoint::kind).toList());
 		assertEquals(List.of("base", "spawn"),
 				decoded.waypoints().stream().map(SyncedMapWaypoint::commandTarget).toList());
+	}
+
+	@Test
+	void unsupportedProtocolIsRejectedBeforeSnapshotBodyIsRead() {
+		FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+		buffer.writeVarInt(IntegrationProtocol.PROTOCOL_VERSION + 1);
+		buffer.writeByte(0x7F);
+
+		assertThrows(DecoderException.class, () -> MapWaypointSnapshotPayload.CODEC.decode(buffer));
+		assertEquals(1, buffer.readerIndex());
 	}
 
 	private static MapWaypointSnapshot snapshot() {
