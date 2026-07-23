@@ -109,6 +109,24 @@ java {
     withSourcesJar()
 }
 
+tasks.named("sourcesJar", Jar) {
+    if (includeIntegrationCommon.get()) {
+        from sourceSets.integrationCommon.java
+    }
+    if (includeXaeroIntegration.get()) {
+        from sourceSets.xaeroIntegration.java
+    }
+    if (includeJourneyMapIntegration.get()) {
+        from sourceSets.journeyMapIntegration.java
+    }
+    if (includeBlueMapIntegration.get()) {
+        from sourceSets.blueMapIntegration.java
+    }
+    from("LICENSE.txt") {
+        rename { "LICENSE_${archiveBaseName}" }
+    }
+}
+
 jar {
     from("LICENSE.txt") {
         rename { "LICENSE_${archiveBaseName}" }

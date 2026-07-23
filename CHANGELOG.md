@@ -25,7 +25,7 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.3             |              2 |                     2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |          not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
 
-## [2.4] - Unreleased
+## [2.4] - 2026-07-23
 
 ### Added
 
@@ -41,6 +41,11 @@ The config and storage schema versions are tracked separately from the mod relea
 - Shared-home broadcasts are dispatched in bounded per-tick work and repeated broadcasts for the same publication are coalesced.
 - Updating or deleting an owner's home now reconciles active shared-home publications and subscribed map waypoints.
 - Timed-out target safety searches now request worker cancellation and discard late results without delaying later teleport execution.
+
+### Fixed
+
+- Fixed home, warp, shared-home, and TPA request suggestions so command completion only offers entries matching the text already typed.
+- Fixed a race between `/tpc reload` and live configuration changes that could allow a delayed reload result to overwrite a newly applied setting.
 
 ### Notes
 
