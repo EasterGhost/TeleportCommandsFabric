@@ -72,15 +72,19 @@ public class ConfigManager {
 
 			CompletableFuture<Void> reloadFuture = new CompletableFuture<>();
 			RELOAD_FUTURE = reloadFuture;
-			CompletableFuture.runAsync(() -> {
-				try {
-					loadConfig();
-					saveConfigSync();
-					ConfigApplier.applyRuntime();
-				} catch (Exception exception) {
-					throw new CompletionException(exception);
-				}
-			}, ioExecutor()).whenComplete((ignored, throwable) -> completeReload(reloadFuture, throwable));
+			try {
+				CompletableFuture.runAsync(() -> {
+					try {
+						loadConfig();
+						saveConfigSync();
+						ConfigApplier.applyRuntime();
+					} catch (Exception exception) {
+						throw new CompletionException(exception);
+					}
+				}, ioExecutor()).whenComplete((ignored, throwable) -> completeReload(reloadFuture, throwable));
+			} catch (RuntimeException exception) {
+				completeReload(reloadFuture, exception);
+			}
 			return reloadFuture;
 		}
 	}
