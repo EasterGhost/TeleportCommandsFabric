@@ -1,6 +1,7 @@
 package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.wild;
 
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportTicketTypes;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ChunkResult;
@@ -84,7 +85,7 @@ final class WildChunkLoadPool<C> {
 		load.markTicketHeld();
 		activeTicketCount++;
 		try {
-			level.getChunkSource().addTicketAndLoadWithRadius(WildTicketTypes.wild(), key.chunkPos(), TICKET_RADIUS)
+			level.getChunkSource().addTicketAndLoadWithRadius(TeleportTicketTypes.wild(), key.chunkPos(), TICKET_RADIUS)
 					.whenComplete((result, throwable) -> completionQueue.add(
 							new LoadCompletion(key, loadSequence, isSuccessfulLoad(result, throwable))));
 		} catch (RuntimeException exception) {
@@ -135,7 +136,7 @@ final class WildChunkLoadPool<C> {
 		load.clearTicketHeld();
 		activeTicketCount--;
 		try {
-			load.level().getChunkSource().removeTicketWithRadius(WildTicketTypes.wild(), load.key().chunkPos(),
+			load.level().getChunkSource().removeTicketWithRadius(TeleportTicketTypes.wild(), load.key().chunkPos(),
 					TICKET_RADIUS);
 		} catch (RuntimeException exception) {
 			ModConstants.LOGGER.warn("Failed to release Wild chunk ticket for {} in {}", load.key().chunkPos(),

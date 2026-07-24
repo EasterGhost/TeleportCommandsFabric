@@ -6,8 +6,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportTicketTypes;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.WildService;
-import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.wild.WildTicketTypes;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
@@ -53,7 +53,7 @@ public class TeleportCommands implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		WildTicketTypes.initialize();
+		TeleportTicketTypes.initialize();
 		ServerLifecycleEvents.SERVER_STARTING.register(TeleportCommands::initializeMod);
 		ServerTickEvents.END_SERVER_TICK.register(TeleportCommandsLifecycle::tick);
 		ServerLifecycleEvents.SERVER_STOPPING.register(TeleportCommandsLifecycle::shutdown);

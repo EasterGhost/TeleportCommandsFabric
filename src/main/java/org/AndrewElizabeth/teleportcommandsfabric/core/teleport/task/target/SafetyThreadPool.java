@@ -2,16 +2,14 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target;
 
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 import org.AndrewElizabeth.teleportcommandsfabric.ModConstants;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +19,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public final class SafetyThreadPool {
+	private static final BlockPos WARMUP_BASE_POS = BlockPos.ZERO;
+	private static final BlockPos WARMUP_SAFE_OFFSET = new BlockPos(3, -3, 3);
+	private static final int WARMUP_ITERATIONS_PER_THREAD = 250;
 	private final ExecutorService safetyExecutor;
 
 	public SafetyThreadPool() {
@@ -45,17 +46,12 @@ public final class SafetyThreadPool {
 		if (level == null) {
 			return;
 		}
-		BlockPos spawnPos = level.getRespawnData().pos();
-		ChunkPos chunkPos = new ChunkPos(spawnPos.getX() >> 4, spawnPos.getZ() >> 4);
-		int ticketRadius = 1;
-		level.getChunkSource().addTicketWithRadius(TicketType.UNKNOWN, chunkPos, ticketRadius);
 
 		int threads = TeleportServiceSettings.SAFETY_WORKER_THREADS;
-		int warmupIterationsPerThread = 250;
 		CyclicBarrier barrier = new CyclicBarrier(threads);
-		List<CompletableFuture<Void>> futures = new ArrayList<>(threads);
+		TeleportSafety.BlockStateReader reader = createWarmupReader(WARMUP_BASE_POS);
 		for (int i = 0; i < threads; i++) {
-			futures.add(CompletableFuture.runAsync(() -> {
+			CompletableFuture.runAsync(() -> {
 				try {
 					barrier.await(5, TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
@@ -63,41 +59,54 @@ public final class SafetyThreadPool {
 					return;
 				} catch (Exception ignored) {
 				}
-				LoadedChunkBlockStateReader reader = waitForSafetyReader(level, spawnPos);
-				if (reader == null) {
-					return;
-				}
-				for (int j = 0; j < warmupIterationsPerThread; j++) {
-					if (TeleportSafety.getSafeBlockPos(spawnPos, level, reader).isEmpty()) {
-						DebugLog.warn("Teleport safety warmup check returned no safe position.");
-						break;
+
+				BlockPos expectedSafePos = WARMUP_BASE_POS.offset(WARMUP_SAFE_OFFSET);
+				for (int j = 0; j < WARMUP_ITERATIONS_PER_THREAD; j++) {
+					if (Thread.currentThread().isInterrupted()) {
+						return;
+					}
+					BlockPos safePos = TeleportSafety.getSafeBlockPos(WARMUP_BASE_POS, level, reader)
+							.orElseThrow(() -> new IllegalStateException(
+									"Synthetic teleport safety warmup found no safe position"));
+					if (!safePos.equals(expectedSafePos)) {
+						throw new IllegalStateException(
+								"Synthetic teleport safety warmup returned an unexpected position: " + safePos);
 					}
 				}
 			}, safetyExecutor).exceptionally(throwable -> {
 				ModConstants.LOGGER.warn("Failed to warmup teleport safety worker", throwable);
 				return null;
-			}));
+			});
 		}
-
-		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-				.whenComplete((ignored, throwable) -> server.execute(() ->
-						level.getChunkSource().removeTicketWithRadius(TicketType.UNKNOWN, chunkPos, ticketRadius)));
 	}
 
-	private static LoadedChunkBlockStateReader waitForSafetyReader(ServerLevel level, BlockPos pos) {
-		for (int retries = 0; retries < 40; retries++) {
-			LoadedChunkBlockStateReader reader = LoadedChunkBlockStateReader.create(level, pos);
-			if (reader.complete()) {
-				return reader;
+	static TeleportSafety.BlockStateReader createWarmupReader(BlockPos basePos) {
+		BlockPos waterPos = basePos.below();
+		BlockPos witherRosePos = basePos;
+		BlockPos lavaPos = basePos.offset(-2, -1, 0);
+		BlockPos openFenceGatePos = basePos.offset(2, -1, 0);
+		BlockPos safeSupportPos = basePos.offset(WARMUP_SAFE_OFFSET).below();
+		BlockState openFenceGate = Blocks.OAK_FENCE_GATE.defaultBlockState()
+				.setValue(FenceGateBlock.OPEN, true);
+
+		return pos -> {
+			if (pos.equals(waterPos)) {
+				return Blocks.WATER.defaultBlockState();
 			}
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				return null;
+			if (pos.equals(witherRosePos)) {
+				return Blocks.WITHER_ROSE.defaultBlockState();
 			}
-		}
-		return null;
+			if (pos.equals(lavaPos)) {
+				return Blocks.LAVA.defaultBlockState();
+			}
+			if (pos.equals(openFenceGatePos)) {
+				return openFenceGate;
+			}
+			if (pos.equals(safeSupportPos)) {
+				return Blocks.STONE.defaultBlockState();
+			}
+			return Blocks.AIR.defaultBlockState();
+		};
 	}
 
 	public void shutdown() {
