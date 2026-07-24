@@ -17,7 +17,6 @@ def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegra
         .map { it.toBoolean() }
         .orElse(false)
 def includeClientMapIntegration = includeXaeroIntegration.zip(includeJourneyMapIntegration) { xaero, journeymap -> xaero || journeymap }
-def includeAnyMapIntegration = includeClientMapIntegration.zip(includeBlueMapIntegration) { clientIntegration, bluemap -> clientIntegration || bluemap }
 def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeClientMapIntegration) { common, integration -> common || integration }
 def integrationCommonJarName = "teleportcommandsfabric-integration-common-${modVersion}.jar"
 def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${modVersion}.jar"
@@ -42,8 +41,22 @@ def includedJarsJson = {
     }
     return "[" + jars.collect { "{\"file\":\"META-INF/jars/${it}\"}" }.join(",") + "]"
 }
+def buildVariantId = {
+    def xaero = includeXaeroIntegration.get()
+    def journeyMap = includeJourneyMapIntegration.get()
+    def blueMap = includeBlueMapIntegration.get()
+    def common = includeIntegrationCommon.get()
+
+    if (xaero && journeyMap && blueMap) {
+        return "standard"
+    }
+    if (!xaero && !journeyMap && !blueMap) {
+        return common ? "common" : "core"
+    }
+    return "custom"
+}
 def buildVariantName = {
-    includeAnyMapIntegration.get() ? "Standard" : "Core"
+    buildVariantId().capitalize()
 }
 ext.includedJarsJson = includedJarsJson
 ext.buildVariantName = buildVariantName
@@ -53,8 +66,9 @@ ext.includeJourneyMapIntegration = includeJourneyMapIntegration
 ext.includeBlueMapIntegration = includeBlueMapIntegration
 
 tasks.withType(AbstractArchiveTask).configureEach {
-    if (!includeXaeroIntegration.get() && !includeJourneyMapIntegration.get() && !includeBlueMapIntegration.get()) {
-        archiveVersion = "${modVersion}-core"
+    def variant = buildVariantId()
+    if (variant != "standard") {
+        archiveVersion = "${modVersion}-${variant}"
     }
 }
 

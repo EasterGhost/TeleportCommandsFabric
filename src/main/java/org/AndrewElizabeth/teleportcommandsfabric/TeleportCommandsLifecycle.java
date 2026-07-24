@@ -5,11 +5,14 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.record.PlayerRecordedLoca
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.WildService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportOperationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.TeleportPreloadManager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.SafetyThreadPool;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.TeleportBatchDispatcher;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.home.SharedHomeBroadcastDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.LegacyStorageMigrator;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
@@ -17,6 +20,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedL
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPages;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
@@ -27,7 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 final class TeleportCommandsLifecycle {
-	private static boolean playerConnectionEventsRegistered;
+	private static boolean playerLifecycleEventsRegistered;
 
 	private TeleportCommandsLifecycle() {
 	}
@@ -55,6 +59,12 @@ final class TeleportCommandsLifecycle {
 		if (TeleportCommands.RTP_SERVICE != null) {
 			TeleportCommands.RTP_SERVICE.tick(server);
 		}
+		if (TeleportCommands.WILD_SERVICE != null) {
+			TeleportCommands.WILD_SERVICE.tick(server);
+		}
+		if (TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER != null) {
+			TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER.tick(server);
+		}
 	}
 
 	static void shutdown(MinecraftServer server) {
@@ -73,6 +83,10 @@ final class TeleportCommandsLifecycle {
 				teleportOperationManager, teleportPreloadManager, TpaCommand::sendExpired);
 		TeleportCommands.RTP_SERVICE = new RtpService(TeleportCommands.RECORDED_LOCATION_SOURCE,
 				teleportOperationManager, teleportPreloadManager);
+		TeleportCommands.WILD_SERVICE = new WildService(TeleportCommands.RECORDED_LOCATION_SOURCE,
+				teleportOperationManager, teleportPreloadManager);
+		TeleportCommands.SHARED_HOME_SERVICE = new SharedHomeService();
+		TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER = new SharedHomeBroadcastDispatcher();
 		TeleportCommands.GLOBAL_PROFILE_MANAGER = new GlobalProfileManager();
 		TeleportCommands.PLAYER_PROFILE_MANAGER = new PlayerProfileManager();
 		TeleportCommands.WAYPOINT_PAGES = new WaypointPages();
@@ -92,11 +106,11 @@ final class TeleportCommandsLifecycle {
 		CompletableFuture.allOf(globalLoad, recordLoad).join();
 	}
 
-	static synchronized void registerPlayerConnectionEvents() {
-		if (playerConnectionEventsRegistered) {
+	static synchronized void registerPlayerLifecycleEvents() {
+		if (playerLifecycleEventsRegistered) {
 			return;
 		}
-		playerConnectionEventsRegistered = true;
+		playerLifecycleEventsRegistered = true;
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
 			UUID playerUuid = handler.player.getUUID();
@@ -112,6 +126,9 @@ final class TeleportCommandsLifecycle {
 			if (TeleportCommands.RTP_SERVICE != null) {
 				TeleportCommands.RTP_SERVICE.onPlayerQuit(playerUuid);
 			}
+			if (TeleportCommands.WILD_SERVICE != null) {
+				TeleportCommands.WILD_SERVICE.onPlayerQuit(playerUuid);
+			}
 		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
@@ -123,17 +140,33 @@ final class TeleportCommandsLifecycle {
 				TeleportCommands.TELEPORT_SERVICE.onPlayerJoin(playerUuid);
 			}
 		});
+
+		ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) -> {
+			try {
+				if (TeleportCommands.WILD_SERVICE != null) {
+					TeleportCommands.WILD_SERVICE.onPlayerChangeLevel(player.getUUID(), destination.dimension());
+				}
+			} catch (RuntimeException exception) {
+				ModConstants.LOGGER.warn("Failed to process player level change teleport hooks", exception);
+			}
+		});
 	}
 
 	private static void shutdownStorageManagers() {
 		TeleportService teleportService = TeleportCommands.TELEPORT_SERVICE;
 		TpaService tpaService = TeleportCommands.TPA_SERVICE;
 		RtpService rtpService = TeleportCommands.RTP_SERVICE;
+		WildService wildService = TeleportCommands.WILD_SERVICE;
 		WaypointPages waypointPages = TeleportCommands.WAYPOINT_PAGES;
+		SharedHomeService sharedHomeService = TeleportCommands.SHARED_HOME_SERVICE;
+		SharedHomeBroadcastDispatcher sharedHomeBroadcastDispatcher = TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER;
 		PlayerRecordedLocationManager recordedLocationManager = TeleportCommands.RECORDED_LOCATION_MANAGER;
 		GlobalProfileManager globalProfileManager = TeleportCommands.GLOBAL_PROFILE_MANAGER;
 		PlayerProfileManager playerProfileManager = TeleportCommands.PLAYER_PROFILE_MANAGER;
 
+		if (wildService != null) {
+			wildService.shutdown();
+		}
 		if (teleportService != null) {
 			teleportService.shutdown();
 		}
@@ -146,9 +179,18 @@ final class TeleportCommandsLifecycle {
 		if (waypointPages != null) {
 			waypointPages.close();
 		}
+		if (sharedHomeService != null) {
+			sharedHomeService.clear();
+		}
+		if (sharedHomeBroadcastDispatcher != null) {
+			sharedHomeBroadcastDispatcher.clear();
+		}
 		TeleportCommands.TELEPORT_SERVICE = null;
 		TeleportCommands.TPA_SERVICE = null;
 		TeleportCommands.RTP_SERVICE = null;
+		TeleportCommands.WILD_SERVICE = null;
+		TeleportCommands.SHARED_HOME_SERVICE = null;
+		TeleportCommands.SHARED_HOME_BROADCAST_DISPATCHER = null;
 		TeleportCommands.WAYPOINT_PAGES = null;
 
 		CompletableFuture<Void> configShutdown = ConfigManager.shutdown();

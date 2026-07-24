@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-public class PlayerRecordedLocationIO {
-	public Map<UUID, PlayerRecordedLocations> loadRecords() throws IOException {
+final class PlayerRecordedLocationIO {
+	Map<UUID, PlayerRecordedLocations> loadRecords() throws IOException {
 		Path recordFile = getRecordFile();
 		if (Files.notExists(recordFile)) {
 			return Collections.emptyMap();
@@ -27,7 +27,7 @@ public class PlayerRecordedLocationIO {
 		return PlayerRecordedLocationNbtCodec.fromNbt(tag);
 	}
 
-	public void saveRecords(Map<UUID, PlayerRecordedLocations> records) throws IOException {
+	void saveRecords(Map<UUID, PlayerRecordedLocations> records) throws IOException {
 		if (records.isEmpty()) {
 			delete();
 			return;
@@ -38,7 +38,7 @@ public class PlayerRecordedLocationIO {
 		NbtFileIO.writeAtomically(recordFile, tag);
 	}
 
-	public boolean delete() throws IOException {
+	boolean delete() throws IOException {
 		return Files.deleteIfExists(getRecordFile());
 	}
 

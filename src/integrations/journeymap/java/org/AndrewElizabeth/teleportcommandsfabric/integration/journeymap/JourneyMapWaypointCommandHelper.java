@@ -14,6 +14,7 @@ public final class JourneyMapWaypointCommandHelper {
 	static final String MARKER_KEY = "tpc.marker";
 	static final String KIND_KEY = "tpc.kind";
 	static final String NAME_KEY = "tpc.name";
+	static final String TARGET_KEY = "tpc.target";
 	private static final String DEATH_GROUP_ID = "journeymap_death";
 	private static final int DEATH_MATCH_RADIUS = 1;
 	private static final String MARKER_VALUE = "true";
@@ -21,10 +22,11 @@ public final class JourneyMapWaypointCommandHelper {
 	private JourneyMapWaypointCommandHelper() {
 	}
 
-	static void tag(Waypoint waypoint, SyncedWaypointKind kind, String name) {
+	static void tag(Waypoint waypoint, SyncedWaypointKind kind, String name, String commandTarget) {
 		waypoint.setCustomData(MARKER_KEY, MARKER_VALUE);
 		waypoint.setCustomData(KIND_KEY, kind.name());
 		waypoint.setCustomData(NAME_KEY, name);
+		waypoint.setCustomData(TARGET_KEY, commandTarget);
 	}
 
 	static boolean isTpcWaypoint(Waypoint waypoint) {
@@ -32,12 +34,12 @@ public final class JourneyMapWaypointCommandHelper {
 	}
 
 	static String key(SyncedMapWaypoint waypoint) {
-		return waypoint.kind().name() + '\u0000' + waypoint.name();
+		return waypoint.kind().name() + '\u0000' + waypoint.commandTarget();
 	}
 
 	static String key(Waypoint waypoint) {
 		WaypointCommandTarget target = target(waypoint);
-		return target == null ? null : target.kind().name() + '\u0000' + target.name();
+		return target == null ? null : target.kind().name() + '\u0000' + target.commandTarget();
 	}
 
 	public static String buildTeleportCommand(Waypoint waypoint) {
@@ -46,8 +48,9 @@ public final class JourneyMapWaypointCommandHelper {
 			return matchesCurrentDeathLocation(waypoint) ? command("back") + " death" : null;
 		}
 		return switch (target.kind()) {
-		case HOME -> command("home") + " " + CommandArgumentUtils.quote(target.name());
-		case WARP -> command("warp") + " " + CommandArgumentUtils.quote(target.name());
+		case HOME -> command("home") + " " + CommandArgumentUtils.quote(target.commandTarget());
+		case WARP -> command("warp") + " " + CommandArgumentUtils.quote(target.commandTarget());
+		case SHARED_HOME -> "teleportcommandsfabric:sharedhome " + target.commandTarget();
 		};
 	}
 
@@ -82,8 +85,9 @@ public final class JourneyMapWaypointCommandHelper {
 			return null;
 		}
 		return switch (target.kind()) {
-		case HOME -> "teleportcommandsfabric:maphome " + CommandArgumentUtils.quote(target.name()) + " false";
-		case WARP -> "teleportcommandsfabric:mapwarp " + CommandArgumentUtils.quote(target.name()) + " false";
+		case HOME -> "teleportcommandsfabric:maphome " + CommandArgumentUtils.quote(target.commandTarget()) + " false";
+		case WARP -> "teleportcommandsfabric:mapwarp " + CommandArgumentUtils.quote(target.commandTarget()) + " false";
+		case SHARED_HOME -> "teleportcommandsfabric:mapsharedhome " + target.commandTarget() + " false";
 		};
 	}
 
@@ -93,16 +97,24 @@ public final class JourneyMapWaypointCommandHelper {
 		}
 		String kindValue = waypoint.getCustomData(KIND_KEY);
 		String name = waypoint.getCustomData(NAME_KEY);
+		String commandTarget = waypoint.getCustomData(TARGET_KEY);
 		if (kindValue == null || name == null || name.isBlank()) {
 			return null;
 		}
 		try {
-			return new WaypointCommandTarget(SyncedWaypointKind.valueOf(kindValue), name);
+			SyncedWaypointKind kind = SyncedWaypointKind.valueOf(kindValue);
+			if (commandTarget == null || commandTarget.isBlank()) {
+				if (kind == SyncedWaypointKind.SHARED_HOME) {
+					return null;
+				}
+				commandTarget = name;
+			}
+			return new WaypointCommandTarget(kind, commandTarget);
 		} catch (IllegalArgumentException exception) {
 			return null;
 		}
 	}
 
-	private record WaypointCommandTarget(SyncedWaypointKind kind, String name) {
+	private record WaypointCommandTarget(SyncedWaypointKind kind, String commandTarget) {
 	}
 }

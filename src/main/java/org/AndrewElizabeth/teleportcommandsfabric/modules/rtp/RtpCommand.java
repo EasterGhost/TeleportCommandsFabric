@@ -9,6 +9,5 @@ public final class RtpCommand {
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(RtpNodeFactory.buildRtpCommand("rtp"));
-		dispatcher.register(RtpNodeFactory.buildRtpCommand("wild"));
 	}
 }

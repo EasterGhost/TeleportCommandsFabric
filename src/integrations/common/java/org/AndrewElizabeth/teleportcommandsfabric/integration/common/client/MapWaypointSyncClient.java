@@ -17,7 +17,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 
 @Environment(EnvType.CLIENT)
-public final class MapWaypointSyncClient {
+final class MapWaypointSyncClient {
 	private static final int JOIN_HELLO_DELAY_TICKS = 20;
 	private static boolean initialized;
 	private static boolean pendingHello;
@@ -30,7 +30,7 @@ public final class MapWaypointSyncClient {
 		pendingHello = true;
 	}
 
-	public static void initialize() {
+	static void initialize() {
 		if (initialized) {
 			return;
 		}
@@ -73,6 +73,10 @@ public final class MapWaypointSyncClient {
 	private static void sendBestAvailableHandshake() {
 		if (ClientPlayNetworking.canSend(ClientIntegrationHelloPayload.TYPE)) {
 			ClientPlayNetworking.send(ClientIntegrationHelloPayload.current());
+			if (IntegrationProtocol.PROTOCOL_VERSION > IntegrationProtocol.MIN_SUPPORTED_PROTOCOL_VERSION) {
+				ClientPlayNetworking.send(new ClientIntegrationHelloPayload(
+						IntegrationProtocol.MIN_SUPPORTED_PROTOCOL_VERSION));
+			}
 			pendingHello = false;
 			DebugLog.info("Sending integration common hello.");
 			return;
@@ -85,10 +89,6 @@ public final class MapWaypointSyncClient {
 	}
 
 	private static void handleSnapshot(MapWaypointSnapshotPayload payload) {
-		if (!IntegrationProtocol.isSupported(payload.protocolVersion())) {
-			DebugLog.debug("Ignoring unsupported map waypoint snapshot protocol {}.", payload.protocolVersion());
-			return;
-		}
 		ClientMapWaypointSnapshots.update(payload.snapshot());
 		DebugLog.info("Map waypoint snapshot received (waypoints: {}).", payload.snapshot().waypoints().size());
 		MapWaypointAdapterRegistry.dispatch(payload.snapshot());

@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.function.BooleanSupplier;
 
 final class TeleportSafety {
     static final int SEARCH_RADIUS = 3;
@@ -22,6 +24,7 @@ final class TeleportSafety {
     private static final byte CACHE_UNKNOWN = 0;
     private static final byte MASK_SUPPORT = 1;
     private static final byte MASK_BODY_CLEAR = 2;
+    private static final BooleanSupplier NEVER_CANCELLED = () -> false;
     private static final Offset[] CANDIDATE_OFFSETS = createCandidateOffsets();
     private static final ThreadLocal<SearchContext> SEARCH_CONTEXT = ThreadLocal.withInitial(SearchContext::new);
 
@@ -33,10 +36,16 @@ final class TeleportSafety {
     }
 
     public static Optional<BlockPos> getSafeBlockPos(BlockPos blockPos, ServerLevel world, BlockStateReader reader) {
+        return getSafeBlockPos(blockPos, world, reader, NEVER_CANCELLED);
+    }
+
+    static Optional<BlockPos> getSafeBlockPos(BlockPos blockPos, ServerLevel world, BlockStateReader reader,
+            BooleanSupplier cancellationRequested) {
         SearchContext context = SEARCH_CONTEXT.get();
-        context.reset(blockPos, world, reader);
+        context.reset(blockPos, world, reader, cancellationRequested);
         try {
             for (Offset offset : CANDIDATE_OFFSETS) {
+                context.throwIfCancelled();
                 if (context.isSafe(offset)) {
                     return Optional.of(context.toBlockPos(offset));
                 }
@@ -90,21 +99,25 @@ final class TeleportSafety {
         private int baseZ;
         private ServerLevel world;
         private BlockStateReader reader;
+        private BooleanSupplier cancellationRequested;
         private final byte[] maskCache = new byte[CACHE_X_SIZE * CACHE_Y_SIZE * CACHE_Z_SIZE];
         private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
-        private void reset(BlockPos blockPos, ServerLevel world, BlockStateReader reader) {
+        private void reset(BlockPos blockPos, ServerLevel world, BlockStateReader reader,
+                BooleanSupplier cancellationRequested) {
             this.baseX = blockPos.getX();
             this.baseY = blockPos.getY();
             this.baseZ = blockPos.getZ();
             this.world = world;
             this.reader = reader;
+            this.cancellationRequested = cancellationRequested;
             Arrays.fill(maskCache, CACHE_UNKNOWN);
         }
 
         private void clearWorld() {
             this.world = null;
             this.reader = null;
+            this.cancellationRequested = null;
         }
 
         private boolean isSafe(Offset offset) {
@@ -129,7 +142,9 @@ final class TeleportSafety {
             }
 
             mutablePos.set(baseX + relativeX, baseY + relativeY, baseZ + relativeZ);
+            throwIfCancelled();
             BlockState state = reader.getBlockState(mutablePos);
+            throwIfCancelled();
             byte mask = createMask(state);
             maskCache[index] = (byte) (mask + 1);
             return mask;
@@ -143,7 +158,9 @@ final class TeleportSafety {
                 return MASK_SUPPORT | MASK_BODY_CLEAR;
             }
 
+            throwIfCancelled();
             boolean collisionEmpty = state.getCollisionShape(world, mutablePos).isEmpty();
+            throwIfCancelled();
             byte mask = 0;
 
             if (!collisionEmpty && !SafetyBlockRules.isUnsafeSupport(state.getBlock())) {
@@ -154,6 +171,12 @@ final class TeleportSafety {
             }
 
             return mask;
+        }
+
+        private void throwIfCancelled() {
+            if (cancellationRequested.getAsBoolean()) {
+                throw new CancellationException("Teleport safety check cancelled");
+            }
         }
 
         private int cacheIndex(int relativeX, int relativeY, int relativeZ) {

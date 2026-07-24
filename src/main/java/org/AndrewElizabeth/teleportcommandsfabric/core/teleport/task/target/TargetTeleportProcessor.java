@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TargetTeleportProcessor {
 	private static final long SAFETY_CHECK_TIMEOUT_MILLIS = 5000L;
@@ -75,21 +76,37 @@ public final class TargetTeleportProcessor {
 
 			BlockPos basePos = BlockPos.containing(prepared.target().position());
 			TeleportSafety.BlockStateReader reader = createBlockStateReader(prepared.target().world(), basePos);
+			SafetyCancellation cancellation = new SafetyCancellation();
+			CompletableFuture<Void> terminationFuture = new CompletableFuture<>();
 			CompletableFuture<Optional<BlockPos>> safetyFuture = CompletableFuture.supplyAsync(
-					() -> TeleportSafety.getSafeBlockPos(basePos, prepared.target().world(), reader),
+					() -> {
+						try {
+							return TeleportSafety.getSafeBlockPos(basePos, prepared.target().world(), reader,
+									cancellation::isRequested);
+						} finally {
+							terminationFuture.complete(null);
+						}
+					},
 					workerPool.getExecutor());
 			if (safetyChecks == null) {
 				safetyChecks = new ArrayList<>();
 			}
-			safetyChecks.add(new PreparedSafetyCheck(prepared, basePos, safetyFuture));
+			safetyChecks.add(new PreparedSafetyCheck(prepared, basePos, safetyFuture, terminationFuture, cancellation));
 		}
 
 		if (safetyChecks == null) {
 			return;
 		}
 
+		long safetyDeadlineNanos = System.nanoTime()
+				+ TimeUnit.MILLISECONDS.toNanos(SAFETY_CHECK_TIMEOUT_MILLIS);
 		for (PreparedSafetyCheck safetyCheck : safetyChecks) {
-			Optional<BlockPos> safePos = joinSafetyCheck(safetyCheck);
+			SafetyCheckResult result = joinSafetyCheck(safetyCheck, safetyDeadlineNanos);
+			if (result.timedOut()) {
+				finishTimedOutSafetyCheck(safetyCheck);
+				continue;
+			}
+			Optional<BlockPos> safePos = result.safePos();
 			if (safePos.isEmpty()) {
 				finishEntry(safetyCheck.prepared().entry(), TeleportStatus.NO_SAFE_POSITION);
 				continue;
@@ -139,23 +156,36 @@ public final class TargetTeleportProcessor {
 		return LoadedChunkBlockStateReader.create(world, basePos);
 	}
 
-	private Optional<BlockPos> joinSafetyCheck(PreparedSafetyCheck safetyCheck) {
+	private SafetyCheckResult joinSafetyCheck(PreparedSafetyCheck safetyCheck, long deadlineNanos) {
 		try {
-			return safetyCheck.safetyFuture().get(SAFETY_CHECK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			long remainingNanos = Math.max(0L, deadlineNanos - System.nanoTime());
+			return SafetyCheckResult.completed(
+					safetyCheck.safetyFuture().get(remainingNanos, TimeUnit.NANOSECONDS));
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
 			ModConstants.LOGGER.warn("Parallel teleport safety check was interrupted; falling back to server thread",
 					exception);
-			return TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world());
+			return SafetyCheckResult.completed(
+					TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world()));
 		} catch (CancellationException | ExecutionException exception) {
 			ModConstants.LOGGER.warn("Parallel teleport safety check failed; falling back to server thread", exception);
-			return TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world());
+			return SafetyCheckResult.completed(
+					TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world()));
 		} catch (TimeoutException exception) {
+			safetyCheck.cancellation().request();
 			ModConstants.LOGGER.warn(
-					"Parallel teleport safety check timed out after {} ms; falling back to server thread",
+					"Parallel teleport safety batch exceeded its {} ms deadline; cancelling the unfinished worker task",
 					SAFETY_CHECK_TIMEOUT_MILLIS, exception);
-			return TeleportSafety.getSafeBlockPos(safetyCheck.basePos(), safetyCheck.prepared().target().world());
+			return SafetyCheckResult.timeout();
 		}
+	}
+
+	private void finishTimedOutSafetyCheck(PreparedSafetyCheck safetyCheck) {
+		TargetTeleportExecution entry = safetyCheck.prepared().entry();
+		executor.finishOperation(entry.pending(), TeleportStatus.FAILED);
+		safetyCheck.terminationFuture().whenComplete((ignored, throwable) ->
+				safetyCheck.prepared().server().execute(() ->
+						preloadManager.release(entry.playerUuid(), entry.pendingSequence())));
 	}
 
 	private TeleportStatus finishPreparedTeleport(PreparedExecution prepared, Vec3 destination) {
@@ -194,6 +224,30 @@ public final class TargetTeleportProcessor {
 	private record PreparedSafetyCheck(
 			PreparedExecution prepared,
 			BlockPos basePos,
-			CompletableFuture<Optional<BlockPos>> safetyFuture) {
+			CompletableFuture<Optional<BlockPos>> safetyFuture,
+			CompletableFuture<Void> terminationFuture,
+			SafetyCancellation cancellation) {
+	}
+
+	private record SafetyCheckResult(Optional<BlockPos> safePos, boolean timedOut) {
+		private static SafetyCheckResult completed(Optional<BlockPos> safePos) {
+			return new SafetyCheckResult(safePos, false);
+		}
+
+		private static SafetyCheckResult timeout() {
+			return new SafetyCheckResult(Optional.empty(), true);
+		}
+	}
+
+	private static final class SafetyCancellation {
+		private final AtomicBoolean requested = new AtomicBoolean();
+
+		private boolean isRequested() {
+			return requested.get();
+		}
+
+		private void request() {
+			requested.set(true);
+		}
 	}
 }

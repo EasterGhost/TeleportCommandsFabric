@@ -4,35 +4,35 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 
 import java.util.Optional;
 
-public class PlayerRecordedLocations {
+final class PlayerRecordedLocations {
 	private RecordedLocation deathLocation;
 	private RecordedLocation previousTeleportLocation;
 
-	public Optional<RecordedLocation> getDeathLocation() {
+	Optional<RecordedLocation> getDeathLocation() {
 		return Optional.ofNullable(deathLocation);
 	}
 
-	public void setDeathLocation(RecordedLocation deathLocation) {
+	void setDeathLocation(RecordedLocation deathLocation) {
 		this.deathLocation = deathLocation;
 	}
 
-	public Optional<RecordedLocation> getPreviousTeleportLocation() {
+	Optional<RecordedLocation> getPreviousTeleportLocation() {
 		return Optional.ofNullable(previousTeleportLocation);
 	}
 
-	public void setPreviousTeleportLocation(RecordedLocation previousTeleportLocation) {
+	void setPreviousTeleportLocation(RecordedLocation previousTeleportLocation) {
 		this.previousTeleportLocation = previousTeleportLocation;
 	}
 
-	public void clearDeathLocation() {
+	void clearDeathLocation() {
 		this.deathLocation = null;
 	}
 
-	public void clearPreviousTeleportLocation() {
+	void clearPreviousTeleportLocation() {
 		this.previousTeleportLocation = null;
 	}
 
-	public boolean isEmpty() {
+	boolean isEmpty() {
 		return deathLocation == null && previousTeleportLocation == null;
 	}
 }

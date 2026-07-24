@@ -138,14 +138,6 @@ public final class TeleportService {
 		workerPool.shutdown();
 	}
 
-	public int queueSize() {
-		return dispatcher.queueSize();
-	}
-
-	public int activePreloadTicketCount() {
-		return preloadManager.activeTicketCount();
-	}
-
 	public void configurePreload(boolean enabled, int radiusChunks) {
 		preloadManager.configure(enabled, radiusChunks);
 	}

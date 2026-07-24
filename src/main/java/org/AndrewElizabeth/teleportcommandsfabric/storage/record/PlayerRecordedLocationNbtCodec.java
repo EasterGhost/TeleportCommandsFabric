@@ -11,11 +11,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public final class PlayerRecordedLocationNbtCodec {
+final class PlayerRecordedLocationNbtCodec {
 	private PlayerRecordedLocationNbtCodec() {
 	}
 
-	public static CompoundTag toNbt(Map<UUID, PlayerRecordedLocations> records) {
+	static CompoundTag toNbt(Map<UUID, PlayerRecordedLocations> records) {
 		CompoundTag tag = new CompoundTag();
 		tag.putInt("DataVersion", ModConstants.STORAGE_VERSION);
 		ListTag recordList = new ListTag();
@@ -33,7 +33,7 @@ public final class PlayerRecordedLocationNbtCodec {
 		return tag;
 	}
 
-	public static Map<UUID, PlayerRecordedLocations> fromNbt(CompoundTag tag) {
+	static Map<UUID, PlayerRecordedLocations> fromNbt(CompoundTag tag) {
 		Map<UUID, PlayerRecordedLocations> records = new LinkedHashMap<>();
 		ListTag recordList = tag.getListOrEmpty("PlayerBackRecords");
 

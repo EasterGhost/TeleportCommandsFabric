@@ -4,7 +4,8 @@ import xaero.hud.minimap.waypoint.WaypointColor;
 
 enum XaeroWaypointType {
 	WARP(WaypointColor.BLUE, "W"),
-	HOME(WaypointColor.GREEN, "H");
+	HOME(WaypointColor.GREEN, "H"),
+	SHARED_HOME(WaypointColor.YELLOW, "S");
 
 	private final WaypointColor color;
 	private final String symbol;
@@ -23,6 +24,6 @@ enum XaeroWaypointType {
 	}
 
 	String prefix() {
-		return XaeroWaypointTags.prefix(this == WARP);
+		return XaeroWaypointTags.prefix(this);
 	}
 }

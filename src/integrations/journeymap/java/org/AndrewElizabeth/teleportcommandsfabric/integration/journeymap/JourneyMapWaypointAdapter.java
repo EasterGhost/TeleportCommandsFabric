@@ -23,8 +23,10 @@ import java.util.Objects;
 final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 	private static final int WARP_COLOR = 0x55CCFF;
 	private static final int HOME_COLOR = 0x55FF88;
+	private static final int SHARED_HOME_COLOR = 0xFFCC55;
 	private static final String WARP_GROUP_NAME = "TPC Warps";
 	private static final String HOME_GROUP_NAME = "TPC Homes";
+	private static final String SHARED_HOME_GROUP_NAME = "TPC Shared Homes";
 	private final IClientAPI api;
 	private boolean applyingSnapshot;
 	private MapWaypointSnapshot lastSnapshot;
@@ -79,7 +81,8 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 			}
 			SyncedMapWaypoint desiredWaypoint = desired.get(key);
 			if (desiredWaypoint == null
-					|| !matches(waypoint, desiredWaypoint, groups.get(desiredWaypoint.kind()), persistent)) {
+					|| !matches(waypoint, desiredWaypoint, groups.get(desiredWaypoint.kind()),
+							isPersistent(desiredWaypoint.kind(), persistent))) {
 				api.removeWaypoint(ModConstants.MOD_ID, waypoint);
 			} else {
 				desired.remove(key);
@@ -88,7 +91,8 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 
 		for (SyncedMapWaypoint waypoint : desired.values()) {
 			api.addWaypoint(ModConstants.MOD_ID,
-					createWaypoint(waypoint, groups.get(waypoint.kind()), persistent));
+					createWaypoint(waypoint, groups.get(waypoint.kind()),
+							isPersistent(waypoint.kind(), persistent)));
 		}
 	}
 
@@ -106,7 +110,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		Waypoint waypoint = WaypointFactory.createWaypoint(ModConstants.MOD_ID,
 				new BlockPos(synced.x(), synced.y(), synced.z()), synced.name(), synced.worldId(), persistent);
 		waypoint.setColor(color(synced.kind()));
-		JourneyMapWaypointCommandHelper.tag(waypoint, synced.kind(), synced.name());
+		JourneyMapWaypointCommandHelper.tag(waypoint, synced.kind(), synced.name(), synced.commandTarget());
 		group.addWaypoint(waypoint);
 		return waypoint;
 	}
@@ -125,6 +129,7 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 		Map<SyncedWaypointKind, WaypointGroup> groups = new LinkedHashMap<>();
 		groups.put(SyncedWaypointKind.WARP, group(WARP_GROUP_NAME, persistent));
 		groups.put(SyncedWaypointKind.HOME, group(HOME_GROUP_NAME, persistent));
+		groups.put(SyncedWaypointKind.SHARED_HOME, group(SHARED_HOME_GROUP_NAME, false));
 		return groups;
 	}
 
@@ -139,7 +144,15 @@ final class JourneyMapWaypointAdapter implements MapWaypointAdapter {
 	}
 
 	private int color(SyncedWaypointKind kind) {
-		return kind == SyncedWaypointKind.WARP ? WARP_COLOR : HOME_COLOR;
+		return switch (kind) {
+		case WARP -> WARP_COLOR;
+		case HOME -> HOME_COLOR;
+		case SHARED_HOME -> SHARED_HOME_COLOR;
+		};
+	}
+
+	private boolean isPersistent(SyncedWaypointKind kind, boolean persistent) {
+		return kind != SyncedWaypointKind.SHARED_HOME && persistent;
 	}
 
 	private void sendCommand(String command) {

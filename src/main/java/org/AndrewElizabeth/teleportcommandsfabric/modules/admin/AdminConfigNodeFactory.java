@@ -21,6 +21,7 @@ import net.minecraft.network.chat.MutableComponent;
 import java.time.Duration;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class AdminConfigNodeFactory {
 	private AdminConfigNodeFactory() {
@@ -34,7 +35,8 @@ final class AdminConfigNodeFactory {
 				.then(Commands.argument(argName, IntegerArgumentType.integer(min))
 						.executes(context -> mutateAndReply(context,
 								config -> setter.accept(config, IntegerArgumentType.getInteger(context, argName)),
-								AdminMessages.t(context.getSource(), messageKey, intArg(context, argName)))));
+								() -> AdminMessages.t(context.getSource(), messageKey,
+										Component.literal(String.valueOf(ConfigManager.query(getter)))))));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> intNode(String literalName, String argName, int min, int max,
@@ -45,7 +47,8 @@ final class AdminConfigNodeFactory {
 				.then(Commands.argument(argName, IntegerArgumentType.integer(min, max))
 						.executes(context -> mutateAndReply(context,
 								config -> setter.accept(config, IntegerArgumentType.getInteger(context, argName)),
-								AdminMessages.t(context.getSource(), messageKey, intArg(context, argName)))));
+								() -> AdminMessages.t(context.getSource(), messageKey,
+										Component.literal(String.valueOf(ConfigManager.query(getter)))))));
 	}
 
 	static LiteralArgumentBuilder<CommandSourceStack> durationSecondsNode(String literalName, String argName, int min,
@@ -93,9 +96,14 @@ final class AdminConfigNodeFactory {
 
 	private static int mutateAndReply(CommandContext<CommandSourceStack> context, java.util.function.Consumer<Config> writer,
 			MutableComponent message) throws CommandSyntaxException {
+		return mutateAndReply(context, writer, () -> message);
+	}
+
+	private static int mutateAndReply(CommandContext<CommandSourceStack> context, java.util.function.Consumer<Config> writer,
+			Supplier<MutableComponent> messageSupplier) throws CommandSyntaxException {
 		try {
 			ConfigManager.mutate(writer);
-			AdminMessages.sendSuccess(context.getSource(), message, true);
+			AdminMessages.sendSuccess(context.getSource(), messageSupplier.get(), true);
 			return CommandReturns.COMPLETED_SYNC;
 		} catch (Exception exception) {
 			ModConstants.LOGGER.error("Failed to update admin config.", exception);

@@ -12,6 +12,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKi
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointRenderMode;
+import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointRows;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 
@@ -32,18 +33,25 @@ final class WarpListHandler {
 	}
 
 	static int renderWarps(CommandSourceStack source, ServerPlayer player, WaypointListQuery query, boolean pagePicker) {
-		return renderWarps(source, player, query, pagePicker ? WaypointRenderMode.PAGE_PICKER : WaypointRenderMode.PAGE);
+		return renderWarps(source, player, query, pagePicker ? WaypointRenderMode.PAGE_PICKER : WaypointRenderMode.PAGE, null);
 	}
 
 	static int renderWarpFilterPicker(CommandSourceStack source, ServerPlayer player, WaypointListQuery query,
 			WaypointFilterPickerKind pickerKind) {
 		return renderWarps(source, player, query, pickerKind == WaypointFilterPickerKind.DIMENSION
 				? WaypointRenderMode.DIMENSION_FILTER_PICKER
-				: WaypointRenderMode.PREFIX_FILTER_PICKER);
+				: WaypointRenderMode.PREFIX_FILTER_PICKER, null);
+	}
+
+	static int renderWarpManage(CommandSourceStack source, ServerPlayer player, UUID waypointUuid, WaypointListQuery query,
+			boolean deleteConfirmation) {
+		return renderWarps(source, player, query, deleteConfirmation
+				? WaypointRenderMode.DELETE_CONFIRMATION
+				: WaypointRenderMode.MANAGE, waypointUuid);
 	}
 
 	private static int renderWarps(CommandSourceStack source, ServerPlayer player, WaypointListQuery query,
-			WaypointRenderMode renderMode) {
+			WaypointRenderMode renderMode, UUID waypointUuid) {
 		if (!ensureEnabled(player)) {
 			return CommandReturns.FAILED;
 		}
@@ -67,6 +75,17 @@ final class WarpListHandler {
 					}
 					WaypointPageRequest request = new WaypointPageRequest(WaypointPageKind.WARPS, data.warps(), data.hiddenWarpUuids(),
 							null, admin, query, language(currentPlayer));
+					if (renderMode == WaypointRenderMode.MANAGE || renderMode == WaypointRenderMode.DELETE_CONFIRMATION) {
+						NamedLocationView location = WaypointRows.findByUuid(data.warps(), waypointUuid).orElse(null);
+						if (location == null) {
+							WarpMessages.send(currentPlayer, "commands.teleport_commands.warp.notFound", ChatFormatting.RED);
+							return;
+						}
+						currentPlayer.sendSystemMessage(renderMode == WaypointRenderMode.DELETE_CONFIRMATION
+								? TeleportCommands.WAYPOINT_PAGES.renderDeleteConfirmation(request, location)
+								: TeleportCommands.WAYPOINT_PAGES.renderManage(request, location), false);
+						return;
+					}
 					List<NamedLocationView> filtered = TeleportCommands.WAYPOINT_PAGES.filteredRows(request);
 					if (filtered.isEmpty()) {
 						if (query.filter() instanceof WaypointFilter.Dimension dimension) {

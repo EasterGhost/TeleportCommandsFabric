@@ -48,6 +48,8 @@ public abstract class ClientPlayNetworkHandlerMixin {
 				|| normalized.startsWith("tpadeny ")
 				|| normalized.equals("homes")
 				|| normalized.startsWith("homes ")
+				|| normalized.equals("sharedhomes")
+				|| normalized.startsWith("sharedhomes ")
 				|| normalized.startsWith("home ")
 				|| normalized.startsWith("tmphome ")
 				|| normalized.startsWith("maphome ")

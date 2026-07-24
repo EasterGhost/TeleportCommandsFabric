@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render;
 
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeView;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.ComponentSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
@@ -77,7 +78,10 @@ public final class PageRenderer {
 		boolean personalMapVisible = isPersonalMapVisible(request, location);
 
 		message.append("\n");
-		message.append(Component.literal("  - " + location.getName()).withStyle(ChatFormatting.AQUA));
+		String displayName = location instanceof SharedHomeView shared
+				? shared.ownerName() + " / " + location.getName()
+				: location.getName();
+		message.append(Component.literal("  - " + displayName).withStyle(ChatFormatting.AQUA));
 		appendMarkers(message, request, location, quotedName, actualMapVisible, currentPage);
 		appendLocationLine(message, request.language(), location);
 		appendActionLine(message, request, location, quotedName, personalMapVisible, currentPage);
@@ -128,31 +132,37 @@ public final class PageRenderer {
 			String quotedName, boolean mapVisible, int currentPage) {
 		message.append("\n");
 		message.append(Component.literal("     | ").withStyle(ChatFormatting.AQUA));
+		if (location instanceof SharedHomeView shared) {
+			appendSharedActions(message, request, shared, mapVisible, currentPage);
+			return;
+		}
+
 		appendActionButton(message, request.language(), "commands.teleport_commands.common.tp", ChatFormatting.GREEN,
 				new ClickEvent.RunCommand(commands.teleportCommand(request.kind(), quotedName)));
-
-		if (request.canModify()) {
-			appendModifyButtons(message, request, location, quotedName);
-		}
 
 		appendActionButton(message, request.language(), mapVisible
 				? "commands.teleport_commands.common.hideFromMap"
 				: "commands.teleport_commands.common.showOnMap", mapVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD,
 				new ClickEvent.RunCommand(commands.visibilityCommand(request, quotedName, !mapVisible, currentPage)));
+
+		if (request.canModify()) {
+			appendActionButton(message, request.language(), "commands.teleport_commands.common.manage", ChatFormatting.BLUE,
+					new ClickEvent.RunCommand(commands.manageCommand(request, location.getUuid(), currentPage)));
+		}
 	}
 
-	private void appendModifyButtons(MutableComponent message, WaypointPageRequest request, NamedLocationView location, String quotedName) {
-		appendActionButton(message, request.language(), "commands.teleport_commands.common.rename", ChatFormatting.BLUE,
-				new ClickEvent.SuggestCommand("/" + commands.renameCommand(request.kind()) + " " + quotedName + " "));
-		appendActionButton(message, request.language(), "commands.teleport_commands.common.update", ChatFormatting.YELLOW,
-				new ClickEvent.RunCommand(commands.updateCommand(request.kind()) + " " + quotedName));
-		if (request.kind() == WaypointPageKind.HOMES && !location.isTemporary()
-				&& !Objects.equals(request.defaultLocationUuid(), location.getUuid())) {
-			appendActionButton(message, request.language(), "commands.teleport_commands.common.defaultPrompt", ChatFormatting.DARK_AQUA,
-					new ClickEvent.RunCommand("defaulthome " + quotedName));
-		}
-		appendActionButton(message, request.language(), "commands.teleport_commands.common.delete", ChatFormatting.RED,
-				new ClickEvent.SuggestCommand("/" + commands.deleteCommand(request.kind()) + " " + quotedName));
+	private void appendSharedActions(MutableComponent message, WaypointPageRequest request, SharedHomeView shared,
+			boolean mapVisible, int currentPage) {
+		appendActionButton(message, request.language(), "commands.teleport_commands.common.tp", ChatFormatting.GREEN,
+				new ClickEvent.RunCommand(commands.sharedTeleportCommand(shared.key())));
+		appendActionButton(message, request.language(), mapVisible
+				? "commands.teleport_commands.common.hideFromMap"
+				: "commands.teleport_commands.common.showOnMap", mapVisible ? ChatFormatting.GRAY : ChatFormatting.GOLD,
+				new ClickEvent.RunCommand(commands.sharedVisibilityCommand(shared.key(), !mapVisible,
+						request.query(), currentPage)));
+		appendActionButton(message, request.language(), "commands.teleport_commands.sharedhome.unsubscribe",
+				ChatFormatting.RED,
+				new ClickEvent.RunCommand(commands.sharedUnsubscribeCommand(shared.key(), request.query(), currentPage)));
 	}
 
 	private MutableComponent buildNavigation(WaypointPageRequest request, int currentPage, int totalPages) {

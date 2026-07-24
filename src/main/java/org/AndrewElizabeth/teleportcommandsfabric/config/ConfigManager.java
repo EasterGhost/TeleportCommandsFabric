@@ -51,6 +51,7 @@ public class ConfigManager {
 			.create();
 	private static ExecutorService IO_EXECUTOR;
 	private static final Object CONFIG_LOCK = new Object();
+	private static CompletableFuture<Void> RELOAD_FUTURE;
 
 	public static void initialize() {
 		CONFIG_FILE = TeleportCommands.CONFIG_DIR.resolve("teleport_commands.json");
@@ -64,15 +65,28 @@ public class ConfigManager {
 	}
 
 	public static CompletableFuture<Void> reload() {
-		return CompletableFuture.runAsync(() -> {
-			try {
-				loadConfig();
-				saveConfigSync();
-				ConfigApplier.applyRuntime();
-			} catch (Exception exception) {
-				throw new CompletionException(exception);
+		synchronized (CONFIG_LOCK) {
+			if (RELOAD_FUTURE != null) {
+				return RELOAD_FUTURE;
 			}
-		}, ioExecutor());
+
+			CompletableFuture<Void> reloadFuture = new CompletableFuture<>();
+			RELOAD_FUTURE = reloadFuture;
+			try {
+				CompletableFuture.runAsync(() -> {
+					try {
+						loadConfig();
+						saveConfigSync();
+						ConfigApplier.applyRuntime();
+					} catch (Exception exception) {
+						throw new CompletionException(exception);
+					}
+				}, ioExecutor()).whenComplete((ignored, throwable) -> completeReload(reloadFuture, throwable));
+			} catch (RuntimeException exception) {
+				completeReload(reloadFuture, exception);
+			}
+			return reloadFuture;
+		}
 	}
 
 	private static void loadConfig() throws Exception {
@@ -147,12 +161,28 @@ public class ConfigManager {
 
 	public static void mutate(Consumer<Config> writer) {
 		synchronized (CONFIG_LOCK) {
+			if (RELOAD_FUTURE != null) {
+				throw new IllegalStateException("Config reload is in progress.");
+			}
 			Config config = requireConfig();
 			writer.accept(config);
 			config.normalize();
+			saveConfigAsync();
 		}
-		saveConfigAsync();
 		ConfigApplier.applyRuntime();
+	}
+
+	private static void completeReload(CompletableFuture<Void> reloadFuture, Throwable throwable) {
+		synchronized (CONFIG_LOCK) {
+			if (RELOAD_FUTURE == reloadFuture) {
+				RELOAD_FUTURE = null;
+			}
+		}
+		if (throwable == null) {
+			reloadFuture.complete(null);
+		} else {
+			reloadFuture.completeExceptionally(throwable);
+		}
 	}
 
 	private static void setConfig(Config config) {

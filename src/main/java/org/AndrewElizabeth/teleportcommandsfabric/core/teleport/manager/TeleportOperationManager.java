@@ -101,7 +101,7 @@ public final class TeleportOperationManager {
 		return visitCurrentOperations(TargetTeleportPending.class, visitor);
 	}
 
-	public <T extends TeleportOperation> int visitCurrentOperations(Class<T> operationType, Predicate<T> visitor) {
+	private <T extends TeleportOperation> int visitCurrentOperations(Class<T> operationType, Predicate<T> visitor) {
 		Objects.requireNonNull(operationType, "operationType");
 		Objects.requireNonNull(visitor, "visitor");
 		int visited = 0;

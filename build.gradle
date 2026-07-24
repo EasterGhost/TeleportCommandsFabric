@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.15.5'
+    id 'net.fabricmc.fabric-loom' version '1.16.3'
     id 'maven-publish'
 }
 
@@ -107,6 +107,24 @@ java {
     // if it is present.
     // If you remove this line, sources will not be generated.
     withSourcesJar()
+}
+
+tasks.named("sourcesJar", Jar) {
+    if (includeIntegrationCommon.get()) {
+        from sourceSets.integrationCommon.java
+    }
+    if (includeXaeroIntegration.get()) {
+        from sourceSets.xaeroIntegration.java
+    }
+    if (includeJourneyMapIntegration.get()) {
+        from sourceSets.journeyMapIntegration.java
+    }
+    if (includeBlueMapIntegration.get()) {
+        from sourceSets.blueMapIntegration.java
+    }
+    from("LICENSE.txt") {
+        rename { "LICENSE_${archiveBaseName}" }
+    }
 }
 
 jar {

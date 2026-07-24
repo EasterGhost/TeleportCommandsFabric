@@ -33,7 +33,7 @@ public final class MessageSupport {
 		}
 	}
 
-	public static void sendUnsafeTeleportPrompt(ServerPlayer player, String command) {
+	private static void sendUnsafeTeleportPrompt(ServerPlayer player, String command) {
 		if (player == null) {
 			return;
 		}

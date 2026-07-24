@@ -27,5 +27,17 @@ public final class HomeCommand {
 				WaypointFilterPickerKind.DIMENSION));
 		dispatcher.register(HomeNodeFactory.buildMapVisibilityNode("maphome", false));
 		dispatcher.register(HomeNodeFactory.buildMapVisibilityNode("teleportcommandsfabric:maphome", true));
+		dispatcher.register(HomeNodeFactory.buildUiNode());
+		dispatcher.register(SharedHomeNodeFactory.buildShareNode());
+		dispatcher.register(SharedHomeNodeFactory.buildTeleportNode());
+		dispatcher.register(SharedHomeNodeFactory.buildInternalTeleportNode());
+		dispatcher.register(SharedHomeNodeFactory.buildMapVisibilityNode());
+		dispatcher.register(SharedHomeNodeFactory.buildListNode("sharedhomes", false));
+		dispatcher.register(SharedHomeNodeFactory.buildListNode("teleportcommandsfabric:sharedhomespages", true));
+		dispatcher.register(SharedHomeNodeFactory.buildFilterPickerNode(
+				"teleportcommandsfabric:sharedhomesprefixfilters", WaypointFilterPickerKind.PREFIX));
+		dispatcher.register(SharedHomeNodeFactory.buildFilterPickerNode(
+				"teleportcommandsfabric:sharedhomesdimensionfilters", WaypointFilterPickerKind.DIMENSION));
+		dispatcher.register(SharedHomeNodeFactory.buildUiNode());
 	}
 }

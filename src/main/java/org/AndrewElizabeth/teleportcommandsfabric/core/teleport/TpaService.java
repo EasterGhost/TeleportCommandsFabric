@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Util;
 
-import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Objects;
@@ -70,18 +69,6 @@ public final class TpaService {
 		sessions.add(session);
 		expiryScheduler.schedule(sessionId, request.expiry());
 		return session;
-	}
-
-	public Tpa.Session createRequest(UUID sender, UUID target, Tpa.Type type, Duration expiry) {
-		return createRequest(TpaRequest.of(sender, target, type, expiry));
-	}
-
-	public Optional<Tpa.Session> getSession(UUID sessionId) {
-		return sessions.get(sessionId);
-	}
-
-	public Optional<Tpa.Session> getLatestIncoming(UUID targetUuid) {
-		return sessions.getLatestIncoming(targetUuid);
 	}
 
 	public List<Tpa.Session> getIncoming(UUID targetUuid) {

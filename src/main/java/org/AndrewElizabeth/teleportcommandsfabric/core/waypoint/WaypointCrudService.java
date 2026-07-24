@@ -10,7 +10,9 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public class WaypointCrudService {
 
@@ -98,8 +100,17 @@ public class WaypointCrudService {
 	}
 
 	public static CompletableFuture<WaypointOperationResult> delete(String name, AsyncWaypointSource source) {
+		return delete(source, accessor -> accessor.findByName(name));
+	}
+
+	public static CompletableFuture<WaypointOperationResult> delete(UUID uuid, AsyncWaypointSource source) {
+		return delete(source, accessor -> accessor.findByUuid(uuid));
+	}
+
+	private static CompletableFuture<WaypointOperationResult> delete(AsyncWaypointSource source,
+			Function<WaypointProfileAccessor, Optional<NamedLocation>> finder) {
 		return source.mutateAtomic(accessor -> {
-			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			Optional<NamedLocation> locationOpt = finder.apply(accessor);
 			if (locationOpt.isEmpty()) {
 				return WaypointOperationResult.NOT_FOUND;
 			}
@@ -127,6 +138,15 @@ public class WaypointCrudService {
 	}
 
 	public static CompletableFuture<WaypointOperationResult> update(ServerPlayer player, String name, AsyncWaypointSource source) {
+		return update(player, source, accessor -> accessor.findByName(name));
+	}
+
+	public static CompletableFuture<WaypointOperationResult> update(ServerPlayer player, UUID uuid, AsyncWaypointSource source) {
+		return update(player, source, accessor -> accessor.findByUuid(uuid));
+	}
+
+	private static CompletableFuture<WaypointOperationResult> update(ServerPlayer player, AsyncWaypointSource source,
+			Function<WaypointProfileAccessor, Optional<NamedLocation>> finder) {
 		net.minecraft.core.BlockPos currentPos = player.blockPosition();
 		double currentY = player.getY();
 		ResourceKey<Level> currentDim = player.level().dimension();
@@ -134,7 +154,7 @@ public class WaypointCrudService {
 		float currentXRot = player.getXRot();
 
 		return source.mutateAtomic(accessor -> {
-			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			Optional<NamedLocation> locationOpt = finder.apply(accessor);
 			if (locationOpt.isEmpty()) {
 				return WaypointOperationResult.NOT_FOUND;
 			}
@@ -217,12 +237,21 @@ public class WaypointCrudService {
 	}
 
 	public static CompletableFuture<WaypointOperationResult> setDefault(String name, AsyncWaypointSource source) {
+		return setDefault(source, accessor -> accessor.findByName(name));
+	}
+
+	public static CompletableFuture<WaypointOperationResult> setDefault(UUID uuid, AsyncWaypointSource source) {
+		return setDefault(source, accessor -> accessor.findByUuid(uuid));
+	}
+
+	private static CompletableFuture<WaypointOperationResult> setDefault(AsyncWaypointSource source,
+			Function<WaypointProfileAccessor, Optional<NamedLocation>> finder) {
 		return source.mutateAtomic(accessor -> {
 			if (!source.isDefaultSupported()) {
 				return WaypointOperationResult.DEFAULT_NOT_SUPPORTED;
 			}
 
-			Optional<NamedLocation> locationOpt = accessor.findByName(name);
+			Optional<NamedLocation> locationOpt = finder.apply(accessor);
 			if (locationOpt.isEmpty()) {
 				return WaypointOperationResult.NOT_FOUND;
 			}

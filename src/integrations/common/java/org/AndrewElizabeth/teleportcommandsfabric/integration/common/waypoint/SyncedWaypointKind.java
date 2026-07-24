@@ -2,5 +2,6 @@ package org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint;
 
 public enum SyncedWaypointKind {
 	HOME,
-	WARP
+	WARP,
+	SHARED_HOME
 }

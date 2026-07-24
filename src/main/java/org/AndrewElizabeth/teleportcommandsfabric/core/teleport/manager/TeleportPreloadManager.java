@@ -3,10 +3,11 @@ package org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.target.TargetTeleportExecution;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.TeleportTarget;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportTicketTypes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.server.level.TicketType;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 public final class TeleportPreloadManager {
 	private final Map<Key, PreloadHandle> handles = new HashMap<>();
+	private final Map<TicketKey, SharedTicket> sharedTickets = new HashMap<>();
 	private static final PreloadTickResult EMPTY_TICK_RESULT = new PreloadTickResult(List.of(), List.of());
 	private volatile boolean enabled;
 	private volatile int radiusChunks = TeleportServiceSettings.PRELOAD_RADIUS_CHUNKS;
@@ -36,7 +38,7 @@ public final class TeleportPreloadManager {
 		return enabled;
 	}
 
-	public boolean isChunkLoaded(TeleportTarget target) {
+	private boolean isChunkLoaded(TeleportTarget target) {
 		Objects.requireNonNull(target, "target");
 		Vec3 position = target.position();
 		return target.world().isLoaded(BlockPos.containing(position));
@@ -59,14 +61,9 @@ public final class TeleportPreloadManager {
 		BlockPos blockPos = BlockPos.containing(entry.target().position());
 		ChunkPos chunkPos = new ChunkPos(blockPos.getX() >> 4, blockPos.getZ() >> 4);
 		int radius = radiusChunks;
-		ServerChunkCache chunkSource = entry.target().world().getChunkSource();
-		chunkSource.addTicketWithRadius(TicketType.UNKNOWN, chunkPos, radius);
-		handles.put(key, new PreloadHandle(entry, chunkPos, radius, currentTick + TeleportServiceSettings.PRELOAD_TIMEOUT_TICKS));
+		SharedTicket ticket = acquireTicket(entry.target().world(), chunkPos, radius);
+		handles.put(key, new PreloadHandle(entry, ticket, currentTick + TeleportServiceSettings.PRELOAD_TIMEOUT_TICKS));
 		return true;
-	}
-
-	public boolean isReady(TargetTeleportExecution entry) {
-		return isChunkLoaded(entry.target());
 	}
 
 	public PreloadTickResult tick(long currentTick) {
@@ -108,8 +105,7 @@ public final class TeleportPreloadManager {
 		if (handle == null) {
 			return;
 		}
-		handle.entry.target().world().getChunkSource()
-				.removeTicketWithRadius(TicketType.UNKNOWN, handle.chunkPos, handle.radiusChunks);
+		releaseTicket(handle.ticket);
 	}
 
 	public void releaseAll() {
@@ -120,7 +116,34 @@ public final class TeleportPreloadManager {
 	}
 
 	public int activeTicketCount() {
-		return handles.size();
+		return sharedTickets.size();
+	}
+
+	private SharedTicket acquireTicket(ServerLevel world, ChunkPos chunkPos, int radiusChunks) {
+		TicketKey key = new TicketKey(world, chunkPos, radiusChunks);
+		SharedTicket ticket = sharedTickets.get(key);
+		if (ticket != null) {
+			ticket.retain();
+			return ticket;
+		}
+
+		ServerChunkCache chunkSource = world.getChunkSource();
+		chunkSource.addTicketWithRadius(TeleportTicketTypes.targetPreload(), chunkPos, radiusChunks);
+		SharedTicket created = new SharedTicket(key);
+		sharedTickets.put(key, created);
+		return created;
+	}
+
+	private void releaseTicket(SharedTicket ticket) {
+		if (!ticket.release()) {
+			return;
+		}
+		if (!sharedTickets.remove(ticket.key(), ticket)) {
+			throw new IllegalStateException("Target preload ticket lease is not registered");
+		}
+		TicketKey key = ticket.key();
+		key.world().getChunkSource().removeTicketWithRadius(
+				TeleportTicketTypes.targetPreload(), key.chunkPos(), key.radiusChunks());
 	}
 
 	public record PreloadTickResult(List<TargetTeleportExecution> ready, List<TargetTeleportExecution> timedOut) {
@@ -132,19 +155,51 @@ public final class TeleportPreloadManager {
 		}
 	}
 
+	private record TicketKey(ServerLevel world, ChunkPos chunkPos, int radiusChunks) {
+		private TicketKey {
+			Objects.requireNonNull(world, "world");
+			Objects.requireNonNull(chunkPos, "chunkPos");
+			if (radiusChunks < 0) {
+				throw new IllegalArgumentException("radiusChunks cannot be negative");
+			}
+		}
+	}
+
 	private static final class PreloadHandle {
 		private final TargetTeleportExecution entry;
-		private final ChunkPos chunkPos;
-		private final int radiusChunks;
+		private final SharedTicket ticket;
 		private final long timeoutTick;
 		private boolean handedOff;
 
-		private PreloadHandle(TargetTeleportExecution entry, ChunkPos chunkPos, int radiusChunks, long timeoutTick) {
+		private PreloadHandle(TargetTeleportExecution entry, SharedTicket ticket, long timeoutTick) {
 			this.entry = entry;
-			this.chunkPos = chunkPos;
-			this.radiusChunks = radiusChunks;
+			this.ticket = ticket;
 			this.timeoutTick = timeoutTick;
 			this.handedOff = false;
+		}
+	}
+
+	private static final class SharedTicket {
+		private final TicketKey key;
+		private int references = 1;
+
+		private SharedTicket(TicketKey key) {
+			this.key = key;
+		}
+
+		private TicketKey key() {
+			return key;
+		}
+
+		private void retain() {
+			references++;
+		}
+
+		private boolean release() {
+			if (references <= 0) {
+				throw new IllegalStateException("Target preload ticket released more than acquired");
+			}
+			return --references == 0;
 		}
 	}
 }

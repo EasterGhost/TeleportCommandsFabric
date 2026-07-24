@@ -51,7 +51,13 @@ public final class AdminHelpRenderer {
 							"commands.teleport_commands.admin.help.desc.config.home.deleteInvalid"),
 					config("temporaryHomeTtl", "/tpc config home temporaryHomeTtl <seconds>",
 							"/tpc config home temporaryHomeTtl ",
-							"commands.teleport_commands.admin.help.desc.config.home.temporaryHomeTtl"))),
+							"commands.teleport_commands.admin.help.desc.config.home.temporaryHomeTtl"),
+					config("sharedMax", "/tpc config home sharedMax <count>",
+							"/tpc config home sharedMax ",
+							"commands.teleport_commands.admin.help.desc.config.home.sharedMax"),
+					config("sharedBroadcastCooldown", "/tpc config home sharedBroadcastCooldown <seconds>",
+							"/tpc config home sharedBroadcastCooldown ",
+							"commands.teleport_commands.admin.help.desc.config.home.sharedBroadcastCooldown"))),
 			new ConfigGroup("tpa", List.of(
 					config("expireTime", "/tpc config tpa expireTime <seconds>", "/tpc config tpa expireTime ",
 							"commands.teleport_commands.admin.help.desc.config.tpa.expireTime"))),
@@ -68,6 +74,11 @@ public final class AdminHelpRenderer {
 							"commands.teleport_commands.admin.help.desc.config.rtp.minRadius"),
 					config("maxRadius", "/tpc config rtp maxRadius <blocks>", "/tpc config rtp maxRadius ",
 							"commands.teleport_commands.admin.help.desc.config.rtp.maxRadius"))),
+			new ConfigGroup("wild", List.of(
+					config("minRadius", "/tpc config wild minRadius <blocks>", "/tpc config wild minRadius ",
+							"commands.teleport_commands.admin.help.desc.config.wild.minRadius"),
+					config("maxRadius", "/tpc config wild maxRadius <blocks>", "/tpc config wild maxRadius ",
+							"commands.teleport_commands.admin.help.desc.config.wild.maxRadius"))),
 			new ConfigGroup("integration", List.of(
 					config("syncIntervalSeconds", "/tpc config integration syncIntervalSeconds <seconds>",
 							"/tpc config integration syncIntervalSeconds ",
@@ -115,7 +126,7 @@ public final class AdminHelpRenderer {
 			appendEntry(message, entry, request.language());
 		}
 		appendSection(message, "commands.teleport_commands.admin.help.section.modules", request.language());
-		appendLine(message, Component.literal("back home tpa warp worldspawn rtp integration").withStyle(ChatFormatting.GRAY));
+		appendLine(message, Component.literal("back home tpa warp worldspawn rtp wild integration").withStyle(ChatFormatting.GRAY));
 		return message;
 	}
 

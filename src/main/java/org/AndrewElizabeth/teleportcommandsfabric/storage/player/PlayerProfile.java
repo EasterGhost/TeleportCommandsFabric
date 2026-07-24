@@ -13,7 +13,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 public class PlayerProfile {
 	private final UUID playerUuid;
@@ -231,7 +230,7 @@ public class PlayerProfile {
 		return hiddenWarpUuids.removeIf(uuid -> !existingWarpUuids.contains(uuid));
 	}
 
-	public boolean ensureDefaultHomeUuid() {
+	private boolean ensureDefaultHomeUuid() {
 		if (defaultHomeUuid == null) {
 			return false;
 		}
@@ -242,30 +241,12 @@ public class PlayerProfile {
 		return true;
 	}
 
-	public boolean removeExpiredHomes() {
+	private boolean removeExpiredHomes() {
 		boolean changed = false;
 		for (var iterator = homes.entrySet().iterator(); iterator.hasNext();) {
 			Map.Entry<UUID, NamedLocation> entry = iterator.next();
 			NamedLocation home = entry.getValue();
 			if (!home.isExpired()) {
-				continue;
-			}
-			if (Objects.equals(defaultHomeUuid, home.getUuid())) {
-				defaultHomeUuid = null;
-			}
-			homeNameIndex.remove(normalizeName(home.getName()));
-			iterator.remove();
-			changed = true;
-		}
-		return changed;
-	}
-
-	public boolean removeInvalidHomes(Predicate<NamedLocation> isInvalidHome) {
-		boolean changed = false;
-		for (var iterator = homes.entrySet().iterator(); iterator.hasNext();) {
-			Map.Entry<UUID, NamedLocation> entry = iterator.next();
-			NamedLocation home = entry.getValue();
-			if (!isInvalidHome.test(home)) {
 				continue;
 			}
 			if (Objects.equals(defaultHomeUuid, home.getUuid())) {
@@ -302,10 +283,6 @@ public class PlayerProfile {
 
 	private static String normalizeName(String name) {
 		return name == null ? "" : name.toLowerCase(Locale.ROOT);
-	}
-
-	public void clearDefaultHome() {
-		this.defaultHomeUuid = null;
 	}
 
 	private void assignSequenceIfNeeded(NamedLocation home) {

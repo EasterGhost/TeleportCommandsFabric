@@ -76,6 +76,7 @@ final class HomeTeleportHandler {
 				WaypointCrudService.deleteIfUnchanged(home, source).whenComplete((result, throwable) -> server.execute(() -> {
 					if (throwable == null && result == WaypointOperationResult.SUCCESS) {
 						WaypointMapSyncEvents.markPlayerDirty(playerUuid);
+						SharedHomePublicationHandler.onOwnerHomesChanged(server, playerUuid);
 					}
 					ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUuid);
 					if (throwable == null && result == WaypointOperationResult.SUCCESS && currentPlayer != null) {

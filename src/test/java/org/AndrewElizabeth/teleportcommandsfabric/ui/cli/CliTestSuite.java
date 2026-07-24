@@ -1,7 +1,13 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli;
 
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeKey;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeView;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.WaypointSuggestionSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpTopic;
@@ -11,9 +17,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminRuntimeInfo;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminStatusRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.back.BackPreviewRenderer;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.cache.WarpListCache;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.pagination.PageView;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
-import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageAssembler;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointFilterPickerKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointFilter;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
@@ -46,6 +50,7 @@ import java.util.stream.Stream;
 import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.ScenarioTestSupport.*;
 import static org.AndrewElizabeth.teleportcommandsfabric.testsupport.TextAssertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public final class CliTestSuite {
 	private static final ResourceKey<Level> OVERWORLD = dimension("minecraft:overworld");
@@ -61,6 +66,9 @@ public final class CliTestSuite {
 				scenario("Command argument quoting",
 						"Verify command arguments are quoted only when necessary and escaped correctly.",
 						CliTestSuite::testCommandArgumentQuoting),
+				scenario("Waypoint name suggestions",
+						"Verify waypoint suggestions filter by typed prefixes and preserve quoted names.",
+						CliTestSuite::testWaypointNameSuggestions),
 				scenario("Admin warps render actions and navigation",
 						"Verify admin /warps output includes clickable global map state and five page candidates.",
 						CliTestSuite::testAdminWarpsRenderActionsAndNavigation),
@@ -79,6 +87,12 @@ public final class CliTestSuite {
 				scenario("Homes render markers and actions",
 						"Verify /homes output shows default and temporary markers and does not show global map controls.",
 						CliTestSuite::testHomesRenderMarkersAndActions),
+				scenario("Shared homes render subscription actions",
+						"Verify /sharedhomes output identifies owners and exposes teleport, map, and unsubscribe actions.",
+						CliTestSuite::testSharedHomesRenderSubscriptionActions),
+				scenario("Waypoint manage and delete confirmation",
+						"Verify low-frequency waypoint actions use a manage page and deletion requires explicit confirmation.",
+						CliTestSuite::testWaypointManageAndDeleteConfirmation),
 				scenario("Back preview render",
 						"Verify /back preview renders previous and death records with facing, pitch, and teleport actions.",
 						CliTestSuite::testBackPreviewRender),
@@ -98,6 +112,26 @@ public final class CliTestSuite {
 		assertEquals("\"a\\\"b\"", CommandArgumentUtils.quote("a\"b"), "quote should be escaped");
 		assertEquals("\"a\\\\b\"", CommandArgumentUtils.quote("a\\b"), "backslash should be escaped");
 		assertEquals("\"\"", CommandArgumentUtils.quote(null), "null should serialize as an empty quoted argument");
+	}
+
+	private static void testWaypointNameSuggestions() {
+		List<String> names = List.of("alpha", "alpine base", "beta", "基地");
+		var unquoted = WaypointSuggestionSupport.build(new SuggestionsBuilder("/home al", 6), names);
+		assertEquals(Set.of("alpha", "\"alpine base\""),
+				Set.copyOf(unquoted.getList().stream().map(suggestion -> suggestion.getText()).toList()),
+				"unquoted prefixes should filter suggestions before quoting them");
+		assertEquals(2, unquoted.getList().size(), "unquoted filtering should not retain unrelated names");
+
+		var quoted = WaypointSuggestionSupport.build(new SuggestionsBuilder("/home \"al", 6), names);
+		assertEquals(Set.of("alpha", "\"alpine base\""),
+				Set.copyOf(quoted.getList().stream().map(suggestion -> suggestion.getText()).toList()),
+				"opening quotes should not prevent name matching");
+		assertEquals(2, quoted.getList().size(), "quoted filtering should not retain unrelated names");
+
+		var unicode = WaypointSuggestionSupport.build(new SuggestionsBuilder("/home 基", 6), names);
+		assertEquals(List.of("\"基地\""),
+				unicode.getList().stream().map(suggestion -> suggestion.getText()).toList(),
+				"Unicode names should match before being quoted for Brigadier");
 	}
 
 	private static void testAdminWarpsRenderActionsAndNavigation() {
@@ -129,9 +163,9 @@ public final class CliTestSuite {
 				"en_us")));
 
 		assertContains(text, "========== 传送点 (第 1/7 页) ==========", "header should show page 1 of 7");
-		assertContains(text, "  - spawn [地图: 开] [全局地图: 开]\n     | [X0 Y64 Z0] [minecraft:overworld]\n     | [传送] [重命名] [更新位置] [删除] [地图隐藏] ",
+		assertContains(text, "  - spawn [地图: 开] [全局地图: 开]\n     | [X0 Y64 Z0] [minecraft:overworld]\n     | [传送] [地图隐藏] [管理] ",
 				"admin visible warp should show global map state on the name line");
-		assertContains(text, "  - nether_hub [地图: 关] [全局地图: 关]\n     | [X120 Y70 Z-40] [minecraft:the_nether]\n     | [传送] [重命名] [更新位置] [删除] [地图显示] ",
+		assertContains(text, "  - nether_hub [地图: 关] [全局地图: 关]\n     | [X120 Y70 Z-40] [minecraft:the_nether]\n     | [传送] [地图显示] [管理] ",
 				"admin hidden warp should show global map state on the name line");
 		assertNotContains(text, "[全局地图隐藏] ", "global map action should not be rendered on the action line");
 		assertNotContains(text, "[全局地图显示] ", "global map action should not be rendered on the action line");
@@ -209,6 +243,7 @@ public final class CliTestSuite {
 		assertNotContains(text, "[重命名]", "regular player should not see rename");
 		assertNotContains(text, "[更新位置]", "regular player should not see update");
 		assertNotContains(text, "[删除]", "regular player should not see delete");
+		assertNotContains(text, "[管理]", "regular player should not see manage");
 		assertNotContains(text, "[全局地图隐藏]", "regular player should not see global map action");
 	}
 
@@ -221,24 +256,14 @@ public final class CliTestSuite {
 		WaypointListQuery query = new WaypointListQuery(1,
 				WaypointFilter.prefix("a"),
 				new WaypointSort(SortKey.NAME, SortDirection.DESC));
-		WaypointPageRequest request = new WaypointPageRequest(
-				WaypointPageKind.WARPS,
-				rows,
-				Set.of(),
-				null,
-				false,
-				query,
-				"en_us");
 		WarpListCache cache = new WarpListCache();
-		WaypointPageAssembler assembler = new WaypointPageAssembler(cache);
 
-		PageView<NamedLocationView> first = assembler.page(request);
-		PageView<NamedLocationView> second = assembler.page(request);
+		List<NamedLocationView> first = cache.rows(rows, query);
+		List<NamedLocationView> second = cache.rows(rows, query);
 
-		assertEquals(List.of("atlas", "argon", "alpha"), first.entries().stream().map(NamedLocationView::getName).toList(),
+		assertEquals(List.of("atlas", "argon", "alpha"), first.stream().map(NamedLocationView::getName).toList(),
 				"prefix filter and descending name sort should produce expected row order");
-		assertEquals(first.entries(), second.entries(), "cached result should be stable for repeated request");
-		assertEquals(1, cache.cachedQueryCount(), "warp cache should hold one query result");
+		assertSame(first, second, "repeated request should return the cached row list");
 	}
 
 	private static void testHomesRenderMarkersAndActions() {
@@ -255,7 +280,62 @@ public final class CliTestSuite {
 
 		assertContains(text, "  - main home (默认) [地图: 开]", "default home marker should render");
 		assertContains(text, "  - temp [临时] [地图: 开]", "temporary home marker should render");
+		assertContains(text, "     | [传送] [地图隐藏] [管理] ", "home rows should move low-frequency actions into manage");
+		assertNotContains(text, "[重命名]", "home list should not render rename directly");
 		assertNotContains(text, "[全局地图", "home page should not show global map controls");
+	}
+
+	private static void testSharedHomesRenderSubscriptionActions() {
+		TestLocation location = location("farm", 30, 70.0D, 40, NETHER, true, 0);
+		SharedHomeView sharedHome = new SharedHomeView(
+				new SharedHomeKey(UUID.randomUUID(), location.getUuid()),
+				"Alex",
+				NamedLocationSnapshot.from(location),
+				true,
+				0);
+		String text = render(new WaypointPageRequest(
+				WaypointPageKind.SHARED_HOMES,
+				List.of(sharedHome),
+				Set.of(),
+				null,
+				false,
+				Set.of(),
+				WaypointListQuery.defaultQuery(),
+				"en_us"));
+
+		assertContains(text, "========== Shared Homes (Page 1/1) ==========", "shared homes should use their own title");
+		assertContains(text, "  - Alex / farm [Map: On]", "shared home rows should identify owner and home");
+		assertContains(text, "     | [Tp] [Hide From Map] [Unsubscribe] ",
+				"shared home rows should expose subscription-specific actions");
+	}
+
+	private static void testWaypointManageAndDeleteConfirmation() {
+		TestLocation home = location("main home", 10, 64.0D, 20, OVERWORLD, true, 0);
+		WaypointListQuery query = new WaypointListQuery(2,
+				WaypointFilter.prefix("m"),
+				new WaypointSort(SortKey.NAME, SortDirection.DESC));
+		WaypointPageRequest request = new WaypointPageRequest(
+				WaypointPageKind.HOMES,
+				List.of(home),
+				Set.of(),
+				home.getUuid(),
+				true,
+				query,
+				"en_us");
+
+		String manage = renderManage(request, home);
+		String confirmation = renderDeleteConfirmation(request, home);
+		CommandLinkBuilder commands = new CommandLinkBuilder();
+
+		assertContains(manage, "========== Manage Home ==========\n  - main home (Default) [Map: On]\n     | [X10 Y64 Z20] [minecraft:overworld]\n     | [Tp] [Rename] [Update] \n     | [Share] \n     | [Delete] [Back] ",
+				"manage page should render the selected waypoint and low-frequency actions");
+		assertContains(manage, "[Share]", "permanent home management should expose sharing");
+		assertContains(confirmation, "========== Manage Home ==========\nDelete \"main home\"? This cannot be undone.\n[Confirm Delete] [Cancel]",
+				"delete should require an explicit confirmation page");
+		assertEquals("teleportcommandsfabric:homeui confirmdelete " + home.getUuid()
+				+ " 2 filter prefix m sort name desc",
+				commands.confirmDeleteCommand(request, home.getUuid(), 2),
+				"confirmed delete should preserve the complete list query");
 	}
 
 	private static void testBackPreviewRender() {
@@ -289,20 +369,24 @@ public final class CliTestSuite {
 		String homeConfig = renderer.render(AdminHelpRequest.configModule("home", "en_us", runtimeInfo)).getString();
 		String zhRtpConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
 				"rtp", "zh_cn", runtimeInfo)).getString();
+		String wildConfig = renderer.render(new AdminHelpRequest(AdminHelpTopic.CONFIG_MODULE,
+				"wild", "en_us", runtimeInfo)).getString();
 
 		assertContains(overview, "========== TeleportCommandsFabric Admin ==========\nVersion: test-version\nIntegrations: Client map sync available\nTopics:\n[Admin Commands] [Config Commands]\nQuick:\n[status] [reload] [debug] [enable] [disable]",
 				"overview help should render compact topic and quick command entries");
 		assertContains(admin, "========== TPC Admin Commands ==========", "admin help should render admin title");
 		assertContains(admin, "/tpc enable <module>\n  Enable a command module.",
 				"admin help should render command usage with description");
-		assertContains(admin, "Modules:\nback home tpa warp worldspawn rtp integration",
+		assertContains(admin, "Modules:\nback home tpa warp worldspawn rtp wild integration",
 				"admin help should render module names");
-		assertContains(config, "========== TPC Config Commands ==========\nModules:\n[teleporting] [back] [home] [tpa]\n[warp] [worldspawn] [rtp] [integration]\n[storage]",
+		assertContains(config, "========== TPC Config Commands ==========\nModules:\n[teleporting] [back] [home] [tpa]\n[warp] [worldspawn] [rtp] [wild]\n[integration] [storage]",
 				"config index should render config modules as topic buttons");
 		assertContains(homeConfig, "========== TPC Config: home ==========\n/tpc config home max <count>\n  Set the maximum number of homes per player.\n/tpc config home deleteInvalid <true|false>",
 				"config module help should render home config commands");
 		assertContains(zhRtpConfig, "========== TPC 配置：rtp ==========\n/tpc config rtp minRadius <blocks>\n  设置 RTP 最小搜索半径。",
 				"config module help should localize descriptions");
+		assertContains(wildConfig, "========== TPC Config: wild ==========\n/tpc config wild minRadius <blocks>\n  Set the minimum Wild search radius, at least 128 blocks.",
+				"config module help should expose Wild radius controls");
 	}
 
 	private static void testAdminStatusRender() {
@@ -339,6 +423,18 @@ public final class CliTestSuite {
 	private static String renderFilterPicker(WaypointPageRequest request, WaypointFilterPickerKind pickerKind) {
 		try (WaypointPages pages = new WaypointPages()) {
 			return pages.renderFilterPicker(request, pickerKind).getString();
+		}
+	}
+
+	private static String renderManage(WaypointPageRequest request, NamedLocationView location) {
+		try (WaypointPages pages = new WaypointPages()) {
+			return pages.renderManage(request, location).getString();
+		}
+	}
+
+	private static String renderDeleteConfirmation(WaypointPageRequest request, NamedLocationView location) {
+		try (WaypointPages pages = new WaypointPages()) {
+			return pages.renderDeleteConfirmation(request, location).getString();
 		}
 	}
 

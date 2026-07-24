@@ -9,6 +9,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.config.section.RtpConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.StorageConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.TeleportingConfig;
 import org.AndrewElizabeth.teleportcommandsfabric.config.section.WarpConfig;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.types.wild.WildRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.admin.AdminHelpRequest;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -20,7 +21,7 @@ import java.util.List;
 
 final class AdminNodeFactory {
 	private static final List<String> CONFIG_MODULES = List.of(
-			"teleporting", "back", "home", "tpa", "warp", "worldspawn", "rtp", "integration", "storage");
+			"teleporting", "back", "home", "tpa", "warp", "worldspawn", "rtp", "wild", "integration", "storage");
 	private static final SuggestionProvider<CommandSourceStack> ENABLED_SUGGESTER = (context,
 			builder) -> SharedSuggestionProvider.suggest(AdminModuleRegistry.enabledNames(), builder);
 	private static final SuggestionProvider<CommandSourceStack> DISABLED_SUGGESTER = (context,
@@ -52,6 +53,7 @@ final class AdminNodeFactory {
 				.then(buildWarpConfigNode())
 				.then(buildWorldSpawnConfigNode())
 				.then(buildRtpConfigNode())
+				.then(buildWildConfigNode())
 				.then(buildIntegrationConfigNode())
 				.then(buildStorageConfigNode());
 	}
@@ -111,7 +113,16 @@ final class AdminNodeFactory {
 				.then(AdminConfigNodeFactory.intNode("temporaryHomeTtl", "seconds", HomeConfig.MIN_TEMPORARY_HOME_TTL_SECONDS,
 						config -> config.getHome().getTemporaryHomeTtlSeconds(),
 						(config, value) -> config.getHome().setTemporaryHomeTtlSeconds(value),
-						"commands.teleport_commands.admin.config.home.temporaryHomeTtl"));
+						"commands.teleport_commands.admin.config.home.temporaryHomeTtl"))
+				.then(AdminConfigNodeFactory.intNode("sharedMax", "count", HomeConfig.MIN_SHARED_HOME_MAXIMUM,
+						config -> config.getHome().getSharedHomeMaximum(),
+						(config, value) -> config.getHome().setSharedHomeMaximum(value),
+						"commands.teleport_commands.admin.config.home.sharedMax"))
+				.then(AdminConfigNodeFactory.intNode("sharedBroadcastCooldown", "seconds",
+						HomeConfig.MIN_SHARED_HOME_BROADCAST_COOLDOWN_SECONDS,
+						config -> config.getHome().getSharedHomeBroadcastCooldownSeconds(),
+						(config, value) -> config.getHome().setSharedHomeBroadcastCooldownSeconds(value),
+						"commands.teleport_commands.admin.config.home.sharedBroadcastCooldown"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildTpaConfigNode() {
@@ -153,6 +164,20 @@ final class AdminNodeFactory {
 						config -> config.getRtp().getMinRadius(),
 						(config, value) -> config.getRtp().setMinRadius(value),
 						"commands.teleport_commands.admin.config.rtp.minRadius"));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> buildWildConfigNode() {
+		return Commands.literal("wild")
+				.then(AdminConfigNodeFactory.intNode("maxRadius", "blocks", WildRequest.MIN_RADIUS,
+						WildRequest.MAX_RADIUS,
+						config -> config.getWild().getMaxRadius(),
+						(config, value) -> config.getWild().setMaxRadius(value),
+						"commands.teleport_commands.admin.config.wild.maxRadius"))
+				.then(AdminConfigNodeFactory.intNode("minRadius", "blocks", WildRequest.MIN_RADIUS,
+						WildRequest.MAX_RADIUS,
+						config -> config.getWild().getMinRadius(),
+						(config, value) -> config.getWild().setMinRadius(value),
+						"commands.teleport_commands.admin.config.wild.minRadius"));
 	}
 
 	private static LiteralArgumentBuilder<CommandSourceStack> buildIntegrationConfigNode() {

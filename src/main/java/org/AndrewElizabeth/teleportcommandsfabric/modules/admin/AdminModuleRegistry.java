@@ -32,6 +32,9 @@ final class AdminModuleRegistry {
 		MODULES.put("rtp", new ModuleToggle(config -> config.getRtp().isEnabled(),
 				(config, enabled) -> config.getRtp().setEnabled(enabled),
 				"commands.teleport_commands.admin.module.rtp"));
+		MODULES.put("wild", new ModuleToggle(config -> config.getWild().isEnabled(),
+				(config, enabled) -> config.getWild().setEnabled(enabled),
+				"commands.teleport_commands.admin.module.wild"));
 		MODULES.put("integration", new ModuleToggle(config -> config.getIntegration().isEnabled(),
 				(config, enabled) -> config.getIntegration().setEnabled(enabled),
 				"commands.teleport_commands.admin.module.integration"));

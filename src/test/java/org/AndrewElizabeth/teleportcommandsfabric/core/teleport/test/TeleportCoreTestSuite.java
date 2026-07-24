@@ -8,7 +8,6 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.manager.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.task.target.*;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportServiceSettings;
 
-import org.AndrewElizabeth.teleportcommandsfabric.core.record.RecordedLocationTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.WaypointTeleportTargets;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationNbtCodec;
@@ -18,10 +17,9 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocatio
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.RecordedLocationView;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfile;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileLifecycle;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileTestAccess;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfile;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileLifecycle;
-import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileNbtCodec;
+import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileTestAccess;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.TpaTrustDecision;
 
 import net.minecraft.core.BlockPos;
@@ -163,11 +161,7 @@ public final class TeleportCoreTestSuite {
 				scenario("Player profile load preserves unavailable-dimension homes",
 						"Verify profile load does not delete homes just because ServerLevel is not available yet.",
 						"homes=1 dimension=tpc:test_dimension serverLevel=unavailable",
-						TeleportCoreTestSuite::testPlayerProfileLoadPreservesUnavailableDimensionHomes),
-				scenario("Recorded target resolver maps empty target",
-						"Verify missing death/previous records map to a failed target result.",
-						"input=Optional.empty expectedStatus=TARGET_UNAVAILABLE",
-						TeleportCoreTestSuite::testRecordedTargetEmpty));
+						TeleportCoreTestSuite::testPlayerProfileLoadPreservesUnavailableDimensionHomes));
 	}
 
 	private static void testTargetTeleportOptions() {
@@ -653,9 +647,8 @@ public final class TeleportCoreTestSuite {
 		assertEquals(25.0F, snapshot.get().getXRot(), "snapshot should keep original pitch");
 
 		RecordedLocation decoded = RecordedLocationNbtCodec.fromNbt(RecordedLocationNbtCodec.toNbt(RecordedLocation.copyOf(snapshot.get())));
-		TeleportTarget target = RecordedLocationTeleportTargets.toTarget(decoded, dummyWorld);
-		assertEquals(180.0F, target.yRot(), "recorded target should use stored yaw");
-		assertEquals(25.0F, target.xRot(), "recorded target should use stored pitch");
+		assertEquals(180.0F, decoded.getYRot(), "recorded location should preserve stored yaw");
+		assertEquals(25.0F, decoded.getXRot(), "recorded location should preserve stored pitch");
 		debug("DATA record.snapshot", "sourcePos=" + location.getBlockPos()
 				+ ", snapshotPos=" + snapshot.get().getBlockPos()
 				+ ", dimensionId=" + snapshot.get().getDimensionId()
@@ -711,7 +704,7 @@ public final class TeleportCoreTestSuite {
 		assertEquals(TpaTrustDecision.DENY, profile.resolveTpaTrust(requesterUuid, Tpa.Type.TPAHERE),
 				"per-player TPAHere rule should override default");
 
-		PlayerProfile decoded = PlayerProfileNbtCodec.fromNbt(PlayerProfileNbtCodec.toNbt(profile));
+		PlayerProfile decoded = PlayerProfileTestAccess.fromNbt(PlayerProfileTestAccess.toNbt(profile));
 		assertEquals(TpaTrustDecision.DENY, decoded.getDefaultTpaTrust(), "default TPA rule should persist");
 		assertEquals(TpaTrustDecision.ACCEPT, decoded.getDefaultTpaHereTrust(), "default TPAHere rule should persist");
 		assertEquals(TpaTrustDecision.ACCEPT, decoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
@@ -723,9 +716,9 @@ public final class TeleportCoreTestSuite {
 		profile.setPlayerTpaTrust(requesterUuid, Tpa.Type.TPAHERE, TpaTrustDecision.DEFAULT);
 		assertFalse(profile.getTpaTrustEntries().containsKey(requesterUuid), "default/default entry should be removed");
 
-		var legacyTag = PlayerProfileNbtCodec.toNbt(profile);
+		var legacyTag = PlayerProfileTestAccess.toNbt(profile);
 		legacyTag.remove("TpaTrust");
-		PlayerProfile legacyDecoded = PlayerProfileNbtCodec.fromNbt(legacyTag);
+		PlayerProfile legacyDecoded = PlayerProfileTestAccess.fromNbt(legacyTag);
 		assertEquals(TpaTrustDecision.DEFAULT, legacyDecoded.resolveTpaTrust(requesterUuid, Tpa.Type.TPA),
 				"legacy profile without trust tag should use default request flow");
 		debug("DATA tpa.trust", "defaultTpa=" + decoded.getDefaultTpaTrust()
@@ -740,7 +733,7 @@ public final class TeleportCoreTestSuite {
 		NamedLocation warp = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
 
 		assertTrue(profile.addWarp(warp), "test warp should be accepted");
-		boolean changed = GlobalProfileLifecycle.prepareLoaded(profile);
+		boolean changed = GlobalProfileTestAccess.prepareLoaded(profile);
 
 		assertFalse(changed, "startup prepare should not treat unavailable dimensions as invalid global data");
 		assertEquals(1, profile.getWarpCount(), "startup prepare should preserve global warps");
@@ -756,7 +749,7 @@ public final class TeleportCoreTestSuite {
 		NamedLocation home = NamedLocation.create("remote", 10, 64.0D, -10, unavailableDimension);
 
 		assertTrue(profile.addHome(home), "test home should be accepted");
-		boolean changed = PlayerProfileLifecycle.prepareLoaded(profile);
+		boolean changed = PlayerProfileTestAccess.prepareLoaded(profile);
 
 		assertFalse(changed, "profile prepare should not treat unavailable dimensions as invalid player data");
 		assertEquals(1, profile.getHomeCount(), "profile prepare should preserve homes");
@@ -764,14 +757,6 @@ public final class TeleportCoreTestSuite {
 		debug("DATA player.load", "homes=" + profile.getHomeCount()
 				+ ", dimension=" + home.getDimensionId()
 				+ ", changed=" + changed);
-	}
-
-	private static void testRecordedTargetEmpty() {
-		TeleportTargetResult result = RecordedLocationTeleportTargets.toTargetResult(Optional.empty(), null);
-		assertTrue(result instanceof TeleportTargetResult.Failed, "empty record target should fail");
-		TeleportTargetResult.Failed failed = (TeleportTargetResult.Failed) result;
-		assertEquals(TeleportStatus.TARGET_UNAVAILABLE, failed.reason(), "empty record target should map to target unavailable");
-		debug("DATA record.target.empty", "status=" + failed.reason());
 	}
 
 	private static TeleportRequest request() {

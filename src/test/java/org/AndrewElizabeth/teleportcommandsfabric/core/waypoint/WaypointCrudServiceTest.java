@@ -67,6 +67,18 @@ final class WaypointCrudServiceTest {
 		assertSame(updated, source.current().orElseThrow());
 	}
 
+	@Test
+	void uuidDeletePreservesSameNameReplacement() {
+		NamedLocation original = location(UUID.randomUUID(), "home", OVERWORLD);
+		NamedLocation replacement = location(UUID.randomUUID(), "home", NETHER);
+		InMemorySource source = new InMemorySource(replacement);
+
+		WaypointOperationResult result = WaypointCrudService.delete(original.getUuid(), source).join();
+
+		assertEquals(WaypointOperationResult.NOT_FOUND, result);
+		assertSame(replacement, source.current().orElseThrow());
+	}
+
 	private static NamedLocation location(UUID uuid, String name, ResourceKey<Level> dimension) {
 		return new NamedLocation(uuid, name, 10, 64.0D, 20, dimension, true);
 	}

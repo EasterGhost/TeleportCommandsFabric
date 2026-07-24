@@ -51,6 +51,22 @@ class XaeroWaypointCommandHelperTest {
 	}
 
 	@Test
+	void sharedHomeTagsUseStableSnapshotTargets() {
+		String target = "00000000-0000-0000-0000-000000000001 00000000-0000-0000-0000-000000000002";
+		MapWaypointSnapshot snapshot = new MapWaypointSnapshot(List.of(
+				new SyncedMapWaypoint(SyncedWaypointKind.SHARED_HOME, "Alex / Farm", target,
+						"minecraft:overworld", 1, 64, 2)),
+				false, "Warps", "Homes", MapWaypointSnapshot.empty().deathLocation());
+
+		withCurrentSnapshot(snapshot, () -> {
+			assertEquals("teleportcommandsfabric:sharedhome " + target,
+					buildTaggedTeleportCommand("TPC-S Alex / Farm"));
+			assertEquals("teleportcommandsfabric:mapsharedhome " + target + " false",
+					buildHideCommand("TPC-S Alex / Farm"));
+		});
+	}
+
+	@Test
 	void syncedWaypointCreationAddsTeleportTags() {
 		TaggedWaypoint temporaryWaypoint = taggedWaypoint(true);
 		TaggedWaypoint persistentWaypoint = taggedWaypoint(false);
@@ -92,7 +108,7 @@ class XaeroWaypointCommandHelperTest {
 
 	private static String invokeStringHelper(Method method, String name, String description) {
 		try {
-			return (String) method.invoke(null, name);
+			return (String) method.invoke(null, name, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 		} catch (IllegalAccessException exception) {
 			throw new AssertionError("Unable to access " + description, exception);
 		} catch (InvocationTargetException exception) {
@@ -108,24 +124,35 @@ class XaeroWaypointCommandHelperTest {
 	}
 
 	private static void withLegacyXaeroSnapshot(Runnable action) {
+		withSnapshot("updateLegacyXaero", MapWaypointSnapshot.empty(), action);
+	}
+
+	private static void withCurrentSnapshot(MapWaypointSnapshot snapshot, Runnable action) {
+		withSnapshot("update", snapshot, action);
+	}
+
+	private static void withSnapshot(String updateMethod, MapWaypointSnapshot snapshot, Runnable action) {
 		try {
-			Method update = ClientMapWaypointSnapshots.class.getDeclaredMethod("updateLegacyXaero",
+			Method update = ClientMapWaypointSnapshots.class.getDeclaredMethod(updateMethod,
 					MapWaypointSnapshot.class);
 			Method clear = ClientMapWaypointSnapshots.class.getDeclaredMethod("clear");
 			update.setAccessible(true);
 			clear.setAccessible(true);
-			update.invoke(null, MapWaypointSnapshot.empty());
-			action.run();
-			clear.invoke(null);
+			update.invoke(null, snapshot);
+			try {
+				action.run();
+			} finally {
+				clear.invoke(null);
+			}
 		} catch (ReflectiveOperationException exception) {
-			throw new AssertionError("Unable to set legacy Xaero snapshot state", exception);
+			throw new AssertionError("Unable to set Xaero snapshot state", exception);
 		}
 	}
 
 	private static Method taggedTeleportMethod() {
 		try {
 			Method method = XaeroWaypointCommandHelper.class.getDeclaredMethod("buildTaggedTeleportCommand",
-					String.class);
+					String.class, int.class, int.class, int.class);
 			method.setAccessible(true);
 			return method;
 		} catch (NoSuchMethodException exception) {
@@ -135,7 +162,8 @@ class XaeroWaypointCommandHelperTest {
 
 	private static Method hideCommandMethod() {
 		try {
-			Method method = XaeroWaypointCommandHelper.class.getDeclaredMethod("buildHideCommand", String.class);
+			Method method = XaeroWaypointCommandHelper.class.getDeclaredMethod("buildHideCommand",
+					String.class, int.class, int.class, int.class);
 			method.setAccessible(true);
 			return method;
 		} catch (NoSuchMethodException exception) {

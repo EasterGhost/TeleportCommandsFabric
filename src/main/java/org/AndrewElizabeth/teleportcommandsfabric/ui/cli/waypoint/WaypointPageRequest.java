@@ -14,12 +14,19 @@ public record WaypointPageRequest(
 		Set<UUID> hiddenWarpUuids,
 		UUID defaultLocationUuid,
 		boolean canModify,
+		Set<UUID> publishedHomeUuids,
 		WaypointListQuery query,
 		String language) {
+	public WaypointPageRequest(WaypointPageKind kind, List<NamedLocationView> locations, Set<UUID> hiddenWarpUuids,
+			UUID defaultLocationUuid, boolean canModify, WaypointListQuery query, String language) {
+		this(kind, locations, hiddenWarpUuids, defaultLocationUuid, canModify, Set.of(), query, language);
+	}
+
 	public WaypointPageRequest {
 		kind = kind == null ? WaypointPageKind.HOMES : kind;
 		locations = locations == null ? List.of() : List.copyOf(locations);
 		hiddenWarpUuids = hiddenWarpUuids == null ? Set.of() : Set.copyOf(hiddenWarpUuids);
+		publishedHomeUuids = publishedHomeUuids == null ? Set.of() : Set.copyOf(publishedHomeUuids);
 		query = query == null ? WaypointListQuery.defaultQuery() : query;
 		language = language == null || language.isBlank() ? "en_us" : language.toLowerCase(Locale.ROOT);
 	}

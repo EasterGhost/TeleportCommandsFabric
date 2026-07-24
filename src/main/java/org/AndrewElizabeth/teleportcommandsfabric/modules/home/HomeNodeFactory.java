@@ -116,18 +116,42 @@ final class HomeNodeFactory {
 	static LiteralArgumentBuilder<CommandSourceStack> buildMapVisibilityNode(String literal, boolean silent) {
 		var visibleNode = Commands.argument("visible", BoolArgumentType.bool());
 		if (!silent) {
-			visibleNode.executes(context -> HomeMutationHandler.setMapVisibility(context, false, null));
+			visibleNode.executes(context -> HomeMapVisibilityHandler.setVisibility(context, false, null));
 		}
 		if (silent) {
-			visibleNode.executes(context -> HomeMutationHandler.setMapVisibility(context, true, null));
+			visibleNode.executes(context -> HomeMapVisibilityHandler.setVisibility(context, true, null));
 			visibleNode.then(WaypointQueryNodes.pageArgument(
-					(context, query) -> HomeMutationHandler.setMapVisibility(context, true, query)));
+					(context, query) -> HomeMapVisibilityHandler.setVisibility(context, true, query)));
 		}
 		return Commands.literal(literal)
 				.requires(HomeNodeFactory::requiresPlayer)
 				.then(Commands.argument("name", StringArgumentType.string())
 						.suggests(HOME_SUGGESTIONS)
 						.then(visibleNode));
+	}
+
+	static LiteralArgumentBuilder<CommandSourceStack> buildUiNode() {
+		return Commands.literal("teleportcommandsfabric:homeui")
+				.requires(HomeNodeFactory::requiresPlayer)
+				.then(uiActionNode("manage", (context, waypointUuid, query) ->
+						HomeListHandler.renderHomeManage(context.getSource().getPlayerOrException(), waypointUuid, query, false)))
+				.then(uiActionNode("update", (context, waypointUuid, query) ->
+						HomeMutationHandler.updateHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("default", (context, waypointUuid, query) ->
+						HomeMutationHandler.setDefaultHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("share", (context, waypointUuid, query) ->
+						SharedHomePublicationHandler.shareFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("withdraw", (context, waypointUuid, query) ->
+						SharedHomePublicationHandler.withdrawFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)))
+				.then(uiActionNode("delete", (context, waypointUuid, query) ->
+						HomeListHandler.renderHomeManage(context.getSource().getPlayerOrException(), waypointUuid, query, true)))
+				.then(uiActionNode("confirmdelete", (context, waypointUuid, query) ->
+						HomeMutationHandler.deleteHomeFromManage(context.getSource().getPlayerOrException(), waypointUuid, query)));
+	}
+
+	private static LiteralArgumentBuilder<CommandSourceStack> uiActionNode(String action,
+			WaypointQueryNodes.WaypointQueryExecutor executor) {
+		return Commands.literal(action).then(WaypointQueryNodes.waypointUuidArgument(executor));
 	}
 
 	private static boolean requiresPlayer(CommandSourceStack source) {

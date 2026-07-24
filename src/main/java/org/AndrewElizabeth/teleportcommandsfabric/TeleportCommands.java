@@ -6,14 +6,19 @@ import org.AndrewElizabeth.teleportcommandsfabric.core.record.AsyncRecordedLocat
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.RtpService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TpaService;
 import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.TeleportTicketTypes;
+import org.AndrewElizabeth.teleportcommandsfabric.core.teleport.WildService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.admin.AdminCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.back.BackCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.home.HomeCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.home.SharedHomeBroadcastDispatcher;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.rtp.RtpCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.teleport.TeleportCancelCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.tpa.TpaCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.warp.WarpCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.modules.worldspawn.WorldSpawnCommand;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.wild.WildCommand;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedLocationManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
@@ -41,14 +46,18 @@ public class TeleportCommands implements ModInitializer {
 	public static TeleportService TELEPORT_SERVICE;
 	public static TpaService TPA_SERVICE;
 	public static RtpService RTP_SERVICE;
+	public static WildService WILD_SERVICE;
+	public static SharedHomeService SHARED_HOME_SERVICE;
+	public static SharedHomeBroadcastDispatcher SHARED_HOME_BROADCAST_DISPATCHER;
 	public static WaypointPages WAYPOINT_PAGES;
 
 	@Override
 	public void onInitialize() {
+		TeleportTicketTypes.initialize();
 		ServerLifecycleEvents.SERVER_STARTING.register(TeleportCommands::initializeMod);
 		ServerTickEvents.END_SERVER_TICK.register(TeleportCommandsLifecycle::tick);
 		ServerLifecycleEvents.SERVER_STOPPING.register(TeleportCommandsLifecycle::shutdown);
-		TeleportCommandsLifecycle.registerPlayerConnectionEvents();
+		TeleportCommandsLifecycle.registerPlayerLifecycleEvents();
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
 		MOD_LOADER = "Fabric";
 	}
@@ -65,6 +74,7 @@ public class TeleportCommands implements ModInitializer {
 		WarpCommand.register(dispatcher);
 		WorldSpawnCommand.register(dispatcher);
 		RtpCommand.register(dispatcher);
+		WildCommand.register(dispatcher);
 		TeleportCancelCommand.register(dispatcher);
 	}
 

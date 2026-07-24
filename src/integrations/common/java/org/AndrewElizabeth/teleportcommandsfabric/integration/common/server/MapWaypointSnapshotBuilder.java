@@ -1,10 +1,14 @@
 package org.AndrewElizabeth.teleportcommandsfabric.integration.common.server;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.config.ConfigManager;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.MapWaypointSnapshot;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedDeathLocation;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedMapWaypoint;
 import org.AndrewElizabeth.teleportcommandsfabric.integration.common.waypoint.SyncedWaypointKind;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeResolver;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeService;
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeView;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.global.GlobalProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.player.PlayerProfileManager;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
@@ -41,14 +45,22 @@ final class MapWaypointSnapshotBuilder {
 		CompletableFuture<List<NamedLocationView>> warpsFuture = globalManager.query(profile -> profile.getWarps());
 		CompletableFuture<PlayerWaypointData> playerFuture = playerManager.query(playerUuid,
 				profile -> new PlayerWaypointData(profile.getHomes(), profile.getHiddenWarpUuids()));
+		SharedHomeService sharedHomeService = TeleportCommands.SHARED_HOME_SERVICE;
+		boolean sharedHomesEnabled = ConfigManager.query(config -> config.getHome().isEnabled());
+		CompletableFuture<List<SharedHomeView>> sharedHomesFuture = sharedHomeService == null || !sharedHomesEnabled
+				? CompletableFuture.completedFuture(List.of())
+				: SharedHomeResolver.resolveSubscriptions(playerUuid, sharedHomeService, playerManager,
+						TeleportCommands.SERVER);
 
-		return warpsFuture.thenCombine(playerFuture, (warps, playerData) -> {
+		return warpsFuture.thenCombine(playerFuture, CombinedWaypointData::new)
+				.thenCombine(sharedHomesFuture, (combined, sharedHomes) -> {
 			List<SyncedMapWaypoint> waypoints = new ArrayList<>();
-			addWarps(waypoints, warps, playerData.hiddenWarpUuids());
-			addHomes(waypoints, playerData.homes());
+			addWarps(waypoints, combined.warps(), combined.playerData().hiddenWarpUuids());
+			addHomes(waypoints, combined.playerData().homes());
+			addSharedHomes(waypoints, sharedHomes);
 			MapWaypointSnapshot snapshot = new MapWaypointSnapshot(waypoints, options.persistWaypointSets(), options.warpGroupName(), options.homeGroupName(),
 					deathLocation);
-			return new Result(snapshot, nextHomeExpiryMillis(playerData.homes()));
+			return new Result(snapshot, nextHomeExpiryMillis(combined.playerData().homes()));
 		});
 	}
 
@@ -75,6 +87,17 @@ final class MapWaypointSnapshotBuilder {
 		}
 	}
 
+	private static void addSharedHomes(List<SyncedMapWaypoint> waypoints, List<SharedHomeView> homes) {
+		for (SharedHomeView home : homes) {
+			if (!home.mapVisible()) {
+				continue;
+			}
+			String displayName = home.ownerName() + " / " + home.getName();
+			String commandTarget = home.key().ownerUuid() + " " + home.key().homeUuid();
+			addWaypoint(waypoints, SyncedWaypointKind.SHARED_HOME, displayName, commandTarget, home);
+		}
+	}
+
 	private static long nextHomeExpiryMillis(List<NamedLocationView> homes) {
 		long nextExpiry = 0L;
 		for (NamedLocationView home : homes) {
@@ -91,11 +114,17 @@ final class MapWaypointSnapshotBuilder {
 
 	private static void addWaypoint(List<SyncedMapWaypoint> waypoints, SyncedWaypointKind kind,
 			NamedLocationView location) {
+		addWaypoint(waypoints, kind, location.getName(), location.getName(), location);
+	}
+
+	private static void addWaypoint(List<SyncedMapWaypoint> waypoints, SyncedWaypointKind kind,
+			String name, String commandTarget, NamedLocationView location) {
 		String worldId = location.getDimensionId();
 		if (worldId == null || worldId.isBlank()) {
 			return;
 		}
-		waypoints.add(new SyncedMapWaypoint(kind, location.getName(), worldId, location.getX(), location.getY(), location.getZ()));
+		waypoints.add(new SyncedMapWaypoint(kind, name, commandTarget, worldId,
+				location.getX(), location.getY(), location.getZ()));
 	}
 
 	record Options(boolean persistWaypointSets, String warpGroupName, String homeGroupName) {
@@ -105,5 +134,8 @@ final class MapWaypointSnapshotBuilder {
 	}
 
 	private record PlayerWaypointData(List<NamedLocationView> homes, Set<UUID> hiddenWarpUuids) {
+	}
+
+	private record CombinedWaypointData(List<NamedLocationView> warps, PlayerWaypointData playerData) {
 	}
 }

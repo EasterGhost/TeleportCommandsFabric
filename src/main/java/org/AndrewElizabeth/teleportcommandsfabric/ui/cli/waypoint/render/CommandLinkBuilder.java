@@ -1,5 +1,6 @@
 package org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.render;
 
+import org.AndrewElizabeth.teleportcommandsfabric.core.waypoint.shared.SharedHomeKey;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageKind;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPageRequest;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.SortDirection;
@@ -8,6 +9,8 @@ import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.Waypoint
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointListQuery;
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.query.WaypointSort;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
+
+import java.util.UUID;
 
 public final class CommandLinkBuilder {
 	public String listCommand(WaypointPageKind kind, WaypointListQuery query, int page) {
@@ -63,16 +66,48 @@ public final class CommandLinkBuilder {
 		return (kind == WaypointPageKind.HOMES ? "home " : "warp ") + quotedName;
 	}
 
+	public String sharedTeleportCommand(SharedHomeKey key) {
+		return "teleportcommandsfabric:sharedhome " + key.ownerUuid() + " " + key.homeUuid();
+	}
+
+	public String sharedVisibilityCommand(SharedHomeKey key, boolean visible, WaypointListQuery query, int currentPage) {
+		return sharedUiCommand("map", key, visible + " " + pageQueryArgs(query, currentPage));
+	}
+
+	public String sharedUnsubscribeCommand(SharedHomeKey key, WaypointListQuery query, int currentPage) {
+		return sharedUiCommand("unsubscribe", key, pageQueryArgs(query, currentPage));
+	}
+
+	public String manageCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "manage", waypointUuid, currentPage);
+	}
+
+	public String manageUpdateCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "update", waypointUuid, currentPage);
+	}
+
+	public String manageDefaultCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "default", waypointUuid, currentPage);
+	}
+
+	public String manageShareCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "share", waypointUuid, currentPage);
+	}
+
+	public String manageWithdrawCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "withdraw", waypointUuid, currentPage);
+	}
+
+	public String deleteConfirmationCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "delete", waypointUuid, currentPage);
+	}
+
+	public String confirmDeleteCommand(WaypointPageRequest request, UUID waypointUuid, int currentPage) {
+		return uiCommand(request, "confirmdelete", waypointUuid, currentPage);
+	}
+
 	public String renameCommand(WaypointPageKind kind) {
 		return kind == WaypointPageKind.HOMES ? "renamehome" : "renamewarp";
-	}
-
-	public String updateCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES ? "updatehome" : "updatewarp";
-	}
-
-	public String deleteCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES ? "delhome" : "delwarp";
 	}
 
 	private String pageQueryArgs(WaypointListQuery query, int page) {
@@ -104,27 +139,51 @@ public final class CommandLinkBuilder {
 	}
 
 	private String listCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES ? "homes" : "warps";
+		return switch (kind) {
+		case HOMES -> "homes";
+		case WARPS -> "warps";
+		case SHARED_HOMES -> "sharedhomes";
+		};
 	}
 
 	private String pagePickerCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES ? "teleportcommandsfabric:homespages" : "teleportcommandsfabric:warpspages";
+		return switch (kind) {
+		case HOMES -> "teleportcommandsfabric:homespages";
+		case WARPS -> "teleportcommandsfabric:warpspages";
+		case SHARED_HOMES -> "teleportcommandsfabric:sharedhomespages";
+		};
 	}
 
 	private String prefixFilterPickerCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES
-				? "teleportcommandsfabric:homesprefixfilters"
-				: "teleportcommandsfabric:warpsprefixfilters";
+		return switch (kind) {
+		case HOMES -> "teleportcommandsfabric:homesprefixfilters";
+		case WARPS -> "teleportcommandsfabric:warpsprefixfilters";
+		case SHARED_HOMES -> "teleportcommandsfabric:sharedhomesprefixfilters";
+		};
 	}
 
 	private String dimensionFilterPickerCommand(WaypointPageKind kind) {
-		return kind == WaypointPageKind.HOMES
-				? "teleportcommandsfabric:homesdimensionfilters"
-				: "teleportcommandsfabric:warpsdimensionfilters";
+		return switch (kind) {
+		case HOMES -> "teleportcommandsfabric:homesdimensionfilters";
+		case WARPS -> "teleportcommandsfabric:warpsdimensionfilters";
+		case SHARED_HOMES -> "teleportcommandsfabric:sharedhomesdimensionfilters";
+		};
 	}
 
 	private String visibilityCommand(WaypointPageKind kind) {
 		return kind == WaypointPageKind.HOMES ? "teleportcommandsfabric:maphome" : "teleportcommandsfabric:mapwarp";
+	}
+
+	private String uiCommand(WaypointPageRequest request, String action, UUID waypointUuid, int currentPage) {
+		String root = request.kind() == WaypointPageKind.HOMES
+				? "teleportcommandsfabric:homeui"
+				: "teleportcommandsfabric:warpui";
+		return root + " " + action + " " + waypointUuid + " " + pageQueryArgs(request.query(), currentPage);
+	}
+
+	private String sharedUiCommand(String action, SharedHomeKey key, String suffix) {
+		return "teleportcommandsfabric:sharedhomeui " + action + " " + key.ownerUuid() + " " + key.homeUuid()
+				+ " " + suffix;
 	}
 
 	private WaypointListQuery safeQuery(WaypointListQuery query) {

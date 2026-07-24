@@ -28,19 +28,6 @@ public final class TpaSessionRegistry {
 		return Optional.ofNullable(sessions.get(sessionId));
 	}
 
-	public Optional<Tpa.Session> getLatestIncoming(UUID targetUuid) {
-		LinkedHashSet<UUID> incoming = targetIncoming.get(targetUuid);
-		if (incoming == null || incoming.isEmpty()) {
-			return Optional.empty();
-		}
-
-		UUID lastId = null;
-		for (UUID id : incoming) {
-			lastId = id;
-		}
-		return get(lastId);
-	}
-
 	public List<Tpa.Session> getIncoming(UUID targetUuid, long now) {
 		LinkedHashSet<UUID> incoming = targetIncoming.get(targetUuid);
 		if (incoming == null || incoming.isEmpty()) {

@@ -6,12 +6,13 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands;
+import org.AndrewElizabeth.teleportcommandsfabric.modules.common.WaypointSuggestionSupport;
 import org.AndrewElizabeth.teleportcommandsfabric.storage.schema.NamedLocationView;
-import org.AndrewElizabeth.teleportcommandsfabric.utils.CommandArgumentUtils;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -41,13 +42,7 @@ final class HomeSuggestionProvider implements SuggestionProvider<CommandSourceSt
 		}
 
 		return TeleportCommands.PLAYER_PROFILE_MANAGER.query(player.getUUID(), profile -> profile.getHomes().stream()
-				.filter(filter).map(NamedLocationView::getName).toList()).handle((names, throwable) -> {
-					if (throwable == null) {
-						for (String name : names) {
-							builder.suggest(CommandArgumentUtils.quote(name));
-						}
-					}
-					return null;
-				}).thenCompose(ignored -> builder.buildFuture());
+				.filter(filter).map(NamedLocationView::getName).toList()).handle((names, throwable) ->
+						WaypointSuggestionSupport.build(builder, throwable == null ? names : List.of()));
 	}
 }

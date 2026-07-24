@@ -120,18 +120,6 @@ public final class RtpService {
 		executionProcessor.shutdown();
 	}
 
-	public int pendingQueueSize() {
-		return pendingQueue.size();
-	}
-
-	public int readyBacklogSize() {
-		return executionProcessor.readyBacklogSize();
-	}
-
-	public int activeExecutionCount() {
-		return executionProcessor.activeExecutionCount();
-	}
-
 	private void promoteReadyPendings() {
 		while (!pendingQueue.isEmpty()) {
 			PendingRef ref = pendingQueue.peekFirst();

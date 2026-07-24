@@ -24,9 +24,14 @@ final class MapWaypointClientState {
 		return protocolVersion;
 	}
 
-	void useCommon(int protocolVersion) {
+	boolean useCommon(int protocolVersion) {
+		if (syncMode == MapWaypointSyncMode.COMMON && protocolVersion <= this.protocolVersion) {
+			return false;
+		}
 		this.syncMode = MapWaypointSyncMode.COMMON;
 		this.protocolVersion = protocolVersion;
+		this.lastSnapshot = null;
+		return true;
 	}
 
 	void useLegacyXaero() {
