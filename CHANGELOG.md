@@ -29,7 +29,7 @@ The config and storage schema versions are tracked separately from the mod relea
 
 ### Added
 
-- Added runtime shared-home publication and subscription. Players can publish homes with `/sharehome`, subscribe from broadcast messages, browse subscriptions with `/sharedhomes`, and teleport with `/sharedhome`.
+- Added runtime shared-home publication and subscription. Players can publish homes with `/sharehome`, subscribe from broadcast messages, browse subscriptions with pagination, sorting, and filtering through `/sharedhomes`, and teleport with `/sharedhome`.
 - Added configurable per-player publication limits and broadcast cooldowns through `home.sharedHomeMaximum`, `home.sharedHomeBroadcastCooldownSeconds`, and the matching `/tpc config home` commands.
 - Added map synchronization for subscribed shared homes on supported client map integrations.
 - Added management pages for homes and warps with context-preserving actions and delete confirmation. Home management also supports publishing and withdrawing shared homes.
@@ -41,16 +41,20 @@ The config and storage schema versions are tracked separately from the mod relea
 - Shared-home broadcasts are dispatched in bounded per-tick work and repeated broadcasts for the same publication are coalesced.
 - Updating or deleting an owner's home now reconciles active shared-home publications and subscribed map waypoints.
 - Timed-out target safety searches now request worker cancellation and discard late results without delaying later teleport execution.
+- Overlapping target teleports to the same destination area now share reference-counted preload tickets, preventing one operation from releasing another operation's chunk preload.
 
 ### Fixed
 
 - Fixed home, warp, shared-home, and TPA request suggestions so command completion only offers entries matching the text already typed.
 - Fixed a race between `/tpc reload` and live configuration changes that could allow a delayed reload result to overwrite a newly applied setting.
+- Fixed integer config commands reporting the requested value when normalization changed the actual stored value. Success messages now show the effective setting.
+- Fixed safety worker warmup touching live world chunks during server startup. Warmup now uses synthetic block states and does not request chunk loading.
 
 ### Notes
 
 - Shared-home publications, subscriptions, and personal shared-home map visibility are runtime state. They are cleared when the server restarts and do not change the storage schema.
 - Temporary homes cannot be published as shared homes.
+- Map synchronization protocol v2 carries stable shared-home targets while retaining protocol v1 negotiation for 2.3 peers. Shared-home map synchronization requires both sides to support protocol v2.
 - `/wild` is no longer an alias of `/rtp`: RTP remains a short-range random teleport, while Wild loads distant candidate chunks in bounded batches and searches their surface.
 
 ## [2.3.1] - 2026-07-14
