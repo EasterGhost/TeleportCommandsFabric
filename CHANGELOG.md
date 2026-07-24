@@ -25,7 +25,7 @@ The config and storage schema versions are tracked separately from the mod relea
 | 1.3             |              2 |                     2 | Introduced explicit config and storage schema constants; config migration covers the old `wild` section name and storage migration normalizes named-location data.                |
 | 1.2 and earlier |   not embedded |          not embedded | Legacy JSON files have no embedded schema constant; migrators treat files without a `version` property as historical data.                                                        |
 
-## [2.4] - 2026-07-23
+## [2.4] - 2026-07-24
 
 ### Added
 
