@@ -1,6 +1,6 @@
 # User-specific stuff
 .idea/
-
+.claude/
 *.iml
 *.ipr
 *.iws
@@ -18,6 +18,7 @@ atlassian-ide-plugin.xml
 
 # Log file
 *.log
+logs/
 
 # BlueJ files
 *.ctxt
@@ -125,5 +126,20 @@ bin/
 # Ignore Wiki pages
 TeleportCommandsFabric.wiki/
 
-# Ignore drafts
-docs/drafts/
+# Ignore docs
+docs/
+
+# editorconfig
+.editorconfig
+
+# Ignore build logs
+build_log.txt
+
+# Backup files
+*.bak
+src_pre_refactor_backup/
+src_post_refactor_checkpoint/
+backup/
+
+# txt files
+*.txt

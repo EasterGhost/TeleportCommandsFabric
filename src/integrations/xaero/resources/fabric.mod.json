@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "teleport_commands_fabric_xaero",
+	"version": "${version}",
+	"name": "TeleportCommandsFabric Xaero Integration",
+	"description": "Xaero map integration for TeleportCommandsFabric.",
+	"authors": [
+		"Andrew Elizabeth / EasterGhost"
+	],
+	"license": "GPL-3.0-only",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"org.AndrewElizabeth.teleportcommandsfabric.integration.xaero.XaeroClientIntegration"
+		]
+	},
+	"mixins": [
+		"teleportcommandsfabric-xaero.mixins.json"
+	],
+	"custom": {
+		"modmenu": {
+			"parent": {
+				"id": "teleport_commands_fabric",
+				"name": "TeleportCommandsFabric"
+			}
+		}
+	},
+	"depends": {
+		"teleport_commands_fabric": "*",
+		"teleport_commands_fabric_integration_common": "*",
+		"fabricloader": ">=0.17.3",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"xaerominimap": "*",
+		"xaeroworldmap": "*"
+	}
+}

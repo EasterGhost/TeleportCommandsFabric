@@ -1,22 +1,22 @@
 plugins {
-    id 'fabric-loom' version '1.15.4'
+    id 'net.fabricmc.fabric-loom' version '1.15.4'
     id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
+def modVersion = project.version.toString()
+def minecraftVersion = project.minecraft_version
+def loaderVersion = project.loader_version
+def archiveBaseName = project.archives_base_name
+ext.modVersion = modVersion
+ext.archiveBaseName = archiveBaseName
 
 base {
-    archivesName = project.archives_base_name + "-" + project.minecraft_version
+    archivesName = archiveBaseName
 }
 
-loom {
-    mods {
-        "teleportcommandsfabric" {
-            sourceSet sourceSets.main
-        }
-    }
-}
+apply from: "gradle/integrations.gradle"
 
 fabricApi {
     configureDataGeneration {
@@ -33,31 +33,57 @@ repositories {
     maven {
         url = "https://chocolateminecraft.com/maven/"
     }
+    maven {
+        name = "JourneyMap Maven"
+        url = "https://maven.blamejared.com"
+    }
+    maven {
+        name = "JourneyMap Snapshots"
+        url = "https://jm.gserv.me/repository/maven-snapshots/"
+    }
+    maven {
+        name = "BlueMap"
+        url = "https://repo.bluecolored.de/releases"
+    }
 }
 
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modCompileOnly "xaero.minimap:xaerominimap-fabric-${project.minecraft_version}:${project.xaero_minimap_version}"
-    modCompileOnly "xaero.map:xaeroworldmap-fabric-${project.minecraft_version}:${project.xaero_worldmap_version}"
-    modCompileOnly "xaero.lib:xaerolib-fabric-${project.minecraft_version}:${project.xaero_lib_version}"
+    xaeroIntegrationCompileOnly "xaero.minimap:xaerominimap-fabric-${project.xaero_minecraft_version}:${project.xaero_minimap_version}"
+    xaeroIntegrationCompileOnly "xaero.map:xaeroworldmap-fabric-${project.xaero_minecraft_version}:${project.xaero_worldmap_version}"
+    xaeroIntegrationCompileOnly "xaero.lib:xaerolib-fabric-${project.xaero_minecraft_version}:${project.xaero_lib_version}"
+    journeyMapIntegrationCompileOnly "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}"
+    blueMapIntegrationCompileOnly "de.bluecolored:bluemap-api:${project.bluemap_api_version}"
 }
 
+apply from: "test.gradle"
+
 processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
+    def includedJars = includedJarsJson()
+    def buildVariant = buildVariantName()
+    def metaVersion = metaVersion()
+    inputs.property "version", metaVersion
+    inputs.property "minecraft_version", minecraftVersion
+    inputs.property "loader_version", loaderVersion
+    inputs.property "included_jars", includedJars
+    inputs.property "build_variant", buildVariant
     filteringCharset = "UTF-8"
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+        expand "version": metaVersion,
+                "minecraft_version": minecraftVersion,
+                "loader_version": loaderVersion,
+                "build_variant": buildVariant
+        filter { line ->
+            line.contains('"jars": []')
+                    ? line.replace('"jars": []', "\"jars\": ${includedJars}")
+                    : line
+        }
     }
 }
 
@@ -84,9 +110,27 @@ java {
     withSourcesJar()
 }
 
+tasks.named("sourcesJar", Jar) {
+    if (includeIntegrationCommon.get()) {
+        from sourceSets.integrationCommon.java
+    }
+    if (includeXaeroIntegration.get()) {
+        from sourceSets.xaeroIntegration.java
+    }
+    if (includeJourneyMapIntegration.get()) {
+        from sourceSets.journeyMapIntegration.java
+    }
+    if (includeBlueMapIntegration.get()) {
+        from sourceSets.blueMapIntegration.java
+    }
+    from("LICENSE.txt") {
+        rename { "LICENSE_${archiveBaseName}" }
+    }
+}
+
 jar {
     from("LICENSE.txt") {
-        rename { "LICENSE_${project.archives_base_name}" }
+        rename { "LICENSE_${archiveBaseName}" }
     }
 }
 
@@ -94,7 +138,7 @@ jar {
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
+            artifactId = archiveBaseName
             from components.java
         }
     }

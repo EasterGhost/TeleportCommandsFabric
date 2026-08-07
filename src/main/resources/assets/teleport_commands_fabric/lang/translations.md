@@ -30,8 +30,8 @@ Things to know:
 - Hungarian (hu_hu): [Martin Morningstar](https://github.com/RMI637)
 - Italian (it_it): [Vlad Andrei Morariu](https://github.com/VladAndreiMorariu), [Jump-333](https://github.com/Jump-333)
 - Russian (ru_ru): [rfin0](https://github.com/rfin0)
-- Traditional Chinese - Taiwan (zw_tw): [hugoalh](https://github.com/hugoalh), [Dicecan](https://github.com/Dicecan)
+- Traditional Chinese - Taiwan (zh_tw): [hugoalh](https://github.com/hugoalh), [Dicecan](https://github.com/Dicecan)
 - Traditional Chinese - Hong Kong (zh_hk): [Dicecan](https://github.com/Dicecan)
-- Simplified Chinese (zh_cn): [Dicecan](https://github.com/Dicecan)
+- Simplified Chinese (zh_cn): [Dicecan](https://github.com/Dicecan) / [EasterGhost](https://github.com/EasterGhost)
 - Bulgarian (bg_bg): Anonymous
-- **All New Translations**: GPT-5.3-Codex
+- **All New Translations**: GPT-5.3-Codex / GPT-5.5 / DeepSeek V4 Pro

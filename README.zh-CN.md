@@ -1,62 +1,87 @@
-# Teleport Commands Fabric 使用说明
+# Teleport Commands Fabric
 
-TeleportCommandsFabric 是一个面向 Fabric 服务端的传送命令模组，提供完整的常用传送能力，并将管理入口集中在同一套命令体系中，便于长期维护。同时提供客户端接口与Xaero地图联动以提高使用体验。
+> 面向 Fabric 服务端的统一传送工具包 — 所有命令，一个管理面板，无需重启。
 
-- 英文文档：[README.md](README.md)
-- 中文维基：[Wiki-Zh_CN](https://github.com/EasterGhost/TeleportCommandsFabric/wiki)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.7%2B-brightgreen)]()
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue)](LICENSE.txt)
 
-## 模组特色
+[English](README.md) · [Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki)
 
-这个模组围绕服务端日常管理进行设计。玩家常用的 `back`、`home`、`tpa`、`warp`、`worldspawn`、`rtp`/`wild` 在一套规则下运行，管理员也可以通过 `/tpc` 统一控制模块状态和运行参数；`/teleportcommands` 仍保留为兼容别名。支持与Xaero地图系列模组联动以提高使用体验。
+---
 
-### 主要优势
+## 功能概览
 
-- 功能集中：常见传送场景都在同一个模组里完成。
-- 管理统一：启用/禁用、重载、运行时配置默认都走 `/tpc`，`/teleportcommands` 仍然可用。
-- 调整方便：常用参数可在线修改，减少手动改 JSON 的频率。
-- 行为一致：多类传送命令共享统一的延迟与冷却逻辑。
-- 支持联动：可将 `home` 与 `warp` 同步到 Xaero 航点，便于直接在地图上查看和传送。
+| 功能 | 说明 |
+| --- | --- |
+| 🏠 `/home` `/warp` `/back` `/tpa` `/rtp` `/wild` `/worldspawn` | 覆盖定点、玩家互传、近距离随机与长距离探索传送 |
+| 🎛️ `/tpc` | 统一管理入口：启停模块、调整上限、重载配置 — 无需手动编辑 JSON |
+| 🤝 共享 home | 向在线玩家发布 home、从聊天中订阅，并通过 `/sharedhomes` 使用 |
+| 🗺️ 地图联动 | 将 home、已订阅共享 home 和 warp 同步到 Xaero/JourneyMap，并将公共 warp 发布到 BlueMap Web 地图 |
+| 📋 列表增强 | `/homes`、`/sharedhomes` 和 `/warps` 支持可点击分页、排序、筛选与管理操作 |
+| ⚙️ 一致节奏 | 全局延迟和冷却统一生效，已知目标、RTP 与 Wild 则使用适合各自负载的安全逻辑 |
+| ⏳ 临时家 | 支持设置有时限的临时家（`/tmphome`），到期自动清理 |
+| 🤝 TPA 信任 | 可按全局或单个玩家自动接受/拒绝 TPA 与 TPAHere 请求 |
+| 🧭 朝向复原 | home、warp 和传送记录可保存并恢复玩家朝向 |
+| ⚡ 随机传送性能 | 对近距离 RTP 与长距离 Wild 分批调度，兼顾日常和高并发服务器 |
 
-## 客户端体验
-
-服务端传送命令的可用性不依赖客户端是否安装本模组，客户端不安装时也可以正常使用 `back`、`home`、`warp`、`tpa`、`worldspawn` 和 `rtp` 等功能。客户端安装本模组后，传送相关交互会更顺手；若再配合 Xaero 地图模组，则可以进一步获得 `home` 和 `warp` 的地图航点联动。
-
-更具体的安装组合与体验差异，可查看 [功能总览](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview) 和 [Xaero 集成模块](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-7-Xaero)。
+---
 
 ## 快速开始
 
 1. 将模组放入服务端 `mods/` 目录。
-2. 启动一次服务端，生成配置文件 `config/teleport_commands.json`。
-3. 执行 `/tpc help` 确认命令已注册。
-4. 使用 `/tpc config` 系列命令修改配置，或手动修改配置文件后执行 `/tpc reload`。`/teleportcommands` 同样可用。
+2. 启动一次 → 自动生成 `config/teleport_commands.json`。
+3. 执行 `/tpc help` 确认注册，`/tpc status` 查看模块状态。
 
-## 文档导航（Wiki）
+常用管理命令速查：
 
-详细说明集中维护在 Wiki。README 主要用于项目介绍和快速入口。
+```
+/tpc status                     # 查看各模块启用状态
+/tpc enable rtp                 # 启用一个模块（rtp）
+/tpc config home max 20         # 在线修改home上限
+/tpc config teleporting restoreRotation true
+/tpc reload                     # 手动编辑配置文件后重载
+```
 
-### 入门
+额外调试日志默认关闭。目标区块预加载和默认目标安全检查也默认关闭；RTP 与 Wild 使用各自独立的目标选择和落点安全逻辑。
 
-- [首页](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/Home)
-- [快速开始](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/1-Quick-Start)
-- [功能总览](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/2-Features-Overview)
+共享 home 的发布和订阅属于本次服务器运行期间的状态：源 home 仍会正常存储，但重启服务器后需要重新发布和订阅。
 
-### 使用
+---
 
-- [命令说明](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/3-Commands)
-- [配置文件说明](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration)
-- [模块细节](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/5-Module-Details)
+## 构建版本
 
-### 维护
+TeleportCommandsFabric 提供两种构建版本：
 
-- [权限与访问](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/6-Permissions-and-Access)
-- [数据与存储](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/7-Data-and-Storage)
-- [故障排查](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/8-Troubleshooting)
-- [常见问题](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/9-FAQ)
+- **标准版**：包含核心传送功能，以及 Xaero、JourneyMap 和 BlueMap 内嵌联动。推荐大多数用户使用。
+- **核心版**：只包含核心传送功能，不包含内嵌地图联动。适合只需要服务端传送命令，或不使用内嵌地图联动的服务器。
 
-## 配置与管理入口
+兼容性说明：
 
-- 配置文件路径：`config/teleport_commands.json`
-- 运行时配置命令：`/tpc config ...`
-- 重载命令：`/tpc reload`
+- 标准版同时受到 Minecraft/Fabric 兼容性和内嵌地图联动兼容性的影响。
+- 核心版只受 TeleportCommandsFabric 核心功能本身的 Minecraft/Fabric 兼容性影响，适合在内嵌地图联动暂不可用或不需要地图联动时使用。
 
-字段解释和示例请查看 [配置文件说明](https://github.com/EasterGhost/TeleportCommandsFabric/wiki/4-Configuration)。
+如果不确定应该下载哪一个，请选择标准版。
+
+---
+
+## 是否安装客户端模组
+
+服务端模组可独立运行。安装客户端模组（可选）可进一步提升体验：
+
+| | 仅服务端 | 服务端 + 客户端 |
+| --- | :---: | :---: |
+| 全部传送命令 | ✅ | ✅ |
+| 聊天框可点击按钮 | ✅ | ✅ |
+| Xaero/JourneyMap home、共享 home 与 warp 航点 | — | ✅ |
+| BlueMap Web 地图 warp 标记 | ✅ | ✅ |
+| 地图右键直达传送 | — | ✅ |
+| 可信命令跳过确认弹窗 | — | ✅ |
+| TPA 信任自动接受/拒绝 | ✅ | ✅ |
+
+BlueMap 标记要求服务端安装 BlueMap，但不要求客户端安装 TeleportCommandsFabric。
+
+---
+
+## 链接
+
+[Wiki](https://github.com/EasterGhost/TeleportCommandsFabric/wiki) · [English](README.md) · [Changelog](CHANGELOG.md) · [License](LICENSE.txt)

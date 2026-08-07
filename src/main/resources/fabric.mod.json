@@ -3,14 +3,20 @@
 	"id": "teleport_commands_fabric",
 	"version": "${version}",
 	"name": "TeleportCommandsFabric",
-	"description": "A simple tpa command mod for Fabric.",
+	"description": "A simple teleport command toolkit for Fabric servers.",
 	"authors": [
-		"Andrew Elizabeth"
+		{
+			"name": "Andrew Elizabeth / EasterGhost",
+			"contact": {
+				"email": "easterghost1@gmail.com",
+				"homepage": "https://github.com/EasterGhost/TeleportCommandsFabric"
+			}
+		}
 	],
 	"contact": {
-		"sources": "https://github.com/AndrewElizabeth/TeleportCommandsFabric",
-		"issues": "https://github.com/AndrewElizabeth/TeleportCommandsFabric/issues",
-		"email": "easterghost1@gmail.com"
+		"homepage": "https://modrinth.com/mod/teleportcommandsfabric",
+		"sources": "https://github.com/EasterGhost/TeleportCommandsFabric",
+		"issues": "https://github.com/EasterGhost/TeleportCommandsFabric/issues"
 	},
 	"license": "GPL-3.0-only",
 	"icon": "assets/icon.png",
@@ -18,17 +24,25 @@
 	"entrypoints": {
 		"main": [
 			"org.AndrewElizabeth.teleportcommandsfabric.TeleportCommands"
-		],
-		"client": [
-			"org.AndrewElizabeth.teleportcommandsfabric.client.TeleportCommandsClient"
 		]
 	},
 	"mixins": [
 		"teleportcommandsfabric.mixins.json"
 	],
+	"jars": [],
+	"custom": {
+		"modmenu": {
+			"badges": [ "${build_variant}" ],
+			"links": {
+				"modmenu.modrinth": "https://modrinth.com/mod/teleportcommandsfabric",
+				"GitHub": "https://github.com/EasterGhost/TeleportCommandsFabric",
+				"Issue": "https://github.com/EasterGhost/TeleportCommandsFabric/issues"
+			}
+		}
+	},
 	"depends": {
-		"fabricloader": ">=${loader_version}",
+		"fabricloader": ">=0.17.3",
 		"fabric-api": "*",
-		"minecraft": ">=${minecraft_version}"
+		"minecraft": ">=26.1"
 	}
 }
