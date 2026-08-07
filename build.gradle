@@ -13,7 +13,7 @@ ext.modVersion = modVersion
 ext.archiveBaseName = archiveBaseName
 
 base {
-    archivesName = archiveBaseName + "-" + minecraftVersion
+    archivesName = archiveBaseName
 }
 
 apply from: "gradle/integrations.gradle"
@@ -66,8 +66,8 @@ apply from: "test.gradle"
 processResources {
     def includedJars = includedJarsJson()
     def buildVariant = buildVariantName()
-    def metadataVersion = "${modVersion}+${buildVariant.toLowerCase(Locale.ROOT)}"
-    inputs.property "version", metadataVersion
+    def metaVersion = metaVersion()
+    inputs.property "version", metaVersion
     inputs.property "minecraft_version", minecraftVersion
     inputs.property "loader_version", loaderVersion
     inputs.property "included_jars", includedJars
@@ -75,7 +75,7 @@ processResources {
     filteringCharset = "UTF-8"
 
     filesMatching("fabric.mod.json") {
-        expand "version": metadataVersion,
+        expand "version": metaVersion,
                 "minecraft_version": minecraftVersion,
                 "loader_version": loaderVersion,
                 "build_variant": buildVariant

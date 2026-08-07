@@ -1,5 +1,6 @@
 def modVersion = project.ext.modVersion
 def archiveBaseName = project.ext.archiveBaseName
+def minecraftVersion = project.minecraft_version
 
 def includeMapIntegrations = providers.gradleProperty("includeMapIntegrations")
         .map { it.toBoolean() }
@@ -18,10 +19,10 @@ def includeIntegrationCommonRequested = providers.gradleProperty("includeIntegra
         .orElse(false)
 def includeClientMapIntegration = includeXaeroIntegration.zip(includeJourneyMapIntegration) { xaero, journeymap -> xaero || journeymap }
 def includeIntegrationCommon = includeIntegrationCommonRequested.zip(includeClientMapIntegration) { common, integration -> common || integration }
-def integrationCommonJarName = "teleportcommandsfabric-integration-common-${modVersion}.jar"
-def xaeroIntegrationJarName = "teleportcommandsfabric-xaero-${modVersion}.jar"
-def journeyMapIntegrationJarName = "teleportcommandsfabric-journeymap-${modVersion}.jar"
-def blueMapIntegrationJarName = "teleportcommandsfabric-bluemap-${modVersion}.jar"
+def integrationCommonJarName = "${archiveBaseName}-integration-common-${modVersion}.jar"
+def xaeroIntegrationJarName = "${archiveBaseName}-xaero-${modVersion}.jar"
+def journeyMapIntegrationJarName = "${archiveBaseName}-journeymap-${modVersion}.jar"
+def blueMapIntegrationJarName = "${archiveBaseName}-bluemap-${modVersion}.jar"
 def includedJarsJson = {
     def jars = []
     if (includeIntegrationCommon.get()) {
@@ -56,20 +57,23 @@ def buildVariantId = {
     return "custom"
 }
 def buildVariantName = {
-    buildVariantId().capitalize()
+    def id = buildVariantId()
+    id[0].toUpperCase() + id.substring(1)
+}
+def metaVersion = {
+    def variant = buildVariantId()
+    variant == "standard" ? modVersion : "${modVersion}+${variant}"
 }
 ext.includedJarsJson = includedJarsJson
 ext.buildVariantName = buildVariantName
+ext.metaVersion = metaVersion
 ext.includeIntegrationCommon = includeIntegrationCommon
 ext.includeXaeroIntegration = includeXaeroIntegration
 ext.includeJourneyMapIntegration = includeJourneyMapIntegration
 ext.includeBlueMapIntegration = includeBlueMapIntegration
 
 tasks.withType(AbstractArchiveTask).configureEach {
-    def variant = buildVariantId()
-    if (variant != "standard") {
-        archiveVersion = "${modVersion}-${variant}"
-    }
+    archiveVersion = "${metaVersion()}-mc${minecraftVersion}-fabric"
 }
 
 sourceSets {
