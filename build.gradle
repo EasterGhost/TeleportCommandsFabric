@@ -66,7 +66,8 @@ apply from: "test.gradle"
 processResources {
     def includedJars = includedJarsJson()
     def buildVariant = buildVariantName()
-    inputs.property "version", modVersion
+    def metadataVersion = "${modVersion}+${buildVariant.toLowerCase(Locale.ROOT)}"
+    inputs.property "version", metadataVersion
     inputs.property "minecraft_version", minecraftVersion
     inputs.property "loader_version", loaderVersion
     inputs.property "included_jars", includedJars
@@ -74,7 +75,7 @@ processResources {
     filteringCharset = "UTF-8"
 
     filesMatching("fabric.mod.json") {
-        expand "version": modVersion,
+        expand "version": metadataVersion,
                 "minecraft_version": minecraftVersion,
                 "loader_version": loaderVersion,
                 "build_variant": buildVariant
