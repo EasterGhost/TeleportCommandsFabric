@@ -36,7 +36,7 @@ final class LoadedChunkBlockStateReader implements TeleportSafety.BlockStateRead
 				if (chunk == null) {
 					complete = false;
 				}
-				chunkKeys[index] = ChunkPos.pack(chunkX, chunkZ);
+				chunkKeys[index] = ChunkPos.asLong(chunkX, chunkZ);
 				chunks[index] = chunk;
 				index++;
 			}
@@ -50,7 +50,7 @@ final class LoadedChunkBlockStateReader implements TeleportSafety.BlockStateRead
 
 	@Override
 	public BlockState getBlockState(BlockPos pos) {
-		long chunkKey = ChunkPos.pack(pos);
+		long chunkKey = ChunkPos.asLong(pos);
 		for (int i = 0; i < chunkKeys.length; i++) {
 			if (chunkKeys[i] == chunkKey) {
 				LevelChunk chunk = chunks[i];

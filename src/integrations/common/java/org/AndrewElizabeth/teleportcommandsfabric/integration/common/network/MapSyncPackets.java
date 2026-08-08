@@ -32,8 +32,8 @@ public final class MapSyncPackets {
 		if (payloadTypesRegistered) {
 			return;
 		}
-		PayloadTypeRegistry.serverboundPlay().register(ClientIntegrationHelloPayload.TYPE, ClientIntegrationHelloPayload.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(MapWaypointSnapshotPayload.TYPE, MapWaypointSnapshotPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(ClientIntegrationHelloPayload.TYPE, ClientIntegrationHelloPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(MapWaypointSnapshotPayload.TYPE, MapWaypointSnapshotPayload.CODEC);
 		LegacyXaeroSyncPackets.registerPayloadTypes();
 		payloadTypesRegistered = true;
 	}

@@ -39,7 +39,7 @@ final class WildPositionFinder {
 				continue;
 			}
 
-			long packed = chunkPos.pack();
+			long packed = chunkPos.toLong();
 			if (excludedChunks.contains(packed) || !selected.add(packed)) {
 				continue;
 			}

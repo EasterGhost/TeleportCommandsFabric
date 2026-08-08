@@ -29,9 +29,9 @@ public final class LegacyXaeroSyncPackets {
 		if (payloadTypesRegistered) {
 			return;
 		}
-		PayloadTypeRegistry.serverboundPlay().register(LegacyXaeroSyncRequestPayload.TYPE,
+		PayloadTypeRegistry.playC2S().register(LegacyXaeroSyncRequestPayload.TYPE,
 				LegacyXaeroSyncRequestPayload.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(LegacyXaeroSyncDataPayload.TYPE,
+		PayloadTypeRegistry.playS2C().register(LegacyXaeroSyncDataPayload.TYPE,
 				LegacyXaeroSyncDataPayload.CODEC);
 		payloadTypesRegistered = true;
 	}

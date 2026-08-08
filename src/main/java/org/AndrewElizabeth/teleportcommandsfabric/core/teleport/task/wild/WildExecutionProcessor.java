@@ -190,7 +190,7 @@ public final class WildExecutionProcessor {
 
 		Map<ChunkPos, LevelChunk> chunks = new HashMap<>();
 		for (ChunkPos chunkPos : batch.loadedChunks()) {
-			LevelChunk chunk = world.getChunkSource().getChunkNow(chunkPos.x(), chunkPos.z());
+			LevelChunk chunk = world.getChunkSource().getChunkNow(chunkPos.x, chunkPos.z);
 			if (chunk != null) {
 				chunks.put(chunkPos, chunk);
 			}
@@ -233,7 +233,7 @@ public final class WildExecutionProcessor {
 			finishSearch(state, TeleportStatus.NO_SAFE_POSITION);
 			return;
 		}
-		chunks.forEach(chunk -> state.usedChunks().add(chunk.pack()));
+		chunks.forEach(chunk -> state.usedChunks().add(chunk.toLong()));
 		int batchIndex = state.nextBatchIndex();
 		if (!loadCoordinator.submitBatch(state.pending().playerUuid(), state.pending().pendingSequence(),
 				batchIndex, state.pending().dimension(), chunks)) {

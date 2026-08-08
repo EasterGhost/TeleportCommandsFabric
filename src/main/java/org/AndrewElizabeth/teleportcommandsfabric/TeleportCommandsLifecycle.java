@@ -20,7 +20,7 @@ import org.AndrewElizabeth.teleportcommandsfabric.storage.record.PlayerRecordedL
 import org.AndrewElizabeth.teleportcommandsfabric.ui.cli.waypoint.WaypointPages;
 import org.AndrewElizabeth.teleportcommandsfabric.utils.DebugLog;
 
-import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
@@ -141,7 +141,7 @@ final class TeleportCommandsLifecycle {
 			}
 		});
 
-		ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) -> {
+		ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) -> {
 			try {
 				if (TeleportCommands.WILD_SERVICE != null) {
 					TeleportCommands.WILD_SERVICE.onPlayerChangeLevel(player.getUUID(), destination.dimension());
