@@ -27,6 +27,25 @@ class WildPositionFinderTest {
 		assertSamplesStayWithinChunkTolerance(1_000_000, 1_000_000);
 	}
 
+	@Test
+	void samplesOutsideVanillaHorizontalBoundaryAreRejected() {
+		BlockPos boundaryCenter = new BlockPos(30_000_000, 64, 30_000_000);
+		SplittableRandom random = new SplittableRandom(42L);
+		boolean rejected = false;
+
+		for (int sample = 0; sample < 10_000; sample++) {
+			ChunkPos chunk = WildPositionFinder.sampleChunk(boundaryCenter, 30_000_000, 30_000_000, random);
+			if (chunk == null) {
+				rejected = true;
+				continue;
+			}
+			assertTrue(Math.abs((long) chunk.x()) <= 1_875_000L);
+			assertTrue(Math.abs((long) chunk.z()) <= 1_875_000L);
+		}
+
+		assertTrue(rejected);
+	}
+
 	private static void assertSamplesStayWithinChunkTolerance(int minRadius, int maxRadius) {
 		SplittableRandom random = new SplittableRandom(42L);
 		double tolerance = Math.sqrt(8.0D * 8.0D + 8.0D * 8.0D) + 1.0D;

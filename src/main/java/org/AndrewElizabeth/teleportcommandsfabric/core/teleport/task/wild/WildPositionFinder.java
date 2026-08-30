@@ -21,6 +21,8 @@ final class WildPositionFinder {
 	static final int CHUNKS_PER_BATCH = 4;
 	private static final int CANDIDATES_PER_CHUNK = 8;
 	private static final int MAX_ANCHOR_SAMPLE_ATTEMPTS = 4096;
+	// Vanilla's 30,000,000-block horizontal boundary expressed in chunks.
+	private static final long MAX_CHUNK_COORDINATE = 1_875_000L;
 	private static final double PLAYER_HALF_WIDTH = 0.3D;
 
 	private WildPositionFinder() {
@@ -101,8 +103,8 @@ final class WildPositionFinder {
 		long anchorZ = center.getZ() + Math.round(Math.sin(angle) * radius);
 		long chunkX = Math.floorDiv(anchorX, 16L);
 		long chunkZ = Math.floorDiv(anchorZ, 16L);
-		if (chunkX < -ChunkPos.MAX_COORDINATE_VALUE || chunkX > ChunkPos.MAX_COORDINATE_VALUE
-				|| chunkZ < -ChunkPos.MAX_COORDINATE_VALUE || chunkZ > ChunkPos.MAX_COORDINATE_VALUE) {
+		if (chunkX < -MAX_CHUNK_COORDINATE || chunkX > MAX_CHUNK_COORDINATE
+				|| chunkZ < -MAX_CHUNK_COORDINATE || chunkZ > MAX_CHUNK_COORDINATE) {
 			return null;
 		}
 		return new ChunkPos((int) chunkX, (int) chunkZ);
